@@ -1,21 +1,29 @@
 version: '3.8'
 
+x-variables: &defaults
+  DB_NAME: mungos_core
+  DB_USER: mungos
+  DB_PASS: mungos123
+  DB_HOST: postgres-core
+  DB_PORT: 5432
+  SPRING_PROFILES_ACTIVE: docker
+
 services:
   postgres-core:
     image: postgres:16-alpine
     container_name: mungos-postgres-core
     environment:
-      POSTGRES_DB: mungos_core
-      POSTGRES_USER: mungos
-      POSTGRES_PASSWORD: mungos123
+      POSTGRES_DB: *DB_NAME
+      POSTGRES_USER: *DB_USER
+      POSTGRES_PASSWORD: *DB_PASS
     volumes:
       - postgres-core-data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"  # 5433 на хосте чтобы не конфликтовать с sniffer
+      - "5433:5432"
     networks:
       - core-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mungos"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mungos}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,12 +38,12 @@ services:
         condition: service_healthy
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_HOST: postgres-core
-      DB_PORT: 5432
-      DB_NAME: mungos_core
-      DB_USER: mungos
-      DB_PASS: mungos123
+      SPRING_PROFILES_ACTIVE: *SPRING_PROFILES_ACTIVE
+      DB_HOST: *DB_HOST
+      DB_PORT: *DB_PORT
+      DB_NAME: *DB_NAME
+      DB_USER: *DB_USER
+      DB_PASS: *DB_PASS
     ports:
       - "8080:8080"
     networks:
