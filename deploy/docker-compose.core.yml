@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  postgres-core:
+    image: postgres:16-alpine
+    container_name: mungos-postgres-core
+    environment:
+      POSTGRES_DB: mungos_core
+      POSTGRES_USER: mungos
+      POSTGRES_PASSWORD: mungos123
+    volumes:
+      - postgres-core-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # 5433 на хосте чтобы не конфликтовать с sniffer
+    networks:
+      - core-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mungos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  core-app:
+    build:
+      context: ../core
+      dockerfile: Dockerfile
+    container_name: mungos-core-app
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres-core
+      DB_PORT: 5432
+      DB_NAME: mungos_core
+      DB_USER: mungos
+      DB_PASS: mungos123
+    ports:
+      - "8080:8080"
+    networks:
+      - core-network
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: front
+    image: front
+    restart: unless-stopped
+    expose:
+      - "3000"
+    networks:
+      - core-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mungos-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - core-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+networks:
+  core-network:
+    driver: bridge
+
+volumes:
+  postgres-core-data:
+  prometheus-data:
