@@ -1,0 +1,9 @@
+--java_out=D:\Programming\JAVA\MIFI\Mungos\core\target\generated-sources\protobuf
+--plugin=protoc-gen-67ec43d5c4ce8330b3decc5a0dabd38120fb04b7=D:\Programming\JAVA\MIFI\Mungos\core\target\protobuf-maven-plugin\generate\generate\artifacts\protoc-gen-grpc-java-d29e48349ad7b11089ed1bcfe6127a34e50e7b13.exe
+--67ec43d5c4ce8330b3decc5a0dabd38120fb04b7_out=D:\Programming\JAVA\MIFI\Mungos\core\target\generated-sources\protobuf
+--67ec43d5c4ce8330b3decc5a0dabd38120fb04b7_opt=@generated=omit
+D:\Programming\JAVA\MIFI\Mungos\core\src\main\proto\empty.proto
+--proto_path=D:\Programming\JAVA\MIFI\Mungos\core\src\main\proto
+--proto_path=D:\Programming\JAVA\MIFI\Mungos\core\target\protobuf-maven-plugin\generate\generate\archives\grpc-services-1.77.1-7fd5dd835ccd2c50396210d0f69ee70745905da1
+--proto_path=D:\Programming\JAVA\MIFI\Mungos\core\target\protobuf-maven-plugin\generate\generate\archives\protobuf-java-4.33.4-32d0f5fee77520ad8e7f42194de919e12ada9d26
+--proto_path=D:\Programming\JAVA\MIFI\Mungos\core\target\protobuf-maven-plugin\generate\generate\archives\proto-google-common-protos-2.63.2-02db751665f362aa87339a3eda382f740eaf2ddf
