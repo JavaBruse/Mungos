@@ -1,0 +1,16 @@
+node_modules
+dist
+.angular
+.git
+.gitignore
+README.md
+**/*.log
+**/*.md
+!.dockerignore
+Dockerfile
+.dockerignore
+.idea
+.vscode
+coverage
+tests
+src/environments/environment.ts
