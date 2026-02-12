@@ -1,11 +1,5 @@
 version: '3.8'
-
-x-variables: &sniffer-defaults
-  DB_NAME: mungos_sniffer
-  DB_USER: mungos
-  DB_PASS: mungos123
-  DB_HOST: postgres-sniffer
-  DB_PORT: 5432
+name: mungos-sniffer
 
 services:
   postgres-sniffer:
@@ -13,17 +7,17 @@ services:
     container_name: mungos-postgres-sniffer
     restart: unless-stopped
     environment:
-      POSTGRES_DB: *DB_NAME
-      POSTGRES_USER: *DB_USER
-      POSTGRES_PASSWORD: *DB_PASS
+      POSTGRES_DB: ${SNIFFER_DB_NAME}
+      POSTGRES_USER: ${SNIFFER_DB_USER}
+      POSTGRES_PASSWORD: ${SNIFFER_DB_PASS}
     volumes:
       - postgres-sniffer-data:/var/lib/postgresql/data
-    ports:
-      - "5434:5432"
+    expose:
+      - "5432"
     networks:
       - sniffer-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mungos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${SNIFFER_DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,23 +27,30 @@ services:
       context: ../sniffer
       dockerfile: Dockerfile
     container_name: mungos-sniffer-app
+    image: mungos-sniffer-app
     depends_on:
       postgres-sniffer:
         condition: service_healthy
+    restart: unless-stopped
     environment:
-      DB_HOST: *DB_HOST
-      DB_PORT: *DB_PORT
-      DB_USER: *DB_USER
-      DB_PASS: *DB_PASS
-      DB_NAME: *DB_NAME
+      DB_HOST: ${SNIFFER_DB_HOST}
+      DB_PORT: ${SNIFFER_DB_PORT}
+      DB_USER: ${SNIFFER_DB_USER}
+      DB_PASS: ${SNIFFER_DB_PASS}
+      DB_NAME: ${SNIFFER_DB_NAME}
     ports:
-      - "8081:8080"
+      - "${SNIFFER_APP_PORT}:8080"
     networks:
       - sniffer-network
+      - mungos-shared
 
 networks:
   sniffer-network:
     driver: bridge
+  mungos-shared:
+    name: mungos-shared-network
+    external: false        
 
 volumes:
   postgres-sniffer-data:
+    name: mungos_sniffer_postgres-data

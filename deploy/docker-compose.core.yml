@@ -1,29 +1,23 @@
 version: '3.8'
-
-x-variables: &defaults
-  DB_NAME: mungos_core
-  DB_USER: mungos
-  DB_PASS: mungos123
-  DB_HOST: postgres-core
-  DB_PORT: 5432
-  SPRING_PROFILES_ACTIVE: docker
+name: mungos-master
 
 services:
   postgres-core:
     image: postgres:16-alpine
     container_name: mungos-postgres-core
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: *DB_NAME
-      POSTGRES_USER: *DB_USER
-      POSTGRES_PASSWORD: *DB_PASS
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     volumes:
       - postgres-core-data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
+    expose:
+      - "5432"
     networks:
       - core-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mungos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,14 +32,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: *SPRING_PROFILES_ACTIVE
-      DB_HOST: *DB_HOST
-      DB_PORT: *DB_PORT
-      DB_NAME: *DB_NAME
-      DB_USER: *DB_USER
-      DB_PASS: *DB_PASS
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      CORE_PORT: ${CORE_PORT}
     ports:
-      - "8080:8080"
+      - "${CORE_PORT}:7779"
     networks:
       - core-network
 
@@ -54,10 +49,9 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
     container_name: mungos-frontend
-    image: front
     restart: unless-stopped
-    expose:
-      - "3000"
+    ports:
+      - "${FRONT_PORT}:3000"
     networks:
       - core-network
 
@@ -71,6 +65,7 @@ services:
       - "9090:9090"
     networks:
       - core-network
+      - mungos-shared
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -78,7 +73,12 @@ services:
 networks:
   core-network:
     driver: bridge
+  mungos-shared:
+    driver: bridge
+    name: mungos-shared-network
 
 volumes:
   postgres-core-data:
+    name: mungos_postgres-core-data
   prometheus-data:
+    name: mungos_prometheus-data
