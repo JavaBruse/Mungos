@@ -24,7 +24,7 @@ services:
     build:
       context: ../core
       dockerfile: Dockerfile
-    container_name: mungos-core-app
+    container_name: mungos-core
     depends_on:
       postgres-core:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    container_name: front
+    container_name: mungos-frontend
     image: front
     restart: unless-stopped
     expose:

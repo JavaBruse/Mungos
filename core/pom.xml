@@ -130,29 +130,24 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>io.github.ascopes</groupId>
-				<artifactId>protobuf-maven-plugin</artifactId>
-				<version>4.0.3</version>
-				<configuration>
-					<protoc>${protobuf-java.version}</protoc>
-					<binaryMavenPlugins>
-						<binaryMavenPlugin>
-							<groupId>io.grpc</groupId>
-							<artifactId>protoc-gen-grpc-java</artifactId>
-							<version>${grpc.version}</version>
-							<options>@generated=omit</options>
-						</binaryMavenPlugin>
-					</binaryMavenPlugins>
-				</configuration>
-				<executions>
-					<execution>
-						<id>generate</id>
-						<goals>
-							<goal>generate</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
+    <groupId>io.github.ascopes</groupId>
+    <artifactId>protobuf-maven-plugin</artifactId>
+    <version>4.0.3</version>
+    <configuration>
+        <protocVersion>${protobuf-java.version}</protocVersion>
+        <protocArtifact>com.google.protobuf:protoc:${protobuf-java.version}:exe:linux-x86_64</protocArtifact>
+        <pluginId>grpc-java</pluginId>
+        <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:linux-x86_64</pluginArtifact>
+    </configuration>
+    <executions>
+        <execution>
+            <id>generate</id>
+            <goals>
+                <goal>generate</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
