@@ -4,6 +4,7 @@ services:
   postgres-sniffer:
     image: postgres:16-alpine
     container_name: mungos-postgres-sniffer
+    restart: unless-stopped
     environment:
       POSTGRES_DB: mungos_sniffer
       POSTGRES_USER: mungos
