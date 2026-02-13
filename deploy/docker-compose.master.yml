@@ -45,6 +45,13 @@ services:
       - "${CORE_PORT}:7779"
     networks:
       - core-network
+    develop:
+      watch:
+        - action: rebuild
+          path: ../core
+          ignore:
+          - target/   
+          - .mvn/
 
   frontend:
     build:

@@ -44,6 +44,14 @@ services:
     networks:
       - sniffer-network
       - mungos-shared
+    develop:
+    watch:
+      - action: rebuild
+        path: ../sniffer
+        ignore:
+          - tmp/
+          - vendor/
+          - "*.log"
 
 networks:
   sniffer-network:
