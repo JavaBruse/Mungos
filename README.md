@@ -1,5 +1,5 @@
 # Core со своей БД и Prometheus
-docker-compose -f deploy/docker-compose.core.yml up -d
+docker-compose -f deploy/docker-compose.master.yml up -d
 
 
 # Sniffer со своей БД

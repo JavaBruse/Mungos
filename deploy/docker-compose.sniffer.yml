@@ -1,23 +1,23 @@
-version: '3.8'
 name: mungos-sniffer
 
 services:
-  postgres-sniffer:
-    image: postgres:16-alpine
-    container_name: mungos-postgres-sniffer
+  clickhouse-sniffer:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: mungos-clickhouse-sniffer
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${SNIFFER_DB_NAME}
-      POSTGRES_USER: ${SNIFFER_DB_USER}
-      POSTGRES_PASSWORD: ${SNIFFER_DB_PASS}
+      CLICKHOUSE_DB: ${SNIFFER_DB_NAME}
+      CLICKHOUSE_USER: ${SNIFFER_DB_USER}
+      CLICKHOUSE_PASSWORD: ${SNIFFER_DB_PASS}
     volumes:
-      - postgres-sniffer-data:/var/lib/postgresql/data
+      - clickhouse-sniffer-data:/var/lib/clickhouse
     expose:
-      - "5432"
+      - "8123"  # HTTP порт
+      - "9000"  # Native порт
     networks:
       - sniffer-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${SNIFFER_DB_USER}"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,18 +26,19 @@ services:
     build:
       context: ../sniffer
       dockerfile: Dockerfile
-    container_name: mungos-sniffer-app
-    image: mungos-sniffer-app
+    container_name: mungos-sniffer
     depends_on:
-      postgres-sniffer:
+      clickhouse-sniffer:
         condition: service_healthy
     restart: unless-stopped
     environment:
+      DB_TYPE: CLICKHOUSE  # Добавьте поддержку в приложение
       DB_HOST: ${SNIFFER_DB_HOST}
       DB_PORT: ${SNIFFER_DB_PORT}
       DB_USER: ${SNIFFER_DB_USER}
       DB_PASS: ${SNIFFER_DB_PASS}
       DB_NAME: ${SNIFFER_DB_NAME}
+      DB_PROTOCOL: ${SNIFFER_DB_PROTOCOL:-http}  # http или native
     ports:
       - "${SNIFFER_APP_PORT}:8080"
     networks:
@@ -49,8 +50,8 @@ networks:
     driver: bridge
   mungos-shared:
     name: mungos-shared-network
-    external: false        
+    external: false
 
 volumes:
-  postgres-sniffer-data:
-    name: mungos_sniffer_postgres-data
+  clickhouse-sniffer-data:
+    name: mungos_clickhouse_sniffer-data
