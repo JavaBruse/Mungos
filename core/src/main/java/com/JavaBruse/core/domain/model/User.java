@@ -1,4 +1,4 @@
-package com.javabruse.domain.model;
+package com.JavaBruse.core.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,10 +15,11 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users", schema = "security_schema")
+@Table(name = "users")
 public class User implements UserDetails {
     @Id
     @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(name = "username", unique = true, nullable = false)
@@ -27,12 +28,15 @@ public class User implements UserDetails {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "email", unique = true, nullable = false)
-    private String email;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
     private Role role;
+
+    @Column(name= "updated", nullable = false)
+    private Boolean updated = false;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

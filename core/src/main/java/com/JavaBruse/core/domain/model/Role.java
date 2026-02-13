@@ -1,6 +1,7 @@
-package com.javabruse.domain.model;
+package com.JavaBruse.core.domain.model;
 
 public enum Role {
-    ROLE_USER,
-    ROLE_ADMIN
+    ROLE_ADMIN,
+    ROLE_ANALYTIC,
+    ROLE_SECURITY
 }

@@ -1,7 +1,7 @@
-package com.javabruse.config;
+package com.JavaBruse.core.config;
 
+import com.JavaBruse.core.service.UserService;
 import lombok.RequiredArgsConstructor;
-import com.javabruse.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -48,8 +48,7 @@ public class SecurityConfiguration {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userService.userDetailsService());
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userService.userDetailsService());
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

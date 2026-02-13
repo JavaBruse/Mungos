@@ -1,4 +1,4 @@
-package com.javabruse.domain.dto;
+package com.JavaBruse.core.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

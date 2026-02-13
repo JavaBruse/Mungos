@@ -1,11 +1,10 @@
-package com.javabruse.service;
+package com.JavaBruse.core.service;
 
+import com.JavaBruse.core.domain.dto.JwtAuthenticationResponse;
+import com.JavaBruse.core.domain.dto.SignInRequest;
+import com.JavaBruse.core.domain.dto.SignUpRequest;
+import com.JavaBruse.core.domain.model.User;
 import lombok.RequiredArgsConstructor;
-import com.javabruse.domain.dto.JwtAuthenticationResponse;
-import com.javabruse.domain.dto.SignInRequest;
-import com.javabruse.domain.dto.SignUpRequest;
-import com.javabruse.domain.model.Role;
-import com.javabruse.domain.model.User;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,20 +21,14 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
 
-    /**
-     * Регистрация пользователя
-     *
-     * @param request данные пользователя
-     * @return токен
-     */
-    public JwtAuthenticationResponse signUp(SignUpRequest request) {
+
+    public JwtAuthenticationResponse addUser(SignUpRequest request) {
 
         var user = User.builder()
                 .id(UUID.randomUUID().toString())
                 .username(request.getUsername())
-                .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ROLE_USER)
+                .role(request.getRole())
                 .build();
 
         userService.create(user);
@@ -44,12 +37,18 @@ public class AuthenticationService {
         return new JwtAuthenticationResponse(jwt);
     }
 
-    /**
-     * Аутентификация пользователя
-     *
-     * @param request данные пользователя
-     * @return токен
-     */
+    public JwtAuthenticationResponse updatePassword(SignUpRequest request) {
+
+        var user = User.builder()
+                .id(UUID.randomUUID().toString())
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .build();
+        user = userService.update(user);
+        var jwt = jwtService.generateToken(user);
+        return new JwtAuthenticationResponse(jwt);
+    }
+
     public JwtAuthenticationResponse signIn(SignInRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 request.getUsername(),
@@ -67,5 +66,4 @@ public class AuthenticationService {
     public String getUUID(Authentication authentication) {
         return userService.getByUsername(authentication.getName()).getId();
     }
-
 }

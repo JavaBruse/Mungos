@@ -1,14 +1,17 @@
-package com.JavaBruse.core;
+package com.JavaBruse.core.service;
 
 import com.JavaBruse.core.domain.model.Role;
 import com.JavaBruse.core.domain.model.User;
 import com.JavaBruse.core.repository.UserRepository;
-import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DatabaseInitializer {
 
     @Value("${admin.username}")
@@ -20,12 +23,7 @@ public class DatabaseInitializer {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public DatabaseInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
-
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void initAdminUser() {
         if (!userRepository.existsByUsername(adminUsername)) {
             User admin = new User();
@@ -33,8 +31,6 @@ public class DatabaseInitializer {
             admin.setPassword(passwordEncoder.encode(adminPassword));
             admin.setFullName("Administrator");
             admin.setRole(Role.ROLE_ADMIN);
-            admin.setUpdated(false);
-            admin.setUpdated(false);
             userRepository.save(admin);
         }
     }

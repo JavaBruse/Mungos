@@ -1,21 +1,33 @@
+logging:
+  level:
+    org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
 server:
   port: ${CORE_PORT}
+  servlet:
+    context-path: /
 
 spring:
   application:
     name: core
-
   datasource:
     url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
     username: ${DB_USER}
     password: ${DB_PASS}
     driver-class-name: org.postgresql.Driver
-  
   jpa:
-    hibernate:
-      ddl-auto: validate
     show-sql: true
+    hibernate:
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+token:
+  signing:
+    key: 12l3j43kl6jh346jh34i6g346ui346n34u643yb634l6yb34lu6y346lu34yb634lu6yn34oi6uy346v43u6iy4vy43iou6by34iou6ynm34oiu6ym34oi6uyn34mo6i
+
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}

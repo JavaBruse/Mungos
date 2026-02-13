@@ -1,15 +1,14 @@
-package com.javabruse.exaption;
+package com.JavaBruse.core.exaption;
 
 
 public class ExistsExeption extends RuntimeException {
     public ExistsExeption(String message) {
-        super(message); // Вызываем конструктор родительского класса с сообщением
+        super(message);
     }
 
     @Override
     public String toString() {
-        // Здесь можно настроить, что выводить, если нужно
-        return getMessage(); // Возвращаем только сообщение, без стека вызовов
+        return getMessage();
     }
 
 

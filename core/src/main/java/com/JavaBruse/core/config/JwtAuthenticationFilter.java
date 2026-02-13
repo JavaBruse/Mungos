@@ -1,14 +1,14 @@
-package com.javabruse.config;
+package com.JavaBruse.core.config;
 
+import com.JavaBruse.core.exaption.ExistsExeption;
+import com.JavaBruse.core.service.JwtService;
+import com.JavaBruse.core.service.UserService;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import com.javabruse.exaption.ExistsExeption;
-import com.javabruse.service.JwtService;
-import com.javabruse.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
