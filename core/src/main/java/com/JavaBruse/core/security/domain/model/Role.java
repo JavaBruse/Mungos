@@ -1,4 +1,4 @@
-package com.JavaBruse.core.domain.model;
+package com.JavaBruse.core.security.domain.model;
 
 public enum Role {
     ROLE_ADMIN,

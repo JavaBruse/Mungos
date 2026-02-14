@@ -1,4 +1,4 @@
-package com.JavaBruse.core.domain.model;
+package com.JavaBruse.core.security.domain.model;
 
 import jakarta.persistence.*;
 import lombok.*;

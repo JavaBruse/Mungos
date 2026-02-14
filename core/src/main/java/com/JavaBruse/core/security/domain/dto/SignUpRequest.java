@@ -1,6 +1,6 @@
-package com.JavaBruse.core.domain.dto;
+package com.JavaBruse.core.security.domain.dto;
 
-import com.JavaBruse.core.domain.model.Role;
+import com.JavaBruse.core.security.domain.model.Role;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

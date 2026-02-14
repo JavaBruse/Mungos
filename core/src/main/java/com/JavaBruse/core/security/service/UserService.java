@@ -1,9 +1,9 @@
-package com.JavaBruse.core.service;
+package com.JavaBruse.core.security.service;
 
-import com.JavaBruse.core.domain.model.Role;
-import com.JavaBruse.core.domain.model.User;
-import com.JavaBruse.core.exaption.ExistsExeption;
-import com.JavaBruse.core.repository.UserRepository;
+import com.JavaBruse.core.security.domain.model.Role;
+import com.JavaBruse.core.security.domain.model.User;
+import com.JavaBruse.core.security.exaption.ExistsExeption;
+import com.JavaBruse.core.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;

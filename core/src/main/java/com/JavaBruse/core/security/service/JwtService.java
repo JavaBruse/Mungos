@@ -1,6 +1,6 @@
-package com.JavaBruse.core.service;
+package com.JavaBruse.core.security.service;
 
-import com.JavaBruse.core.domain.model.User;
+import com.JavaBruse.core.security.domain.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

@@ -1,8 +1,8 @@
-package com.JavaBruse.core.config;
+package com.JavaBruse.core.security.config;
 
-import com.JavaBruse.core.exaption.ExistsExeption;
-import com.JavaBruse.core.service.JwtService;
-import com.JavaBruse.core.service.UserService;
+import com.JavaBruse.core.security.exaption.ExistsExeption;
+import com.JavaBruse.core.security.service.JwtService;
+import com.JavaBruse.core.security.service.UserService;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

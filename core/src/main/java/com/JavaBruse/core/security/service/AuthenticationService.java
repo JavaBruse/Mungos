@@ -1,9 +1,9 @@
-package com.JavaBruse.core.service;
+package com.JavaBruse.core.security.service;
 
-import com.JavaBruse.core.domain.dto.JwtAuthenticationResponse;
-import com.JavaBruse.core.domain.dto.SignInRequest;
-import com.JavaBruse.core.domain.dto.SignUpRequest;
-import com.JavaBruse.core.domain.model.User;
+import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
+import com.JavaBruse.core.security.domain.dto.SignInRequest;
+import com.JavaBruse.core.security.domain.dto.SignUpRequest;
+import com.JavaBruse.core.security.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -1,8 +1,8 @@
-package com.JavaBruse.core.service;
+package com.JavaBruse.core.security.service;
 
-import com.JavaBruse.core.domain.model.Role;
-import com.JavaBruse.core.domain.model.User;
-import com.JavaBruse.core.repository.UserRepository;
+import com.JavaBruse.core.security.domain.model.Role;
+import com.JavaBruse.core.security.domain.model.User;
+import com.JavaBruse.core.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

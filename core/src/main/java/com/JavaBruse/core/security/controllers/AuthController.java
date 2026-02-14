@@ -1,9 +1,9 @@
-package com.JavaBruse.core.controllers;
+package com.JavaBruse.core.security.controllers;
 
-import com.JavaBruse.core.domain.dto.JwtAuthenticationResponse;
-import com.JavaBruse.core.domain.dto.SignInRequest;
-import com.JavaBruse.core.domain.dto.SignUpRequest;
-import com.JavaBruse.core.service.AuthenticationService;
+import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
+import com.JavaBruse.core.security.domain.dto.SignInRequest;
+import com.JavaBruse.core.security.domain.dto.SignUpRequest;
+import com.JavaBruse.core.security.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
