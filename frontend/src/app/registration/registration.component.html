@@ -1,0 +1,29 @@
+<div class="center">
+
+    <form [formGroup]="profileForm" class="vertical-box box-width-login-regis" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Login</mat-label>
+            <input matInput type="text" formControlName="login" autocomplete="current-username" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Email</mat-label>
+            <input matInput placeholder="name@example.com" formControlName="email" (blur)="updateErrorMessage()"
+                required />
+            @if (email.invalid) {
+            <mat-error>{{errorMessage()}}</mat-error>
+            }
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput formControlName="passwd" autocomplete="current-password"
+                [type]="hide() ? 'password' : 'text'" />
+            <button type="button" matIconButton matSuffix (click)="clickEvent($event)"
+                [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide()">
+                <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" class="full-width">
+            Зарегистрироваться
+        </button>
+    </form>
+</div>

@@ -1,1 +1,305 @@
-/* You can add global styles to this file, and also import other style files */
+// Include theming for Angular Material with `mat.theme()`.
+// This Sass mixin will define CSS variables that are used for styling Angular Material
+// components according to the Material 3 design spec.
+// Learn more about theming and how to use it for your application's
+// custom components at https://material.angular.dev/guide/theming
+@use '@angular/material' as mat;
+
+html {
+    @include mat.theme((color: (primary: mat.$cyan-palette,
+                tertiary: mat.$orange-palette,
+            ),
+            typography: Roboto,
+            density: 0,
+        ));
+}
+
+body {
+    // Default the application to a light color theme. This can be changed to
+    // `dark` to enable the dark color theme, or to `light dark` to defer to the
+    // user's system settings.
+    color-scheme: light;
+
+    // Set a default background, font and text colors for the application using
+    // Angular Material's system-level CSS variables. Learn more about these
+    // variables at https://material.angular.dev/guide/system-variables
+    background-color: var(--mat-sys-surface);
+    color: var(--mat-sys-on-surface);
+    font: var(--mat-sys-body-medium);
+
+    // Reset the user agent margin.
+    margin: 0;
+}
+
+:root {
+    --radius: 12px;
+    --sidebar-mini: 56px;
+    --sidebar-wide: 210px;
+    --topbar-height: 35px;
+}
+
+[data-theme="dark"] {
+    /* Основной фон страницы */
+    --bg-page: #2c2c2c;
+    /* тёмно-серый почти черный */
+    --card: #1e1e1e;
+    /* чуть светлее для карточек */
+    --background: #1e1e1e;
+    /* фон для контента */
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    /* более контрастные тени */
+
+    /* Текст и основные цвета */
+    --color: #ffffff;
+    /* основной текст */
+    --color-secondary: #cfd8dc;
+    /* второстепенный текст */
+
+    /* Sidebar / навигация */
+    --sidebar-active: rgba(0, 70, 71);
+    /* Cyan — цвет активного пункта */
+    --sidebar-hover: rgba(0, 70, 71);
+    /* светлый Cyan при наведении */
+    --sidebar-devider: #ffffff;
+    /* линии разделителей */
+
+    /* Дополнительные цвета */
+    --primary: #00bcd4;
+    /* Cyan */
+    --accent: #ff9800;
+    /* Orange */
+    --warn: #f44336;
+    /* Red для ошибок */
+
+    --card-thickness: 0 2px 0 rgba(0, 70, 71, 0.781);
+    /* белая грань вместо чёрной */
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    --card-shadow-hover:
+        0 12px 24px rgba(0, 0, 0, 0.8),
+        0 6px 12px rgba(0, 0, 0, 0.5);
+    --card-shadow-active: 0 6px 12px rgba(0, 0, 0, 0.7);
+
+    --star-color: rgb(78, 167, 162);
+    --greeen: #00f700;
+    color-scheme: dark;
+    /* системная поддержка dark mode */
+}
+
+[data-theme="light"] {
+    /* Основной фон страницы */
+    --bg-page: #f5f5f5;
+    /* светло-серый фон вместо чисто белого */
+    --card: #ffffff;
+    /* карточки на белом фоне */
+    --background: #ffffff;
+    /* фон для контента */
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    /* лёгкая тень для контраста */
+
+    /* Текст и основные цвета */
+    --color: #000000;
+    /* основной текст */
+    --color-secondary: #424242;
+    /* второстепенный текст */
+
+    /* Sidebar / навигация */
+    --sidebar-active: rgb(78, 167, 162);
+    /* Cyan для активного пункта */
+    --sidebar-hover: rgb(78, 167, 162);
+    /* светлый Cyan при наведении */
+    --sidebar-devider: #bdbdbd;
+    /* линии разделителей */
+
+    /* Дополнительные цвета */
+    --primary: #00bcd4;
+    /* Cyan основной цвет */
+    --accent: #ff9800;
+    /* Orange для акцентов */
+    --warn: #f44336;
+    /* Red для ошибок */
+
+    --card-thickness: 0 2px 0 rgb(78, 167, 162);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --card-shadow-hover:
+        0 12px 24px rgba(0, 0, 0, 0.18),
+        0 6px 12px rgba(0, 0, 0, 0.10);
+    --card-shadow-active: 0 6px 12px rgba(0, 0, 0, 0.16);
+
+    --star-color: rgba(0, 70, 71);
+    --greeen: #004e00;
+
+
+    color-scheme: light;
+    /* системная поддержка light mode */
+}
+
+body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--color);
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+    padding: 0;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    touch-action: pan-y;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+
+main {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: var(--sidebar-mini);
+}
+
+.content {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.button-size mat-icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.center {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.vertical-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.box-width-login-regis {
+    width: 400px;
+    min-width: 200px;
+    // max-width: 90vw;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.search-field {
+    width: 100%;
+    max-width: 400px;
+}
+
+.search-menu-button {
+    margin-left: 10px;
+    /* отступ от поля поиска */
+    width: 40px;
+    margin-bottom: 20px;
+}
+
+//////////////////// card-styles
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 15px;
+}
+
+.card-layout {
+    display: flex;
+    flex: 1;
+    align-items: stretch;
+    height: 100%;
+}
+
+.card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.mat-mdc-card-header,
+.mat-mdc-card-content {
+    padding-bottom: 5px !important;
+    padding-top: 5px !important;
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+}
+
+.card-side {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+}
+
+
+.card-up-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+}
+
+.card-down-button {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: 0;
+    margin: 0;
+}
+
+.card-style[tabindex] {
+    min-height: 120px;
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--color);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: var(--card-thickness), var(--card-shadow) !important;
+    ;
+}
+
+.card-style:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--card-thickness), var(--card-shadow-hover) !important;
+}
+
+
+.card-component-padding {
+    padding: 10px;
+    padding-bottom: 0;
+}
+
+////////////////////
+
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}

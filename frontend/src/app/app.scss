@@ -1,0 +1,239 @@
+.topbar {
+    height: var(--topbar-height);
+    flex: 0 0 auto;
+    display: none;
+    align-items: center;
+    padding: .5rem 1rem;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-mini);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: width .3s, transform .3s;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-transform: uppercase;
+}
+
+.sidebar-top {
+    flex: 0 0 auto;
+}
+
+.sidebar-bottom {
+    flex: 0 0 auto;
+    margin-top: auto;
+}
+
+.sidebar .item {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    align-items: center;
+    padding: 0 0.7rem;
+    text-decoration: none;
+    color: inherit;
+    min-height: 40px;
+}
+
+.sidebar .item mat-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar .item:hover {
+    background: var(--sidebar-hover);
+}
+
+.sidebar .item i {
+    justify-self: center;
+}
+
+.sidebar .label {
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity .2s;
+}
+
+.sidebar:hover {
+    width: var(--sidebar-wide);
+}
+
+.sidebar:hover .label {
+    opacity: 1;
+}
+
+.sidebar .item.active {
+    background: var(--sidebar-active);
+}
+
+.sidebar .divider {
+    height: 1px;
+    margin: .5rem 0;
+    background: var(--sidebar-devider);
+}
+
+
+
+.burger {
+    position: relative;
+    width: 35px;
+    height: 25px;
+    background: transparent;
+    cursor: pointer;
+    display: block;
+}
+
+.burger input {
+    display: none;
+}
+
+.burger span {
+    display: block;
+    position: absolute;
+    height: 4px;
+    width: 100%;
+    background: var(--color);
+    border-radius: 9px;
+    opacity: 1;
+    left: 0;
+    transform: rotate(0deg);
+    transition: .25s ease-in-out;
+}
+
+.burger span:nth-of-type(1) {
+    top: 0px;
+    transform-origin: left center;
+}
+
+.burger span:nth-of-type(2) {
+    top: 50%;
+    transform: translateY(-50%);
+    transform-origin: left center;
+}
+
+.burger span:nth-of-type(3) {
+    top: 100%;
+    transform: translateY(-100%);
+    transform-origin: left center;
+}
+
+.burger input:checked~span:nth-of-type(1) {
+    transform: rotate(45deg);
+    top: 0px;
+    left: 5px;
+}
+
+.burger input:checked~span:nth-of-type(2) {
+    width: 0%;
+    opacity: 0;
+}
+
+.burger input:checked~span:nth-of-type(3) {
+    transform: rotate(-45deg);
+    top: 25px;
+    left: 5px;
+}
+
+
+/* ///////////////////// admin */
+.ai-matrix-loader {
+    width: 2px;
+    padding: 0;
+    position: relative;
+    perspective: 800px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+}
+
+.digit {
+    color: var(--greeen);
+    font-family: monospace;
+    font-size: 10px;
+    text-shadow: 0 0 5px #00ff88;
+    animation:
+        matrix-fall 2s infinite,
+        matrix-flicker 0.5s infinite;
+    opacity: 0;
+}
+
+.digit:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.digit:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.digit:nth-child(3) {
+    animation-delay: 0.5s;
+}
+
+.digit:nth-child(4) {
+    animation-delay: 0.7s;
+}
+
+.digit:nth-child(5) {
+    animation-delay: 0.9s;
+}
+
+.digit:nth-child(6) {
+    animation-delay: 1.1s;
+}
+
+.digit:nth-child(7) {
+    animation-delay: 1.3s;
+}
+
+.digit:nth-child(8) {
+    animation-delay: 1.5s;
+}
+
+.digit:nth-child(9) {
+    animation-delay: 1.7s;
+}
+
+.digit:nth-child(10) {
+    animation-delay: 1.9s;
+}
+
+.digit:nth-child(11) {
+    animation-delay: 2.1s;
+}
+
+.digit:nth-child(12) {
+    animation-delay: 2.3s;
+}
+
+@keyframes matrix-fall {
+    0% {
+        transform: translateY(-50px) rotateX(90deg);
+        opacity: 0;
+    }
+
+    20%,
+    80% {
+        transform: translateY(0) rotateX(0deg);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translateY(50px) rotateX(-90deg);
+        opacity: 0;
+    }
+}
+
+/* /////////////////////////// */

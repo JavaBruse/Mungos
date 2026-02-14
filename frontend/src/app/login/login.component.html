@@ -1,0 +1,20 @@
+<div class="center">
+    <form [formGroup]="profileForm" class="vertical-box box-width-login-regis" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Login</mat-label>
+            <input matInput type="text" formControlName="login" name="login" autocomplete="current-username" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Password</mat-label>
+            <input matInput formControlName="passwd" name="password" autocomplete="current-password"
+                [type]="hide() ? 'password' : 'text'" />
+            <button type="button" matIconButton matSuffix (click)="clickEvent($event)"
+                [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide()">
+                <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+            </button>
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit" class="full-width">
+            Войти
+        </button>
+    </form>
+</div>

@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/security/auth")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationService authenticationService;

@@ -1,0 +1,168 @@
+/* From Uiverse.io by revanth-004 */
+/* COMMON STYLES*/
+.popup-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.popup {
+    box-shadow: 4px 4px 10px -10px rgba(0, 0, 0, 1);
+    width: 300px;
+    justify-content: space-around;
+    align-items: center;
+    display: flex;
+    border-radius: 4px;
+    padding: 5px 0;
+    font-weight: 300;
+    animation: slideInRight 0.5s ease-out forwards;
+}
+
+.popup.leave {
+    animation: slideOutRight 0.5s ease-out forwards;
+}
+
+.popup svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.popup-icon svg {
+    margin: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.close-icon {
+    margin-left: auto;
+}
+
+.close-svg {
+    cursor: pointer;
+}
+
+.close-path {
+    fill: grey;
+}
+
+/* SUCCESS STYLES */
+.success-popup {
+    background-color: #edfbd8;
+    border: solid 1px #84d65a;
+}
+
+.success-icon path {
+    fill: #84d65a;
+}
+
+/* WARNING STYLES */
+.warning-popup {
+    background-color: #fefce8;
+    border: solid 1px #facc15;
+}
+
+.warning-icon path {
+    fill: #facc15;
+}
+
+
+/* ERROR STYLES */
+.error-popup {
+    background-color: #fef2f2;
+    border: solid 1px #f87171;
+}
+
+.error-icon path {
+    fill: #f87171;
+}
+
+/* INFO STYLES */
+.info-popup {
+    background-color: #eff6ff;
+    border: solid 1px #1d4ed8;
+}
+
+.info-icon path {
+    fill: #1d4ed8;
+}
+
+
+/* Общий класс для текста */
+.message-text {
+    padding: 0 10px;
+    flex-grow: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ANIMATIONS */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@media (max-width: 768px) {
+    .popup-container {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        align-items: stretch;
+    }
+
+    .popup {
+        width: auto;
+        max-width: none;
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+    }
+}
+
+.message-text {
+    color: black !important;
+}
