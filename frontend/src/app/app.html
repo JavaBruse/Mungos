@@ -3,35 +3,36 @@
 <nav class="sidebar" [class.open]="menuVisible" id="sidebar" appCloseOnClickOutside (clickOutside)="closeMenu()">
   <div class="sidebar-top">
     @if (loginService.userData().isLogin) {
+    <a class="item" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>home</mat-icon>
+      <span class="label">Главная</span>
+    </a>
     <a class="item" routerLink="/sniffers" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>wifi_tethering</mat-icon> <!-- Иконка для сниффера/сети/перехвата -->
+      <mat-icon>wifi_tethering</mat-icon>
       <span class="label">Анализаторы</span>
     </a>
-
     <a class="item" routerLink="/analytics" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>insights</mat-icon> <!-- Иконка для аналитики/статистики/графиков -->
+      <mat-icon>insights</mat-icon>
       <span class="label">Аналитика</span>
     </a>
-    @if (loginService.userData().isAdmin){
-    <a class="item" routerLink="/amdin" routerLinkActive="active" (click)="closeMenu()">
-      <div class="ai-matrix-loader">
-        <div class="digit">0</div>
-        <div class="digit">1</div>
-        <div class="digit">0</div>
-        <div class="digit">1</div>
-        <div class="digit">1</div>
-        <div class="digit">0</div>
-        <div class="digit">0</div>
-        <div class="digit">1</div>
-        <div class="digit">0</div>
-        <div class="digit">1</div>
-        <div class="digit">1</div>
-        <div class="digit">0</div>
-        <div class="glow"></div>
-      </div>
-
-      <span class="label">Насройки</span>
+    @if (loginService.userData().isAdmin) {
+    <a class="item" (click)="toggleSubmenu($event)">
+      <mat-icon>settings</mat-icon>
+      <span class="label">Настройки</span>
     </a>
+
+    @if (isSubmenuOpen) {
+    <div>
+      <a class="item" routerLink="/settings/users" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>people</mat-icon>
+        <span class="label">Пользователи</span>
+      </a>
+      <a class="item" routerLink="/settings/sniffers" routerLinkActive="active" (click)="closeMenu()">
+        <mat-icon>settings_ethernet</mat-icon>
+        <span class="label">Сниферы</span>
+      </a>
+    </div>
+    }
     }
     }
   </div>

@@ -30,6 +30,7 @@ public class JwtService {
         if (userDetails instanceof User customUserDetails) {
             claims.put("id", customUserDetails.getId());
             claims.put("username", customUserDetails.getUsername());
+            claims.put("fullName", customUserDetails.getFullName());
             claims.put("role", customUserDetails.getRole());
             claims.put("updated", customUserDetails.getUpdated());
         }

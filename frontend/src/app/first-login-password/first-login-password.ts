@@ -31,6 +31,19 @@ export class FirstLoginPassword {
   loginService = inject(LoginService);
   errorMessageService = inject(ErrorMessageService);
   private url = environment.apiUrl;
+  readonly email = new FormControl('', [Validators.required, Validators.email]);
+
+  errorMessage = signal('');
+
+  constructor() {
+    this.profileForm.patchValue({
+      login: this.loginService.userData().username,
+      fullName: this.loginService.userData().fullName,
+    });
+    merge(this.email.statusChanges, this.email.valueChanges)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.updateErrorMessage());
+  }
 
   async onSubmit() {
     if (this.profileForm.invalid) {
@@ -44,14 +57,13 @@ export class FirstLoginPassword {
       fullName: this.profileForm.value.fullName,
       password: this.profileForm.value.passwd
     };
-    console.log(authData)
     try {
       const response: any = await lastValueFrom(this.http.post<{ token: string }>(urls, authData));
       localStorage.setItem('Authorization', `Bearer ${response.token}`);
       this.router.navigate(['stats']);
       this.loginService.updateUserData()
     } catch (error) {
-      this.errorMessageService.showError("Ошибка регистрации!");
+      this.errorMessageService.showError("Ошибка обновления данных!");
     }
   }
 
@@ -63,18 +75,6 @@ export class FirstLoginPassword {
   clickEvent(event: MouseEvent) {
     this.hide.set(!this.hide());
     event.stopPropagation();
-  }
-
-
-
-  readonly email = new FormControl('', [Validators.required, Validators.email]);
-
-  errorMessage = signal('');
-
-  constructor() {
-    merge(this.email.statusChanges, this.email.valueChanges)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.updateErrorMessage());
   }
 
   updateErrorMessage() {

@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-
+import { LoginService } from '../services/login.service';
 
 @Component({
   selector: 'app-home',
@@ -12,5 +12,5 @@ import { MatFormFieldModule } from '@angular/material/form-field';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
-
+  protected loginService = inject(LoginService);
 }

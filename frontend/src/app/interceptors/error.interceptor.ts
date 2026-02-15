@@ -5,10 +5,17 @@ import { catchError, tap } from 'rxjs/operators';
 import { ErrorMessageService } from '../services/error-message.service';
 import { inject } from '@angular/core';
 
-// Вспомогательная функция для успешных сообщений
-function getSuccessMessage(method: string | null, status: number): string | null {
+function getSuccessMessage(method: string | null, status: number, url: string): string | null {
     if (!method) return null;
-
+    if (url.includes('/sign-up') && status === 201) {
+        return 'Регистрация успешна';
+    }
+    if (url.includes('/update-in') && status === 200) {
+        return 'Пароль обновлен';
+    }
+    if (url.includes('/sign-in') && status === 200) {
+        return 'Вход выполнен';
+    }
     switch (method.toUpperCase()) {
         case 'POST':
             return status === 201 ? 'Успешно создано' : 'Успешно добавлено';
@@ -33,7 +40,7 @@ export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
                 // Можно добавить логику для успешных операций
                 // Например, для POST, PUT, DELETE запросов показывать успешное уведомление
                 if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
-                    const successMessage = getSuccessMessage(req.method, event.status);
+                    const successMessage = getSuccessMessage(req.method, event.status, req.url);
                     if (successMessage) {
                         errorMessageService.showSuccess(successMessage);
                     }

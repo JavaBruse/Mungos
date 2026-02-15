@@ -26,6 +26,12 @@ export class App {
   router = inject(Router);
   loginService = inject(LoginService);
   styleSwither = inject(StyleSwitcherService);
+  isSubmenuOpen = false;
+
+  toggleSubmenu(event: Event) {
+    event.stopPropagation();
+    this.isSubmenuOpen = !this.isSubmenuOpen;
+  }
 
   constructor() {
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
