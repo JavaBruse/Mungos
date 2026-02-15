@@ -1,22 +1,17 @@
 import { CanActivateChildFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { CheckToken } from './services/checkToken.service';
 import { LoginService } from './services/login.service';
 
-export const AuthGuard: CanActivateChildFn = async (childRoute, state) => {
+export const AuthGuard: CanActivateChildFn = async () => {
   const router = inject(Router);
   const loginService = inject(LoginService);
-  const checkToken = inject(CheckToken);
-  const isValidTocken = await checkToken.validateToken();
-  loginService.setIsLoginSignal(isValidTocken);
-  return isValidTocken ? true : router.createUrlTree(['/login']);
+  loginService.updateUserData();
+  return loginService.userData().isLogin ? true : router.createUrlTree(['/login']);
 };
 
-export const LoginGuard: CanActivateChildFn = async (childRoute, state) => {
+export const LoginGuard: CanActivateChildFn = async () => {
   const router = inject(Router);
   const loginService = inject(LoginService);
-  const checkToken = inject(CheckToken);
-  const isValidTocken = await checkToken.validateToken();
-  loginService.setIsLoginSignal(isValidTocken);
-  return isValidTocken ? router.createUrlTree(['/home']) : true;
+  loginService.updateUserData();
+  return loginService.userData().isLogin ? router.createUrlTree(['/home']) : true;
 };

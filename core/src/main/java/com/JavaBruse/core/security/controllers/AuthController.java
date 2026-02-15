@@ -1,5 +1,6 @@
 package com.JavaBruse.core.security.controllers;
 
+import com.JavaBruse.core.security.domain.dto.FirstUpdateRequest;
 import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
 import com.JavaBruse.core.security.domain.dto.SignInRequest;
 import com.JavaBruse.core.security.domain.dto.SignUpRequest;
@@ -20,8 +21,8 @@ public class AuthController {
     }
 
 
-    @PostMapping("/update")
-    public JwtAuthenticationResponse update(@RequestBody @Valid SignUpRequest request) {
+    @PostMapping("/update-in")
+    public JwtAuthenticationResponse update(@RequestBody @Valid FirstUpdateRequest request) {
         return authenticationService.updatePassword(request);
     }
 

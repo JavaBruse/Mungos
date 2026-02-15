@@ -48,7 +48,7 @@ export class RegistrationComponent {
     try {
       const response: any = await lastValueFrom(this.http.post<{ token: string }>(urls, authData));
       localStorage.setItem('Authorization', `Bearer ${response.token}`);
-      this.loginService.setIsLoginSignal(true);
+      this.loginService.updateUserData();
       this.router.navigate(['stats']);
     } catch (error) {
       this.errorMessageService.showError("Ошибка регистрации!");

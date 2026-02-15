@@ -31,6 +31,7 @@ public class JwtService {
             claims.put("id", customUserDetails.getId());
             claims.put("username", customUserDetails.getUsername());
             claims.put("role", customUserDetails.getRole());
+            claims.put("updated", customUserDetails.getUpdated());
         }
         return generateToken(claims, userDetails);
     }

@@ -30,6 +30,7 @@ public class UserService {
         User userDB = repository.findByUsername(user.getUsername()).orElseThrow();
         if (!userDB.getUpdated()) {
             userDB.setUpdated(true);
+            userDB.setFullName(user.getFullName());
             userDB.setPassword(user.getPassword());
         }
         return save(userDB);

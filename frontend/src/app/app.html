@@ -1,8 +1,18 @@
 <!-- Боковое меню -->
+@if (loginService.userData().isLogin && loginService.userData().isUpdated ){
 <nav class="sidebar" [class.open]="menuVisible" id="sidebar" appCloseOnClickOutside (clickOutside)="closeMenu()">
   <div class="sidebar-top">
-    @if (loginService.isLoginSignal()) {
-    @if (loginService.isAdminSignal()){
+    @if (loginService.userData().isLogin) {
+    <a class="item" routerLink="/sniffers" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>wifi_tethering</mat-icon> <!-- Иконка для сниффера/сети/перехвата -->
+      <span class="label">Анализаторы</span>
+    </a>
+
+    <a class="item" routerLink="/analytics" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>insights</mat-icon> <!-- Иконка для аналитики/статистики/графиков -->
+      <span class="label">Аналитика</span>
+    </a>
+    @if (loginService.userData().isAdmin){
     <a class="item" routerLink="/amdin" routerLinkActive="active" (click)="closeMenu()">
       <div class="ai-matrix-loader">
         <div class="digit">0</div>
@@ -20,20 +30,9 @@
         <div class="glow"></div>
       </div>
 
-      <span class="label">Админка</span>
+      <span class="label">Насройки</span>
     </a>
     }
-
-    <a class="item" routerLink="/sniffers" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>wifi_tethering</mat-icon> <!-- Иконка для сниффера/сети/перехвата -->
-      <span class="label">Анализаторы</span>
-    </a>
-
-    <a class="item" routerLink="/analytics" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>insights</mat-icon> <!-- Иконка для аналитики/статистики/графиков -->
-      <span class="label">Аналитика</span>
-    </a>
-
     }
   </div>
 
@@ -45,25 +44,13 @@
       <mat-icon>{{ isLightTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
       <span class="label">Тема</span>
     </a>
-
-    @if (loginService.isLoginSignal()) {
     <a class="item" routerLink="/login" (click)="logout()">
       <mat-icon>logout</mat-icon>
       <span class="label">Выход</span>
     </a>
-    } @else {
-    <a class="item" routerLink="/login" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>login</mat-icon>
-      <span class="label">Вход</span>
-    </a>
-    <a class="item" routerLink="/registration" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>person_add</mat-icon>
-      <span class="label">Регистрация</span>
-    </a>
-    }
   </div>
 </nav>
-
+}
 <!-- Оверлей -->
 <div class="backdrop" [class.show]="menuVisible && styleSwither.isMobileViewSignal()" (click)="closeMenu()"></div>
 

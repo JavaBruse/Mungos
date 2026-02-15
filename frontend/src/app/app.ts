@@ -5,7 +5,6 @@ import { RouterOutlet, RouterModule, Router } from '@angular/router';
 import { LoadingComponent } from './loading/loading.component';
 import { LoginService } from './services/login.service';
 import { ErrorMessageComponent } from './error-message/error-message.component';
-import { CheckToken } from './services/checkToken.service';
 
 
 
@@ -27,7 +26,6 @@ export class App {
   router = inject(Router);
   loginService = inject(LoginService);
   styleSwither = inject(StyleSwitcherService);
-  checkTokenService = inject(CheckToken);
 
   constructor() {
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark') || 'light';
@@ -55,8 +53,7 @@ export class App {
 
   logout() {
     localStorage.removeItem('Authorization');
-    this.loginService.setIsLoginSignal(false);
-
+    this.loginService.updateUserData();
     this.closeMenu();
   }
 

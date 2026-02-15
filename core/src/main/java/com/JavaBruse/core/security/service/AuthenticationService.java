@@ -1,5 +1,6 @@
 package com.JavaBruse.core.security.service;
 
+import com.JavaBruse.core.security.domain.dto.FirstUpdateRequest;
 import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
 import com.JavaBruse.core.security.domain.dto.SignInRequest;
 import com.JavaBruse.core.security.domain.dto.SignUpRequest;
@@ -37,11 +38,12 @@ public class AuthenticationService {
         return new JwtAuthenticationResponse(jwt);
     }
 
-    public JwtAuthenticationResponse updatePassword(SignUpRequest request) {
+    public JwtAuthenticationResponse updatePassword(FirstUpdateRequest request) {
 
         var user = User.builder()
                 .id(UUID.randomUUID().toString())
                 .username(request.getUsername())
+                .fullName(request.getFullName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
         user = userService.update(user);
