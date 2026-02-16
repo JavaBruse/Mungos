@@ -1,16 +1,3 @@
-.topbar {
-    height: var(--topbar-height);
-    flex: 0 0 auto;
-    display: none;
-    align-items: center;
-    padding: .5rem 1rem;
-    background: var(--card);
-    box-shadow: var(--shadow);
-    z-index: 1000;
-    position: sticky;
-    top: 0;
-}
-
 .sidebar {
     position: fixed;
     left: 0;
@@ -20,7 +7,7 @@
     background: var(--card);
     box-shadow: var(--shadow);
     overflow: hidden;
-    transition: width .3s, transform .3s;
+    transition: width .3s;
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -58,10 +45,6 @@
     background: var(--sidebar-hover);
 }
 
-.sidebar .item i {
-    justify-self: center;
-}
-
 .sidebar .label {
     opacity: 0;
     white-space: nowrap;
@@ -86,64 +69,27 @@
     background: var(--sidebar-devider);
 }
 
-
-
-.burger {
-    position: relative;
-    width: 35px;
-    height: 25px;
-    background: transparent;
-    cursor: pointer;
-    display: block;
-}
-
-.burger input {
-    display: none;
-}
-
-.burger span {
-    display: block;
-    position: absolute;
-    height: 4px;
-    width: 100%;
-    background: var(--color);
-    border-radius: 9px;
-    opacity: 1;
-    left: 0;
-    transform: rotate(0deg);
-    transition: .25s ease-in-out;
-}
-
-.burger span:nth-of-type(1) {
-    top: 0px;
-    transform-origin: left center;
-}
-
-.burger span:nth-of-type(2) {
-    top: 50%;
-    transform: translateY(-50%);
-    transform-origin: left center;
-}
-
-.burger span:nth-of-type(3) {
-    top: 100%;
-    transform: translateY(-100%);
-    transform-origin: left center;
-}
-
-.burger input:checked~span:nth-of-type(1) {
-    transform: rotate(45deg);
-    top: 0px;
-    left: 5px;
-}
-
-.burger input:checked~span:nth-of-type(2) {
-    width: 0%;
+.settings-header {
+    display: flex;
+    align-items: center;
+    padding-left: 3px;
     opacity: 0;
+    transition: opacity .2s;
 }
 
-.burger input:checked~span:nth-of-type(3) {
-    transform: rotate(-45deg);
-    top: 25px;
-    left: 5px;
+.settings-header .label {
+    opacity: 1;
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+}
+
+.settings-header .divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--sidebar-devider);
+}
+
+.sidebar:hover .settings-header {
+    opacity: 1;
 }

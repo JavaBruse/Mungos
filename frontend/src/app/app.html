@@ -15,30 +15,28 @@
       <mat-icon>insights</mat-icon>
       <span class="label">Аналитика</span>
     </a>
-    @if (loginService.userData().isAdmin) {
-    <a class="item" (click)="toggleSubmenu($event)">
-      <mat-icon>settings</mat-icon>
-      <span class="label">Настройки</span>
-    </a>
 
-    @if (isSubmenuOpen) {
-    <div>
-      <a class="item" routerLink="/settings/users" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>people</mat-icon>
-        <span class="label">Пользователи</span>
-      </a>
-      <a class="item" routerLink="/settings/sniffers" routerLinkActive="active" (click)="closeMenu()">
-        <mat-icon>settings_ethernet</mat-icon>
-        <span class="label">Сниферы</span>
-      </a>
-    </div>
-    }
-    }
+
     }
   </div>
 
   <div class="sidebar-bottom">
+    @if (loginService.userData().isAdmin) {
+    <div class="settings-header">
+      <span class="divider-line"></span>
+      <span class="label">НАСТРОЙКИ</span>
+      <span class="divider-line"></span>
+    </div>
+    <a class="item" routerLink="/settings/users" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>people</mat-icon>
+      <span class="label">Пользователи</span>
+    </a>
+    <a class="item" routerLink="/settings/sniffers" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>settings_ethernet</mat-icon>
+      <span class="label">Сниферы</span>
+    </a>
 
+    }
 
     <div class="divider"></div>
     <a class="item" role="button" (click)="onThemeSwitchChange()">
@@ -53,17 +51,8 @@
 </nav>
 }
 <!-- Оверлей -->
-<div class="backdrop" [class.show]="menuVisible && styleSwither.isMobileViewSignal()" (click)="closeMenu()"></div>
 
 <div class="layout">
-  <header class="topbar">
-    <label class="burger">
-      <input type="checkbox" [checked]="menuVisible && styleSwither.isMobileViewSignal()" (click)="toggleMenu($event)">
-      <span></span>
-      <span></span>
-      <span></span>
-    </label>
-  </header>
   <main>
     <div class="content">
       <router-outlet></router-outlet>

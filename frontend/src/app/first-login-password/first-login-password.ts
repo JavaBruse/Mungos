@@ -11,8 +11,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { merge } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-first-login-password',
@@ -31,7 +29,6 @@ export class FirstLoginPassword {
   loginService = inject(LoginService);
   errorMessageService = inject(ErrorMessageService);
   private url = environment.apiUrl;
-  readonly email = new FormControl('', [Validators.required, Validators.email]);
 
   errorMessage = signal('');
 
@@ -40,9 +37,6 @@ export class FirstLoginPassword {
       login: this.loginService.userData().username,
       fullName: this.loginService.userData().fullName,
     });
-    merge(this.email.statusChanges, this.email.valueChanges)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.updateErrorMessage());
   }
 
   async onSubmit() {
@@ -51,7 +45,7 @@ export class FirstLoginPassword {
       return;
     }
 
-    const urls = this.url + 'security/auth/update-in';
+    const urls = this.url + 'api/v1/auth/update-in';
     const authData = {
       username: this.profileForm.value.login,
       fullName: this.profileForm.value.fullName,
@@ -75,15 +69,5 @@ export class FirstLoginPassword {
   clickEvent(event: MouseEvent) {
     this.hide.set(!this.hide());
     event.stopPropagation();
-  }
-
-  updateErrorMessage() {
-    if (this.email.hasError('Обязательно')) {
-      this.errorMessage.set('Необходимо ввести ФИО');
-    } else if (this.email.hasError('fullName')) {
-      this.errorMessage.set('Некорректный ввод');
-    } else {
-      this.errorMessage.set('');
-    }
   }
 }

@@ -5,11 +5,13 @@ import { RootComponent } from './services/root.service';
 import { AuthGuard, LoginGuard } from './auth.guard';
 import { HomeComponent } from './home/home.component';
 import { FirstLoginPassword } from './first-login-password/first-login-password';
+import { UsersComponent } from './user-control/users-component/users-component';
 
 export const routes: Routes = [
     { path: '', component: RootComponent, pathMatch: 'full' },
     { path: 'login', component: LoginComponent, canActivate: [LoginGuard] },
     { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+    { path: 'settings/users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'update-password', component: FirstLoginPassword, canActivate: [AuthGuard] },
     { path: 'admin/monitoring/**', redirectTo: '' },
     { path: '**', redirectTo: '', pathMatch: 'full' }

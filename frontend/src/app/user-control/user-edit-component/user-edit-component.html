@@ -1,0 +1,28 @@
+<div class="card-layout" [formGroup]="form">
+    <div class="card-main card-component-padding">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Полное имя</mat-label>
+            <input matInput formControlName="fullName" type="text" readonly>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Роль</mat-label>
+            <mat-select formControlName="role">
+                @for (role of userService.roles(); track role) {
+                <mat-option [value]="role">{{ role }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Логин</mat-label>
+            <input matInput formControlName="username" type="text" readonly>
+        </mat-form-field>
+    </div>
+    <div class="card-side">
+        <a class="button-size" (click)="cancel()" matTooltip="Отмена">
+            <mat-icon>cancel</mat-icon>
+        </a>
+        <a class="button-size" (click)="save()" matTooltip="Сохранить">
+            <mat-icon>save</mat-icon>
+        </a>
+    </div>
+</div>

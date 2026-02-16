@@ -220,10 +220,12 @@ main {
 }
 
 //////////////////// card-styles
+
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    // grid-template-columns: 1fr;
     gap: 15px;
+    width: 100%;
 }
 
 .card-layout {

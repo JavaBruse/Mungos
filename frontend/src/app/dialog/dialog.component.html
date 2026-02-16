@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>{{userService.dialogTitle}}</h2>
+<mat-dialog-content>
+    {{userService.dialogDisk}}
+</mat-dialog-content>
+<mat-dialog-actions>
+    <button mat-button (click)="onNoClick()">НЕТ</button>
+    <button mat-button (click)="onYesClick()" cdkFocusInitial>ДА</button>
+</mat-dialog-actions>

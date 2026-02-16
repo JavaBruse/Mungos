@@ -1,0 +1,43 @@
+<div class="card-layout" [formGroup]="form" autocomplete="off">
+    <div class="card-main card-component-padding">
+        <mat-card-header class="vertical-box">
+            <div class="maximum">
+                <mat-form-field appearance="outline">
+                    <mat-label>Login</mat-label>
+                    <input matInput type="text" formControlName="username" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Password</mat-label>
+                    <input matInput formControlName="password" [type]="'text'" autocomplete="off"
+                        [style.-webkit-text-security]="hide() ? 'disc' : 'none'" />
+                    <button type="button" matIconButton matSuffix (click)="clickEvent($event)"
+                        [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hide()">
+                        <mat-icon>{{hide() ? 'visibility_off' : 'visibility'}}</mat-icon>
+                    </button>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Роль</mat-label>
+                    <mat-select formControlName="role" autocomplete="off">
+                        @for (role of userService.roles(); track role) {
+                        <mat-option [value]="role">{{ role }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline">
+                <mat-label>Полное имя</mat-label>
+                <input matInput type="text" formControlName="fullName" class="full-width" />
+            </mat-form-field>
+
+        </mat-card-header>
+    </div>
+    <!-- Кнопки -->
+    <div class="card-side">
+        <a class="button-size" (click)="cancel()" matTooltip="Отмена">
+            <mat-icon>cancel</mat-icon>
+        </a>
+        <a class="button-size" (click)="save()" matTooltip=" Сохранить">
+            <mat-icon>save</mat-icon>
+        </a>
+    </div>
+</div>

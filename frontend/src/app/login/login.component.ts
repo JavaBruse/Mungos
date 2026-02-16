@@ -37,7 +37,7 @@ export class LoginComponent {
       this.errorMessageService.showError('Форма не заполнена!');
       return;
     }
-    const urls = this.url + 'security/auth/sign-in';
+    const urls = this.url + 'api/v1/auth/sign-in';
     const authData = {
       username: this.profileForm.value.login,
       password: this.profileForm.value.passwd

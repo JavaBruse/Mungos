@@ -2,6 +2,7 @@ package com.JavaBruse.core.security.domain.dto;
 
 import com.JavaBruse.core.security.domain.model.Role;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,9 +19,9 @@ public class SignUpRequest {
 
     @Size(min = 5, max = 255, message = "Полное имя пользователя от 5 до 255 символов")
     @NotBlank(message = "Полное имя не может быть пустыми")
-    private String fullName;
+    private String fullname;
 
-    @NotBlank(message = "Полное имя не может быть пустыми")
+    @NotNull(message = "Полное имя не может быть пустыми")
     private Role role;
 
     @Size(max = 255, message = "Длина пароля должна быть не более 255 символов")

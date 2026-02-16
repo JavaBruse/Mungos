@@ -1,5 +1,7 @@
 package com.JavaBruse.core.security.service;
 
+import com.JavaBruse.core.security.converters.UserConverter;
+import com.JavaBruse.core.security.domain.dto.UserDTO;
 import com.JavaBruse.core.security.domain.model.Role;
 import com.JavaBruse.core.security.domain.model.User;
 import com.JavaBruse.core.security.exaption.ExistsExeption;
@@ -9,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +28,17 @@ public class UserService {
             throw new ExistsExeption("Пользователь с \"" + user.getUsername() + "\" таким именем уже существует");
         }
         return save(user);
+    }
+
+    public List<UserDTO> getAll() {
+        return repository.findAll().stream().map(UserConverter::userToUserDTO).toList();
+    }
+
+    public void deleteUser(String id){
+        if (!repository.existsById(id)) {
+            throw new ExistsExeption("Пользователь с \"" + id + "\" не существует");
+        }
+        repository.deleteById(id);
     }
 
     public User update(User user) {

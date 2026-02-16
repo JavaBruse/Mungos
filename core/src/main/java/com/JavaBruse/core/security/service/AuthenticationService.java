@@ -23,19 +23,16 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
 
-    public JwtAuthenticationResponse addUser(SignUpRequest request) {
-
+    public void addUser(SignUpRequest request) {
         var user = User.builder()
-                .id(UUID.randomUUID().toString())
                 .username(request.getUsername())
+                .fullName(request.getFullname())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .updated(false)
                 .build();
 
         userService.create(user);
-
-        var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt);
     }
 
     public JwtAuthenticationResponse updatePassword(FirstUpdateRequest request) {
