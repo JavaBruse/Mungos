@@ -26,8 +26,14 @@ spring:
 
 token:
   signing:
-    key: 12l3j43kl6jh346jh34i6g346ui346n34u643yb634l6yb34lu6y346lu34yb634lu6yn34oi6uy346v43u6iy4vy43iou6by34iou6ynm34oiu6ym34oi6uyn34mo6i
+    key: ${JWT_SECRET:}
+
 
 admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
+
+sniffer:
+  host: mungos-sniffer
+  port: ${SNIFFER_GRPC_PORT}
+  master-key: ${DEFAULT_MASTER_KEY}

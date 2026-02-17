@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package sniffer;
+
+option go_package = "./sniffer;sniffer";
+option java_package = "com.JavaBruse.proto";
+option java_multiple_files = true;
+
+// Сервис сниффера
+service SnifferService {
+  // Первое соединение (регистрация) - используем мастер-ключ
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+
+  // Основной RPC для всех запросов
+  rpc GetStats(StatsRequest) returns (StatsResponse);
+
+  // Проверка соединения
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// Сообщения для регистрации
+message RegisterRequest {
+  string master_key = 1;        // Мастер-ключ из конфига
+  string sniffer_id = 2;        // ID сниффера (например, "office-1")
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string session_key = 2;       // Новый ключ для дальнейшей работы
+  string message = 3;
+}
+
+// Запрос статистики
+message StatsRequest {
+  string session_key = 1;        // Ключ сессии (после регистрации)
+  string period = 2;             // "1h", "24h", "7d"
+}
+
+// Ответ со статистикой
+message StatsResponse {
+  int64 packets_count = 1;
+  int64 bytes_total = 2;
+  map<string, int64> protocols = 3;     // TCP, UDP, ICMP -> count
+  map<string, int64> applications = 4;   // HTTPS, DNS, SSH -> count
+  string error = 5;
+}
+
+// Ping сообщения
+message PingRequest {
+  string session_key = 1;
+  string message = 2;            // "ping" от Java
+}
+
+message PingResponse {
+  string message = 3;            // "pong" от Go
+  int64 timestamp = 4;
+}

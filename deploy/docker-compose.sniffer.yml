@@ -29,36 +29,43 @@ services:
     container_name: mungos-sniffer
     depends_on:
       clickhouse-sniffer:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     environment:
-      DB_TYPE: CLICKHOUSE  # Добавьте поддержку в приложение
-      DB_HOST: ${SNIFFER_DB_HOST}
-      DB_PORT: ${SNIFFER_DB_PORT}
-      DB_USER: ${SNIFFER_DB_USER}
-      DB_PASS: ${SNIFFER_DB_PASS}
-      DB_NAME: ${SNIFFER_DB_NAME}
-      DB_PROTOCOL: ${SNIFFER_DB_PROTOCOL:-http}  # http или native
+        DB_TYPE: ${DB_TYPE}
+        DB_HOST: ${SNIFFER_DB_HOST}
+        DB_PORT: ${SNIFFER_DB_PORT}
+        DB_USER: ${SNIFFER_DB_USER}
+        DB_PASS: ${SNIFFER_DB_PASS}
+        DB_NAME: ${SNIFFER_DB_NAME}
+        DB_PROTOCOL: ${SNIFFER_DB_PROTOCOL}
+        SNIFFER_DEVICE: ${SNIFFER_DEVICE}
+        SNIFFER_PROMISC: ${SNIFFER_PROMISC}
+        SNIFFER_FILTER: ${SNIFFER_FILTER}
+        SNIFFER_LOG: ${SNIFFER_LOG}
+        SNIFFER_ID: ${SNIFFER_ID}
+        SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
+        DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
     ports:
-      - "${SNIFFER_APP_PORT}:8080"
+      - "${SNIFFER_GRPC_PORT}:3331"
     networks:
       - sniffer-network
       - mungos-shared
     develop:
-    watch:
-      - action: rebuild
-        path: ../sniffer
-        ignore:
-          - tmp/
-          - vendor/
-          - "*.log"
+      watch:
+        - action: rebuild
+          path: ../sniffer
+          ignore:
+            - tmp/
+            - vendor/
+            - "*.log"
 
 networks:
   sniffer-network:
     driver: bridge
   mungos-shared:
     name: mungos-shared-network
-    external: false
+    external: true
 
 volumes:
   clickhouse-sniffer-data:
