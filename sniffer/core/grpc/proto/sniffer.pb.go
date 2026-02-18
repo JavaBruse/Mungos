@@ -25,6 +25,7 @@ type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MasterKey     string                 `protobuf:"bytes,1,opt,name=master_key,json=masterKey,proto3" json:"master_key,omitempty"`
 	SnifferId     string                 `protobuf:"bytes,2,opt,name=sniffer_id,json=snifferId,proto3" json:"sniffer_id,omitempty"`
+	SessionKey    string                 `protobuf:"bytes,3,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,13 +74,21 @@ func (x *RegisterRequest) GetSnifferId() string {
 	return ""
 }
 
+func (x *RegisterRequest) GetSessionKey() string {
+	if x != nil {
+		return x.SessionKey
+	}
+	return ""
+}
+
 type RegisterResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	SessionKey    string                 `protobuf:"bytes,2,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
-	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Success           bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	SessionKey        string                 `protobuf:"bytes,2,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
+	Message           string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	ServerCertificate string                 `protobuf:"bytes,4,opt,name=server_certificate,json=serverCertificate,proto3" json:"server_certificate,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *RegisterResponse) Reset() {
@@ -129,6 +138,13 @@ func (x *RegisterResponse) GetSessionKey() string {
 func (x *RegisterResponse) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *RegisterResponse) GetServerCertificate() string {
+	if x != nil {
+		return x.ServerCertificate
 	}
 	return ""
 }
@@ -369,17 +385,20 @@ var File_proto_sniffer_proto protoreflect.FileDescriptor
 
 const file_proto_sniffer_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/sniffer.proto\x12\asniffer\"O\n" +
+	"\x13proto/sniffer.proto\x12\asniffer\"p\n" +
 	"\x0fRegisterRequest\x12\x1d\n" +
 	"\n" +
 	"master_key\x18\x01 \x01(\tR\tmasterKey\x12\x1d\n" +
 	"\n" +
-	"sniffer_id\x18\x02 \x01(\tR\tsnifferId\"g\n" +
+	"sniffer_id\x18\x02 \x01(\tR\tsnifferId\x12\x1f\n" +
+	"\vsession_key\x18\x03 \x01(\tR\n" +
+	"sessionKey\"\x96\x01\n" +
 	"\x10RegisterResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
 	"\vsession_key\x18\x02 \x01(\tR\n" +
 	"sessionKey\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"G\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12-\n" +
+	"\x12server_certificate\x18\x04 \x01(\tR\x11serverCertificate\"G\n" +
 	"\fStatsRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\x12\x16\n" +

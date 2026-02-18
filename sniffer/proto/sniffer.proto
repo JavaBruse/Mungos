@@ -13,12 +13,14 @@ service SnifferService {
 message RegisterRequest {
   string master_key = 1;
   string sniffer_id = 2;
+  string session_key = 3;
 }
 
 message RegisterResponse {
   bool success = 1;
   string session_key = 2;
   string message = 3;
+  string server_certificate = 4;
 }
 
 message StatsRequest {

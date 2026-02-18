@@ -22,12 +22,14 @@ service SnifferService {
 message RegisterRequest {
   string master_key = 1;        // Мастер-ключ из конфига
   string sniffer_id = 2;        // ID сниффера (например, "office-1")
+  string session_key = 3;
 }
 
 message RegisterResponse {
   bool success = 1;
   string session_key = 2;       // Новый ключ для дальнейшей работы
   string message = 3;
+  string server_certificate = 4; // Изменено с certificate на server_certificate
 }
 
 // Запрос статистики

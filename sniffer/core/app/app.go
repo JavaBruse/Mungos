@@ -34,7 +34,6 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	// Передаём ВСЁ из cfg в gRPC сервер
 	grpcServer := grpc.NewServer(&grpc.Config{
 		MasterKey:  cfg.MasterKey,
 		SnifferID:  cfg.SnifferID,
@@ -45,6 +44,8 @@ func New(cfg *config.Config) (*App, error) {
 		DBPass:     cfg.DBPass,
 		DBName:     cfg.DBName,
 		DBProtocol: cfg.DBProtocol,
+		CertFile:   cfg.CertFile,
+		KeyFile:    cfg.KeyFile,
 	})
 
 	return &App{

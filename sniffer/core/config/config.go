@@ -21,6 +21,8 @@ type Config struct {
 	DBPass     string
 	DBName     string
 	DBProtocol string
+	CertFile   string
+	KeyFile    string
 }
 
 func Load() *Config {
@@ -40,6 +42,8 @@ func Load() *Config {
 		DBPass:     getEnv("DB_PASS", ""),
 		DBName:     getEnv("DB_NAME", ""),
 		DBProtocol: getEnv("DB_PROTOCOL", ""),
+		CertFile:   "/app/certs/sniffer.crt",
+		KeyFile:    "/app/certs/sniffer.key",
 	}
 	return cfg
 }
