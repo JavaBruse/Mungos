@@ -61,6 +61,10 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+      args:
+      - API_URL=${API_URL}
+      - SNIFFER_NAME=${SNIFFER_NAME}
+      - SNIFFER_GRPC_PORT=${SNIFFER_GRPC_PORT}
     container_name: mungos-frontend
     restart: unless-stopped
     ports:

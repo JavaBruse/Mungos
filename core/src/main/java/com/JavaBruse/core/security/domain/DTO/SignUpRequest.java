@@ -1,4 +1,4 @@
-package com.JavaBruse.core.security.domain.dto;
+package com.JavaBruse.core.security.domain.DTO;
 
 import com.JavaBruse.core.security.domain.model.Role;
 import jakarta.validation.constraints.NotBlank;

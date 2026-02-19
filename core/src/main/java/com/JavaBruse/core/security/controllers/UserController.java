@@ -1,8 +1,7 @@
 package com.JavaBruse.core.security.controllers;
 
-import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
-import com.JavaBruse.core.security.domain.dto.SignUpRequest;
-import com.JavaBruse.core.security.domain.dto.UserDTO;
+import com.JavaBruse.core.security.domain.DTO.SignUpRequest;
+import com.JavaBruse.core.security.domain.DTO.UserDTO;
 import com.JavaBruse.core.security.domain.model.Role;
 import com.JavaBruse.core.security.service.AuthenticationService;
 import com.JavaBruse.core.security.service.UserService;
@@ -35,7 +34,7 @@ public class UserController {
         return Arrays.stream(Role.values()).toList();
     }
 
-    @GetMapping("/users")
+    @GetMapping("/all")
     public List<UserDTO> getUsers() {
         return userService.getAll();
     }

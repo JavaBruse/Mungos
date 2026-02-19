@@ -1,12 +1,56 @@
-import { HttpErrorResponse, HttpEvent, HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { ErrorMessageService } from '../services/error-message.service';
-import { inject } from '@angular/core';
 
-function getSuccessMessage(method: string | null, status: number, url: string): string | null {
-    if (!method) return null;
+export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
+    const errorMessageService = inject(ErrorMessageService);
+
+    return next(req).pipe(
+        tap(event => {
+            if (event instanceof HttpResponse) {
+                // Только для мутирующих запросов показываем success
+                if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH' || req.method === 'DELETE') {
+                    const message = getSuccessMessage(req, event);
+                    if (message) {
+                        errorMessageService.showSuccess(message);
+                    }
+                }
+            }
+        }),
+        catchError((error: HttpErrorResponse) => {
+            const message = getErrorMessage(error);
+
+            if (error.status >= 400 && error.status < 500) {
+                if (error.status === 401) {
+                    errorMessageService.showWarning('Неавторизованный доступ');
+                } else if (error.status === 403) {
+                    errorMessageService.showWarning('Доступ запрещен');
+                } else if (error.status === 404) {
+                    errorMessageService.showWarning('Ресурс не найден');
+                } else {
+                    errorMessageService.showError(message);
+                }
+            } else if (error.status >= 500) {
+                errorMessageService.showError(message);
+            } else if (error.status === 0) {
+                errorMessageService.showError('Нет соединения с сервером');
+            } else {
+                errorMessageService.showError(message);
+            }
+
+            return throwError(() => error);
+        })
+    );
+};
+
+function getSuccessMessage(req: any, event: HttpResponse<any>): string | null {
+    const url = req.url;
+    const method = req.method;
+    const status = event.status;
+
+    // Специфичные сообщения для конкретных URL
     if (url.includes('/sign-up') && status === 201) {
         return 'Регистрация успешна';
     }
@@ -16,11 +60,12 @@ function getSuccessMessage(method: string | null, status: number, url: string): 
     if (url.includes('/sign-in') && status === 200) {
         return 'Вход выполнен';
     }
-    switch (method.toUpperCase()) {
+
+    // Типовые сообщения
+    switch (method) {
         case 'POST':
             return status === 201 ? 'Успешно создано' : 'Успешно добавлено';
         case 'PUT':
-            return 'Успешно обновлено';
         case 'PATCH':
             return 'Успешно обновлено';
         case 'DELETE':
@@ -30,59 +75,15 @@ function getSuccessMessage(method: string | null, status: number, url: string): 
     }
 }
 
-export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
-    const errorMessageService = inject(ErrorMessageService);
+function getErrorMessage(error: HttpErrorResponse): string {
+    const url = error.url || '';
+    const status = error.status;
 
-    return next(req).pipe(
-        tap(event => {
-            // Обработка успешных ответов
-            if (event instanceof HttpResponse) {
-                // Можно добавить логику для успешных операций
-                // Например, для POST, PUT, DELETE запросов показывать успешное уведомление
-                if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE' || req.method === 'PATCH') {
-                    const successMessage = getSuccessMessage(req.method, event.status, req.url);
-                    if (successMessage) {
-                        errorMessageService.showSuccess(successMessage);
-                    }
-                }
+    // Специфичные ошибки для конкретных URL
+    if (url.includes('/api/v1/sniffer/create') && status >= 500) {
+        return 'Сниффер уже существует';
+    }
 
-                // Для специфичных статусов
-                if (event.status === 201 && req.method !== 'POST') {
-                    errorMessageService.showSuccess('Успешно создано');
-                }
-            }
-        }),
-        catchError((error: HttpErrorResponse) => {
-            let errorMessage = error.error?.message || 'Произошла ошибка';
-
-            // console.error('HTTP Error:', error);
-
-            // Определяем тип уведомления по статусу
-            if (error.status >= 400 && error.status < 500) {
-                if (error.status === 401) {
-                    errorMessageService.showWarning('Неавторизованный доступ');
-                } else if (error.status === 403) {
-                    errorMessageService.showWarning('Доступ запрещен');
-                } else if (error.status === 404) {
-                    errorMessageService.showWarning('Ресурс не найден');
-                } else if (error.status === 422) {
-                    errorMessageService.showWarning('Некорректные данные');
-                } else {
-                    errorMessageService.showError(errorMessage);
-                }
-            } else if (error.status >= 500) {
-                errorMessageService.showError('Серверная ошибка. Попробуйте позже');
-            } else if (error.status === 0) {
-                errorMessageService.showError('Нет соединения с сервером');
-            } else {
-                errorMessageService.showError(errorMessage);
-            }
-
-            return throwError(() => ({
-                status: error.status,
-                message: errorMessage,
-                error: error.error
-            }));
-        })
-    );
-};
+    // Ошибка от сервера или стандартная
+    return error.error?.message || 'Произошла ошибка';
+}

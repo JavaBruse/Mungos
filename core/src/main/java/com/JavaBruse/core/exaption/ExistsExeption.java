@@ -1,4 +1,4 @@
-package com.JavaBruse.core.security.exaption;
+package com.JavaBruse.core.exaption;
 
 
 public class ExistsExeption extends RuntimeException {

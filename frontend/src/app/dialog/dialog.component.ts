@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialog,
@@ -7,8 +7,7 @@ import {
   MatDialogRef,
   MatDialogTitle,
 } from '@angular/material/dialog';
-import { UserService } from '../user-control/service/user.service';
-
+import { MAT_DIALOG_DATA } from '@angular/material/dialog'; // Добавить
 
 @Component({
   selector: 'app-dialog',
@@ -17,8 +16,11 @@ import { UserService } from '../user-control/service/user.service';
   styleUrl: './dialog.component.css'
 })
 export class DialogComponent {
-  userService = inject(UserService);
+  data = inject(MAT_DIALOG_DATA);
+  dialogTitle = signal(this.data.title);
+  dialogDisk = signal(this.data.message);
   readonly dialogRef = inject(MatDialogRef<DialogComponent>);
+
   onNoClick(): void {
     this.dialogRef.close(false);
   }

@@ -1,8 +1,8 @@
 package com.JavaBruse.core.security.controllers;
 
-import com.JavaBruse.core.security.domain.dto.FirstUpdateRequest;
-import com.JavaBruse.core.security.domain.dto.JwtAuthenticationResponse;
-import com.JavaBruse.core.security.domain.dto.SignInRequest;
+import com.JavaBruse.core.security.domain.DTO.FirstUpdateRequest;
+import com.JavaBruse.core.security.domain.DTO.JwtAuthenticationResponse;
+import com.JavaBruse.core.security.domain.DTO.SignInRequest;
 import com.JavaBruse.core.security.service.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

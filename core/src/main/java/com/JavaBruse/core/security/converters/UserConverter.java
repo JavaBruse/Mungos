@@ -1,6 +1,6 @@
 package com.JavaBruse.core.security.converters;
 
-import com.JavaBruse.core.security.domain.dto.UserDTO;
+import com.JavaBruse.core.security.domain.DTO.UserDTO;
 import com.JavaBruse.core.security.domain.model.User;
 import org.springframework.stereotype.Component;
 

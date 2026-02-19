@@ -1,0 +1,34 @@
+<div class="card-layout" [formGroup]="form" autocomplete="off">
+    <div class="card-main card-component-padding">
+        <mat-card-header class="vertical-box">
+            <mat-form-field appearance="outline">
+                <mat-label>Название</mat-label>
+                <input matInput type="text" formControlName="name" class="full-width" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+                <mat-label>Местоположение</mat-label>
+                <input matInput type="text" formControlName="location" class="full-width" />
+            </mat-form-field>
+            <div class="maximum">
+                <mat-form-field appearance="outline">
+                    <mat-label>host</mat-label>
+                    <input matInput type="text" formControlName="host" autocomplete="off" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>port</mat-label>
+                    <input matInput type="text" formControlName="port" autocomplete="off" />
+                </mat-form-field>
+            </div>
+
+        </mat-card-header>
+    </div>
+    <!-- Кнопки -->
+    <div class="card-side">
+        <a class="button-size" (click)="cancel()" matTooltip="Отмена">
+            <mat-icon>cancel</mat-icon>
+        </a>
+        <a class="button-size" (click)="save()" matTooltip=" Сохранить">
+            <mat-icon>save</mat-icon>
+        </a>
+    </div>
+</div>

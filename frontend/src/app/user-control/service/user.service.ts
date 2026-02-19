@@ -24,7 +24,7 @@ export class UserService {
     readonly visibleEdit = this.visibleEditUserSignal.asReadonly();
 
     loadAll() {
-        this.http.get<UserResponseDTO[]>(`${this.apiUrl}/users`).subscribe({
+        this.http.get<UserResponseDTO[]>(`${this.apiUrl}/all`).subscribe({
             next: (users) => this.usersSignal.set(users),
             error: () => this.usersSignal.set([]),
         });

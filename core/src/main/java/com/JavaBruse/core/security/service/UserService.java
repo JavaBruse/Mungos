@@ -1,10 +1,10 @@
 package com.JavaBruse.core.security.service;
 
 import com.JavaBruse.core.security.converters.UserConverter;
-import com.JavaBruse.core.security.domain.dto.UserDTO;
+import com.JavaBruse.core.security.domain.DTO.UserDTO;
 import com.JavaBruse.core.security.domain.model.Role;
 import com.JavaBruse.core.security.domain.model.User;
-import com.JavaBruse.core.security.exaption.ExistsExeption;
+import com.JavaBruse.core.exaption.ExistsExeption;
 import com.JavaBruse.core.security.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;

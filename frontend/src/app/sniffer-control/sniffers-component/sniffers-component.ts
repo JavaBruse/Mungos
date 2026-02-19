@@ -1,7 +1,7 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
-import { Router } from '@angular/router';
-import { lastValueFrom } from 'rxjs';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { HttpService } from '../../services/http.service';
 import { ErrorMessageService } from '../../services/error-message.service';
 import { MatCardModule } from '@angular/material/card';
@@ -15,18 +15,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UserResponseDTO } from '../../user-control/service/user-response.DTO';
-import { UserService } from '../../user-control/service/user.service';
-import { UserAddComponent } from "../user-add-component/user-add-component";
-import { UserEditComponent } from "../user-edit-component/user-edit-component";
 import { DialogComponent } from '../../dialog/dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-
+import { SnifferService } from '../service/sniffer.service';
+import { SnifferAddComponent } from "../sniffer-add-component/sniffer-add-component";
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-users-component',
+  selector: 'app-sniffers-component',
   imports: [
+    CommonModule,
     ReactiveFormsModule,
     MatCardModule,
     MatChipsModule,
@@ -39,39 +37,40 @@ import { MatDialog } from '@angular/material/dialog';
     MatSelectModule,
     MatButtonModule,
     MatCheckboxModule,
-    UserAddComponent,
-    UserEditComponent
+    SnifferAddComponent
   ],
-  templateUrl: './users-component.html',
-  styleUrl: './users-component.scss',
+  templateUrl: './sniffers-component.html',
+  styleUrl: './sniffers-component.scss',
 })
-export class UsersComponent {
+export class SniffersComponent implements OnInit, OnDestroy {
   http = inject(HttpService);
-  userService = inject(UserService);
   errorMessageService = inject(ErrorMessageService);
-  users = this.userService.users;
-  editUserId = signal<string | "">("");
+  snifferService = inject(SnifferService);
+  sniffers = this.snifferService.sniffers;
   readonly dialog = inject(MatDialog);
-
+  isSettingsPage: boolean = false;
+  private urlSubscription!: Subscription;
+  route = inject(ActivatedRoute);
   constructor() {
-    this.userService.loadAll();
-    this.userService.loadRoles();
+    this.snifferService.loadAll();
   }
 
-  startEdit(user: any) {
-    this.editUserId.set(user.id);
+  ngOnInit() {
+    this.urlSubscription = this.route.url.subscribe(segments => {
+      this.isSettingsPage = segments[0]?.path === 'settings';
+    });
   }
-
-  finishEdit() {
-    this.editUserId.set('');
-    this.userService.loadAll();
+  ngOnDestroy() {
+    this.urlSubscription?.unsubscribe();
   }
 
   delete(id: string) {
-    this.userService.delete(id);
+    this.snifferService.delete(id);
   }
 
-  blockUser(id: string) {
+  ping(id: string) {
+    this.snifferService.ping(id);
+    this.errorMessageService.showInfo("Ответ получен");
   }
 
   openDialog(enterAnimationDuration: string, exitAnimationDuration: string, id: string): void {
@@ -79,9 +78,9 @@ export class UsersComponent {
       width: '250px',
       enterAnimationDuration,
       exitAnimationDuration,
-      data: {  // Передаем данные здесь
+      data: {
         title: "Удаление",
-        message: "Действие не обратимо, Вы уверены?"
+        message: "Вы уверены?"
       }
     });
 
@@ -92,5 +91,8 @@ export class UsersComponent {
     });
   }
 
-}
+  onCardClick(id: string) {
+    console.log('Card clicked:', id);
+  }
 
+}

@@ -1,4 +1,4 @@
-package com.JavaBruse.core.security.domain.dto;
+package com.JavaBruse.core.security.domain.DTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

@@ -1,0 +1,49 @@
+.button-add {
+    margin-bottom: 10px;
+    margin-left: auto;
+    display: block;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.filters-container {
+    .card-side.left {
+        width: 40px;
+
+        &:first-child {
+            background: linear-gradient(135deg, var(--gradient1) 0%, var(--gradient2) 100%);
+            border-radius: 12px 0 0 12px;
+        }
+    }
+
+    .card-main {
+        flex: 1;
+        padding: 0px 15px;
+
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            // color: #2c3e50;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+
+            .info-label {
+                width: 150px;
+                // color: #7f8c8d;
+            }
+
+            .info-value {
+                // color: #34495e;
+                font-weight: 500;
+            }
+        }
+
+    }
+}

@@ -1,6 +1,6 @@
 package com.JavaBruse.core.security.config;
 
-import com.JavaBruse.core.security.exaption.ExistsExeption;
+import com.JavaBruse.core.exaption.ExistsExeption;
 import com.JavaBruse.core.security.service.JwtService;
 import com.JavaBruse.core.security.service.UserService;
 import io.jsonwebtoken.MalformedJwtException;
