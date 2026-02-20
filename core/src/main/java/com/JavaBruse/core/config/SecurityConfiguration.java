@@ -1,4 +1,4 @@
-package com.JavaBruse.core.security.config;
+package com.JavaBruse.core.config;
 
 import com.JavaBruse.core.security.domain.model.Role;
 import com.JavaBruse.core.security.service.UserService;
@@ -36,9 +36,9 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/sniffer/**").permitAll()
-
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/v1/sniffer/**").authenticated()
+                        .requestMatchers("/api/v1/ws-sniffer/**").permitAll()
                         .requestMatchers("/api/v1/users-control/**").hasAuthority(Role.ROLE_ADMIN.name())
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))

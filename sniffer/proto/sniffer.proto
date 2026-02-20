@@ -8,6 +8,43 @@ service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetStats(StatsRequest) returns (StatsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
+
+  rpc GetFilteredTraffic(TrafficFilterRequest) returns (stream TrafficPacket);
+}
+
+message TrafficFilterRequest {
+  string session_key = 1;
+  FilterExpression filter = 2;
+  int32 limit = 3;          // сколько пакетов вернуть
+  int32 offset = 4;         // для пагинации
+}
+
+message FilterExpression {
+  repeated string protocols = 1;      // ["TCP", "UDP", "HTTP"]
+  repeated int32 ports = 2;           // [80, 443, 53]
+  repeated string ips = 3;            // ["192.168.1.1", "10.0.0.1"]
+  int64 start_time = 4;                // с какого времени
+  int64 end_time = 5;                  // по какое время
+  string text_search = 6;              // поиск по содержимому
+  map<string, string> custom = 7;      // кастомные фильтры
+}
+
+message TrafficPacket {
+  int64 timestamp = 1;
+  string protocol = 2;
+  int32 src_port = 3;
+  int32 dst_port = 4;
+  string src_ip = 5;
+  string dst_ip = 6;
+  int32 length = 7;
+  bytes payload = 8;           // содержимое пакета
+  map<string, string> headers = 9;    // для HTTP заголовков
+  string method = 10;          // для HTTP (GET, POST)
+  string uri = 11;             // для HTTP
+  int32 status = 12;           // для HTTP ответов
+  string dns_query = 13;       // для DNS
+  string dns_answer = 14;      // для DNS
+  // можно добавлять дальше
 }
 
 message RegisterRequest {

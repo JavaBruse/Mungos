@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 import { HttpService } from '../../services/http.service';
 import { SnifferRequestDTO } from './sniffer-request.DTO';
 import { SnifferResponseDTO } from './sniffer-response.DTO';
+import { SnifferWebSocketService } from './sniffer-websocket.service';
 
 @Injectable({
     providedIn: 'root',
@@ -16,6 +17,7 @@ export class SnifferService {
     dialogDisk: string | null = null;
     private readonly sniffersSignal = signal<SnifferResponseDTO[]>([]);
     private readonly visibleAddSnifferSignal = signal(false);
+    private wsService = inject(SnifferWebSocketService);
 
     readonly sniffers = this.sniffersSignal.asReadonly();
     readonly visibleAdd = this.visibleAddSnifferSignal.asReadonly();
@@ -27,6 +29,9 @@ export class SnifferService {
         });
     }
 
+    requestTrafficStream(snifferId: string, period: string) {
+        this.wsService.requestTraffic(snifferId, period);
+    }
 
     add(snifferData: SnifferRequestDTO) {
         this.http.post<any>(`${this.apiUrl}/create`, snifferData).subscribe({

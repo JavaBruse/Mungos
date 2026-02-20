@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { HttpService } from '../../services/http.service';
 import { ErrorMessageService } from '../../services/error-message.service';
 import { MatCardModule } from '@angular/material/card';
@@ -25,6 +25,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-sniffers-component',
   imports: [
     CommonModule,
+    RouterModule,
     ReactiveFormsModule,
     MatCardModule,
     MatChipsModule,
@@ -51,8 +52,16 @@ export class SniffersComponent implements OnInit, OnDestroy {
   isSettingsPage: boolean = false;
   private urlSubscription!: Subscription;
   route = inject(ActivatedRoute);
+  private router = inject(Router);
+
   constructor() {
     this.snifferService.loadAll();
+  }
+
+  navigateToSniffer(id: string) {
+    if (!this.isSettingsPage) {
+      this.router.navigate(['/sniffer', id]);
+    }
   }
 
   ngOnInit() {
@@ -92,7 +101,6 @@ export class SniffersComponent implements OnInit, OnDestroy {
   }
 
   onCardClick(id: string) {
-    console.log('Card clicked:', id);
-  }
 
+  }
 }

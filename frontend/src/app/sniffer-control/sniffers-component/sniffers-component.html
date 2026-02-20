@@ -1,4 +1,4 @@
-<div class="filters-container">
+<div class="sniffers-container">
     @if (isSettingsPage) {
     <button mat-raised-button color="primary" (click)="snifferService.setVisibleAdd(true)" class="button-add">
         Добавить сниффер
@@ -13,13 +13,11 @@
             }
             @for (sniffer of sniffers(); track sniffer.id) {
             <mat-card tabindex="0" class="card-style" [class.clickable]="!isSettingsPage"
-                (click)="!isSettingsPage && onCardClick(sniffer.id)">
+                (click)="!isSettingsPage && navigateToSniffer(sniffer.id)">
                 <div class="card-layout">
                     <div class="card-side left">
+                        <img src="label_clear.png" alt="" style="width: 50px;">
                         @if (isSettingsPage) {
-                        <div class="">
-                            <mat-icon matTooltip="test-coonect"></mat-icon>
-                        </div>
                         <div class="button-size">
                             <mat-icon (click)="ping(sniffer.id)"
                                 matTooltip="test-coonect">connect_without_contact</mat-icon>

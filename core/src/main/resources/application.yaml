@@ -2,6 +2,8 @@ logging:
   level:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
     org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
 server:
   port: ${CORE_PORT}
   servlet:

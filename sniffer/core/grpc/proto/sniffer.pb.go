@@ -21,6 +21,314 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type TrafficFilterRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
+	Filter        *FilterExpression      `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
+	Limit         int32                  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`   // сколько пакетов вернуть
+	Offset        int32                  `protobuf:"varint,4,opt,name=offset,proto3" json:"offset,omitempty"` // для пагинации
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrafficFilterRequest) Reset() {
+	*x = TrafficFilterRequest{}
+	mi := &file_proto_sniffer_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrafficFilterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrafficFilterRequest) ProtoMessage() {}
+
+func (x *TrafficFilterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrafficFilterRequest.ProtoReflect.Descriptor instead.
+func (*TrafficFilterRequest) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *TrafficFilterRequest) GetSessionKey() string {
+	if x != nil {
+		return x.SessionKey
+	}
+	return ""
+}
+
+func (x *TrafficFilterRequest) GetFilter() *FilterExpression {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *TrafficFilterRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *TrafficFilterRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type FilterExpression struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Protocols     []string               `protobuf:"bytes,1,rep,name=protocols,proto3" json:"protocols,omitempty"`                                                                     // ["TCP", "UDP", "HTTP"]
+	Ports         []int32                `protobuf:"varint,2,rep,packed,name=ports,proto3" json:"ports,omitempty"`                                                                     // [80, 443, 53]
+	Ips           []string               `protobuf:"bytes,3,rep,name=ips,proto3" json:"ips,omitempty"`                                                                                 // ["192.168.1.1", "10.0.0.1"]
+	StartTime     int64                  `protobuf:"varint,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`                                                   // с какого времени
+	EndTime       int64                  `protobuf:"varint,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`                                                         // по какое время
+	TextSearch    string                 `protobuf:"bytes,6,opt,name=text_search,json=textSearch,proto3" json:"text_search,omitempty"`                                                 // поиск по содержимому
+	Custom        map[string]string      `protobuf:"bytes,7,rep,name=custom,proto3" json:"custom,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // кастомные фильтры
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FilterExpression) Reset() {
+	*x = FilterExpression{}
+	mi := &file_proto_sniffer_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FilterExpression) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FilterExpression) ProtoMessage() {}
+
+func (x *FilterExpression) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FilterExpression.ProtoReflect.Descriptor instead.
+func (*FilterExpression) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *FilterExpression) GetProtocols() []string {
+	if x != nil {
+		return x.Protocols
+	}
+	return nil
+}
+
+func (x *FilterExpression) GetPorts() []int32 {
+	if x != nil {
+		return x.Ports
+	}
+	return nil
+}
+
+func (x *FilterExpression) GetIps() []string {
+	if x != nil {
+		return x.Ips
+	}
+	return nil
+}
+
+func (x *FilterExpression) GetStartTime() int64 {
+	if x != nil {
+		return x.StartTime
+	}
+	return 0
+}
+
+func (x *FilterExpression) GetEndTime() int64 {
+	if x != nil {
+		return x.EndTime
+	}
+	return 0
+}
+
+func (x *FilterExpression) GetTextSearch() string {
+	if x != nil {
+		return x.TextSearch
+	}
+	return ""
+}
+
+func (x *FilterExpression) GetCustom() map[string]string {
+	if x != nil {
+		return x.Custom
+	}
+	return nil
+}
+
+type TrafficPacket struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Timestamp     int64                  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Protocol      string                 `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	SrcPort       int32                  `protobuf:"varint,3,opt,name=src_port,json=srcPort,proto3" json:"src_port,omitempty"`
+	DstPort       int32                  `protobuf:"varint,4,opt,name=dst_port,json=dstPort,proto3" json:"dst_port,omitempty"`
+	SrcIp         string                 `protobuf:"bytes,5,opt,name=src_ip,json=srcIp,proto3" json:"src_ip,omitempty"`
+	DstIp         string                 `protobuf:"bytes,6,opt,name=dst_ip,json=dstIp,proto3" json:"dst_ip,omitempty"`
+	Length        int32                  `protobuf:"varint,7,opt,name=length,proto3" json:"length,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,8,opt,name=payload,proto3" json:"payload,omitempty"`                                                                           // содержимое пакета
+	Headers       map[string]string      `protobuf:"bytes,9,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // для HTTP заголовков
+	Method        string                 `protobuf:"bytes,10,opt,name=method,proto3" json:"method,omitempty"`                                                                            // для HTTP (GET, POST)
+	Uri           string                 `protobuf:"bytes,11,opt,name=uri,proto3" json:"uri,omitempty"`                                                                                  // для HTTP
+	Status        int32                  `protobuf:"varint,12,opt,name=status,proto3" json:"status,omitempty"`                                                                           // для HTTP ответов
+	DnsQuery      string                 `protobuf:"bytes,13,opt,name=dns_query,json=dnsQuery,proto3" json:"dns_query,omitempty"`                                                        // для DNS
+	DnsAnswer     string                 `protobuf:"bytes,14,opt,name=dns_answer,json=dnsAnswer,proto3" json:"dns_answer,omitempty"`                                                     // для DNS
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TrafficPacket) Reset() {
+	*x = TrafficPacket{}
+	mi := &file_proto_sniffer_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TrafficPacket) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TrafficPacket) ProtoMessage() {}
+
+func (x *TrafficPacket) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TrafficPacket.ProtoReflect.Descriptor instead.
+func (*TrafficPacket) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *TrafficPacket) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
+func (x *TrafficPacket) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetSrcPort() int32 {
+	if x != nil {
+		return x.SrcPort
+	}
+	return 0
+}
+
+func (x *TrafficPacket) GetDstPort() int32 {
+	if x != nil {
+		return x.DstPort
+	}
+	return 0
+}
+
+func (x *TrafficPacket) GetSrcIp() string {
+	if x != nil {
+		return x.SrcIp
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetDstIp() string {
+	if x != nil {
+		return x.DstIp
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetLength() int32 {
+	if x != nil {
+		return x.Length
+	}
+	return 0
+}
+
+func (x *TrafficPacket) GetPayload() []byte {
+	if x != nil {
+		return x.Payload
+	}
+	return nil
+}
+
+func (x *TrafficPacket) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *TrafficPacket) GetMethod() string {
+	if x != nil {
+		return x.Method
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetUri() string {
+	if x != nil {
+		return x.Uri
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *TrafficPacket) GetDnsQuery() string {
+	if x != nil {
+		return x.DnsQuery
+	}
+	return ""
+}
+
+func (x *TrafficPacket) GetDnsAnswer() string {
+	if x != nil {
+		return x.DnsAnswer
+	}
+	return ""
+}
+
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MasterKey     string                 `protobuf:"bytes,1,opt,name=master_key,json=masterKey,proto3" json:"master_key,omitempty"`
@@ -32,7 +340,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[0]
+	mi := &file_proto_sniffer_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -44,7 +352,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[0]
+	mi := &file_proto_sniffer_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -57,7 +365,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{0}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RegisterRequest) GetMasterKey() string {
@@ -93,7 +401,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[1]
+	mi := &file_proto_sniffer_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -105,7 +413,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[1]
+	mi := &file_proto_sniffer_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +426,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{1}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -159,7 +467,7 @@ type StatsRequest struct {
 
 func (x *StatsRequest) Reset() {
 	*x = StatsRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[2]
+	mi := &file_proto_sniffer_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -171,7 +479,7 @@ func (x *StatsRequest) String() string {
 func (*StatsRequest) ProtoMessage() {}
 
 func (x *StatsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[2]
+	mi := &file_proto_sniffer_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -184,7 +492,7 @@ func (x *StatsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsRequest.ProtoReflect.Descriptor instead.
 func (*StatsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{2}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *StatsRequest) GetSessionKey() string {
@@ -214,7 +522,7 @@ type StatsResponse struct {
 
 func (x *StatsResponse) Reset() {
 	*x = StatsResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[3]
+	mi := &file_proto_sniffer_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -226,7 +534,7 @@ func (x *StatsResponse) String() string {
 func (*StatsResponse) ProtoMessage() {}
 
 func (x *StatsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[3]
+	mi := &file_proto_sniffer_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -239,7 +547,7 @@ func (x *StatsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
 func (*StatsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{3}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *StatsResponse) GetPacketsCount() int64 {
@@ -287,7 +595,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[4]
+	mi := &file_proto_sniffer_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +607,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[4]
+	mi := &file_proto_sniffer_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +620,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PingRequest) GetSessionKey() string {
@@ -339,7 +647,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[5]
+	mi := &file_proto_sniffer_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -351,7 +659,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[5]
+	mi := &file_proto_sniffer_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -364,7 +672,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{5}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -385,7 +693,46 @@ var File_proto_sniffer_proto protoreflect.FileDescriptor
 
 const file_proto_sniffer_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/sniffer.proto\x12\asniffer\"p\n" +
+	"\x13proto/sniffer.proto\x12\asniffer\"\x98\x01\n" +
+	"\x14TrafficFilterRequest\x12\x1f\n" +
+	"\vsession_key\x18\x01 \x01(\tR\n" +
+	"sessionKey\x121\n" +
+	"\x06filter\x18\x02 \x01(\v2\x19.sniffer.FilterExpressionR\x06filter\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x04 \x01(\x05R\x06offset\"\xad\x02\n" +
+	"\x10FilterExpression\x12\x1c\n" +
+	"\tprotocols\x18\x01 \x03(\tR\tprotocols\x12\x14\n" +
+	"\x05ports\x18\x02 \x03(\x05R\x05ports\x12\x10\n" +
+	"\x03ips\x18\x03 \x03(\tR\x03ips\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x04 \x01(\x03R\tstartTime\x12\x19\n" +
+	"\bend_time\x18\x05 \x01(\x03R\aendTime\x12\x1f\n" +
+	"\vtext_search\x18\x06 \x01(\tR\n" +
+	"textSearch\x12=\n" +
+	"\x06custom\x18\a \x03(\v2%.sniffer.FilterExpression.CustomEntryR\x06custom\x1a9\n" +
+	"\vCustomEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd8\x03\n" +
+	"\rTrafficPacket\x12\x1c\n" +
+	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp\x12\x1a\n" +
+	"\bprotocol\x18\x02 \x01(\tR\bprotocol\x12\x19\n" +
+	"\bsrc_port\x18\x03 \x01(\x05R\asrcPort\x12\x19\n" +
+	"\bdst_port\x18\x04 \x01(\x05R\adstPort\x12\x15\n" +
+	"\x06src_ip\x18\x05 \x01(\tR\x05srcIp\x12\x15\n" +
+	"\x06dst_ip\x18\x06 \x01(\tR\x05dstIp\x12\x16\n" +
+	"\x06length\x18\a \x01(\x05R\x06length\x12\x18\n" +
+	"\apayload\x18\b \x01(\fR\apayload\x12=\n" +
+	"\aheaders\x18\t \x03(\v2#.sniffer.TrafficPacket.HeadersEntryR\aheaders\x12\x16\n" +
+	"\x06method\x18\n" +
+	" \x01(\tR\x06method\x12\x10\n" +
+	"\x03uri\x18\v \x01(\tR\x03uri\x12\x16\n" +
+	"\x06status\x18\f \x01(\x05R\x06status\x12\x1b\n" +
+	"\tdns_query\x18\r \x01(\tR\bdnsQuery\x12\x1d\n" +
+	"\n" +
+	"dns_answer\x18\x0e \x01(\tR\tdnsAnswer\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"p\n" +
 	"\x0fRegisterRequest\x12\x1d\n" +
 	"\n" +
 	"master_key\x18\x01 \x01(\tR\tmasterKey\x12\x1d\n" +
@@ -422,11 +769,12 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"F\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xc1\x01\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\x90\x02\n" +
 	"\x0eSnifferService\x12?\n" +
 	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x129\n" +
 	"\bGetStats\x12\x15.sniffer.StatsRequest\x1a\x16.sniffer.StatsResponse\x123\n" +
-	"\x04Ping\x12\x14.sniffer.PingRequest\x1a\x15.sniffer.PingResponseB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
+	"\x04Ping\x12\x14.sniffer.PingRequest\x1a\x15.sniffer.PingResponse\x12M\n" +
+	"\x12GetFilteredTraffic\x12\x1d.sniffer.TrafficFilterRequest\x1a\x16.sniffer.TrafficPacket0\x01B\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
 
 var (
 	file_proto_sniffer_proto_rawDescOnce sync.Once
@@ -440,31 +788,41 @@ func file_proto_sniffer_proto_rawDescGZIP() []byte {
 	return file_proto_sniffer_proto_rawDescData
 }
 
-var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_proto_sniffer_proto_goTypes = []any{
-	(*RegisterRequest)(nil),  // 0: sniffer.RegisterRequest
-	(*RegisterResponse)(nil), // 1: sniffer.RegisterResponse
-	(*StatsRequest)(nil),     // 2: sniffer.StatsRequest
-	(*StatsResponse)(nil),    // 3: sniffer.StatsResponse
-	(*PingRequest)(nil),      // 4: sniffer.PingRequest
-	(*PingResponse)(nil),     // 5: sniffer.PingResponse
-	nil,                      // 6: sniffer.StatsResponse.ProtocolsEntry
-	nil,                      // 7: sniffer.StatsResponse.ApplicationsEntry
+	(*TrafficFilterRequest)(nil), // 0: sniffer.TrafficFilterRequest
+	(*FilterExpression)(nil),     // 1: sniffer.FilterExpression
+	(*TrafficPacket)(nil),        // 2: sniffer.TrafficPacket
+	(*RegisterRequest)(nil),      // 3: sniffer.RegisterRequest
+	(*RegisterResponse)(nil),     // 4: sniffer.RegisterResponse
+	(*StatsRequest)(nil),         // 5: sniffer.StatsRequest
+	(*StatsResponse)(nil),        // 6: sniffer.StatsResponse
+	(*PingRequest)(nil),          // 7: sniffer.PingRequest
+	(*PingResponse)(nil),         // 8: sniffer.PingResponse
+	nil,                          // 9: sniffer.FilterExpression.CustomEntry
+	nil,                          // 10: sniffer.TrafficPacket.HeadersEntry
+	nil,                          // 11: sniffer.StatsResponse.ProtocolsEntry
+	nil,                          // 12: sniffer.StatsResponse.ApplicationsEntry
 }
 var file_proto_sniffer_proto_depIdxs = []int32{
-	6, // 0: sniffer.StatsResponse.protocols:type_name -> sniffer.StatsResponse.ProtocolsEntry
-	7, // 1: sniffer.StatsResponse.applications:type_name -> sniffer.StatsResponse.ApplicationsEntry
-	0, // 2: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
-	2, // 3: sniffer.SnifferService.GetStats:input_type -> sniffer.StatsRequest
-	4, // 4: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
-	1, // 5: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
-	3, // 6: sniffer.SnifferService.GetStats:output_type -> sniffer.StatsResponse
-	5, // 7: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1,  // 0: sniffer.TrafficFilterRequest.filter:type_name -> sniffer.FilterExpression
+	9,  // 1: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
+	10, // 2: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
+	11, // 3: sniffer.StatsResponse.protocols:type_name -> sniffer.StatsResponse.ProtocolsEntry
+	12, // 4: sniffer.StatsResponse.applications:type_name -> sniffer.StatsResponse.ApplicationsEntry
+	3,  // 5: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
+	5,  // 6: sniffer.SnifferService.GetStats:input_type -> sniffer.StatsRequest
+	7,  // 7: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
+	0,  // 8: sniffer.SnifferService.GetFilteredTraffic:input_type -> sniffer.TrafficFilterRequest
+	4,  // 9: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
+	6,  // 10: sniffer.SnifferService.GetStats:output_type -> sniffer.StatsResponse
+	8,  // 11: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
+	2,  // 12: sniffer.SnifferService.GetFilteredTraffic:output_type -> sniffer.TrafficPacket
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_sniffer_proto_init() }
@@ -478,7 +836,7 @@ func file_proto_sniffer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_sniffer_proto_rawDesc), len(file_proto_sniffer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

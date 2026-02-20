@@ -1,6 +1,5 @@
 package com.JavaBruse.core.sniffer.service;
 
-import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
 import com.JavaBruse.proto.*;

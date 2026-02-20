@@ -1,0 +1,28 @@
+<div class="traffic-container">
+    <h2>Traffic Stream for Sniffer #123</h2>
+
+    <div class="traffic-stats">
+        <p>Packets received: {{ trafficData.length }}</p>
+    </div>
+
+    <div class="traffic-packets">
+        <div *ngFor="let packet of trafficData; let i = index" class="packet-item">
+            <div class="packet-header" (click)="togglePacket(i)">
+                Packet {{ i + 1 }} - {{ packet.timestamp | date:'medium' }} - {{ packet.protocol || 'Unknown' }}
+            </div>
+            <div *ngIf="expandedPacket === i" class="packet-details">
+                <pre>{{ packet | json }}</pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button (click)="loadMore()" [disabled]="loading">
+            {{ loading ? 'Loading...' : 'Load More Packets' }}
+        </button>
+    </div>
+
+    <div *ngIf="trafficData.length === 0" class="empty-state">
+        <p>No traffic data yet. Click "Load More" to start.</p>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-package com.JavaBruse.core.security.config;
+package com.JavaBruse.core.config;
 
 import com.JavaBruse.core.exaption.ExistsExeption;
 import com.JavaBruse.core.security.service.JwtService;

@@ -67,8 +67,11 @@ public class SnifferService {
         }
     }
 
-    public StatsResponse getStats(String host, int port, String period) {
-        return grpcClient.execute(host, port, session -> {
+    public StatsResponse getStats(String id, String period) {
+        Optional<SnifferEntity> sniffer = snifferRepository.findById(id);
+        if (sniffer.isEmpty()) {}
+        SnifferEntity snifferEntity = sniffer.get();
+        return grpcClient.execute(snifferEntity.getHost(), snifferEntity.getPort(), session -> {
             StatsRequest request = StatsRequest.newBuilder()
                     .setSessionKey(session.sessionKey)
                     .setPeriod(period)
