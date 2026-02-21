@@ -23,6 +23,7 @@ import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -32,19 +33,26 @@ public class SnifferGrpcClient {
     private String masterKey;
 
     private final ConcurrentHashMap<String, SnifferSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, AtomicLong> lastReconnectAttempt = new ConcurrentHashMap<>();
+    private static final long RECONNECT_COOLDOWN_MS = 10000; // 10 секунд между попытками переподключения
 
     static class SnifferSession {
         ManagedChannel channel;
         SnifferServiceGrpc.SnifferServiceBlockingStub stub;
         String sessionKey;
-        X509Certificate serverCertificate;
         String host;
         int port;
+        String certificate;
+        long lastUsed;
 
         void shutdown() {
             if (channel != null && !channel.isShutdown()) {
                 channel.shutdown();
             }
+        }
+
+        void updateLastUsed() {
+            this.lastUsed = System.currentTimeMillis();
         }
     }
 
@@ -90,6 +98,18 @@ public class SnifferGrpcClient {
     public ConnectionResult connect(String host, int port, String existingSessionKey, String existingCertPEM) {
         String sessionId = host + ":" + port;
 
+        // Проверяем cooldown для предотвращения зацикливания
+        AtomicLong lastAttempt = lastReconnectAttempt.computeIfAbsent(sessionId, k -> new AtomicLong(0));
+        long now = System.currentTimeMillis();
+        long last = lastAttempt.get();
+
+        if (now - last < RECONNECT_COOLDOWN_MS) {
+            log.debug("Reconnect cooldown for {}, skipping", sessionId);
+            return ConnectionResult.failure("Reconnect cooldown");
+        }
+        lastAttempt.set(now);
+
+        // Проверяем существующую сессию
         SnifferSession existing = sessions.get(sessionId);
         if (existing != null) {
             try {
@@ -98,36 +118,106 @@ public class SnifferGrpcClient {
                         .setMessage("test")
                         .build();
                 existing.stub.withDeadlineAfter(2, TimeUnit.SECONDS).ping(testRequest);
-                return ConnectionResult.success(existing.sessionKey, getCertificateAsPEM(existing.serverCertificate));
+                log.info("Existing session is valid for {}", sessionId);
+                existing.updateLastUsed();
+                return ConnectionResult.success(existing.sessionKey, existing.certificate);
             } catch (Exception e) {
+                log.info("Existing session invalid: {}", e.getMessage());
                 existing.shutdown();
                 sessions.remove(sessionId);
             }
         }
 
-        if (existingSessionKey != null && existingCertPEM != null) {
+        // Пробуем восстановить сессию
+        if (existingSessionKey != null) {
             try {
-                X509Certificate serverCert = parseCertificate(existingCertPEM);
-                SnifferSession restoredSession = createSecureSession(host, port, serverCert, existingSessionKey);
-                if (restoredSession != null) {
-                    restoredSession.host = host;
-                    restoredSession.port = port;
-                    sessions.put(sessionId, restoredSession);
-                    return ConnectionResult.success(existingSessionKey, existingCertPEM);
+                ConnectionResult renewalResult = renewSession(host, port, existingSessionKey);
+                if (renewalResult.isSuccess()) {
+                    log.info("Session renewed for {}", sessionId);
+                    return renewalResult;
                 }
             } catch (Exception e) {
-                log.info("Failed to reuse existing session for {}", sessionId);
+                log.warn("Session renewal failed: {}", e.getMessage());
             }
         }
 
+        // Новая регистрация
+        return registerNewClient(host, port, sessionId);
+    }
+
+    private ConnectionResult renewSession(String host, int port, String sessionKey) {
+        ManagedChannel insecureChannel = null;
         try {
             SslContext insecureSslContext = GrpcSslContexts.forClient()
                     .trustManager(io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE)
                     .build();
 
-            ManagedChannel insecureChannel = NettyChannelBuilder.forAddress(host, port)
+            insecureChannel = NettyChannelBuilder.forAddress(host, port)
                     .sslContext(insecureSslContext)
-                    .overrideAuthority("any-host-name")
+                    .overrideAuthority("sniffer-server")
+                    .build();
+
+            SnifferServiceGrpc.SnifferServiceBlockingStub insecureStub = SnifferServiceGrpc.newBlockingStub(insecureChannel);
+
+            RegisterRequest request = RegisterRequest.newBuilder()
+                    .setSessionKey(sessionKey)
+                    .build();
+
+            RegisterResponse response = insecureStub.withDeadlineAfter(10, TimeUnit.SECONDS)
+                    .register(request);
+
+            if (!response.getSuccess()) {
+                return ConnectionResult.failure("Session renewal failed");
+            }
+
+            String newSessionKey = response.getSessionKey();
+            String newCertPEM = response.getServerCertificate();
+
+            if (newCertPEM == null || newCertPEM.isEmpty()) {
+                return ConnectionResult.failure("No certificate received");
+            }
+
+            // Закрываем небезопасный канал
+            insecureChannel.shutdown();
+            insecureChannel = null;
+
+            Thread.sleep(500);
+
+            // Создаем защищенное соединение
+            SnifferSession secureSession = createSessionWithCert(host, port, newCertPEM, newSessionKey);
+
+            if (secureSession != null) {
+                String sessionId = host + ":" + port;
+                secureSession.host = host;
+                secureSession.port = port;
+                secureSession.certificate = newCertPEM;
+                secureSession.updateLastUsed();
+                sessions.put(sessionId, secureSession);
+                return ConnectionResult.success(newSessionKey, newCertPEM);
+            }
+
+            return ConnectionResult.failure("Failed to create secure session");
+
+        } catch (Exception e) {
+            log.error("Session renewal error: {}", e.getMessage());
+            return ConnectionResult.failure("Session renewal failed: " + e.getMessage());
+        } finally {
+            if (insecureChannel != null) {
+                insecureChannel.shutdown();
+            }
+        }
+    }
+
+    private ConnectionResult registerNewClient(String host, int port, String sessionId) {
+        ManagedChannel insecureChannel = null;
+        try {
+            SslContext insecureSslContext = GrpcSslContexts.forClient()
+                    .trustManager(io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory.INSTANCE)
+                    .build();
+
+            insecureChannel = NettyChannelBuilder.forAddress(host, port)
+                    .sslContext(insecureSslContext)
+                    .overrideAuthority("sniffer-server")
                     .build();
 
             SnifferServiceGrpc.SnifferServiceBlockingStub insecureStub = SnifferServiceGrpc.newBlockingStub(insecureChannel);
@@ -141,7 +231,6 @@ public class SnifferGrpcClient {
                     .register(request);
 
             if (!response.getSuccess()) {
-                insecureChannel.shutdown();
                 return ConnectionResult.failure("Registration failed");
             }
 
@@ -149,18 +238,22 @@ public class SnifferGrpcClient {
             String certPEM = response.getServerCertificate();
 
             if (certPEM == null || certPEM.isEmpty()) {
-                insecureChannel.shutdown();
                 return ConnectionResult.failure("No certificate received");
             }
 
-            X509Certificate serverCert = parseCertificate(certPEM);
+            log.info("New registration successful");
             insecureChannel.shutdown();
+            insecureChannel = null;
 
-            SnifferSession secureSession = createSecureSession(host, port, serverCert, sessionKey);
+            Thread.sleep(500);
+
+            SnifferSession secureSession = createSessionWithCert(host, port, certPEM, sessionKey);
 
             if (secureSession != null) {
                 secureSession.host = host;
                 secureSession.port = port;
+                secureSession.certificate = certPEM;
+                secureSession.updateLastUsed();
                 sessions.put(sessionId, secureSession);
                 return ConnectionResult.success(sessionKey, certPEM);
             }
@@ -171,9 +264,15 @@ public class SnifferGrpcClient {
             if (e.getStatus().getCode() == Status.Code.ALREADY_EXISTS) {
                 return ConnectionResult.busy("Sniffer is busy with another client");
             }
+            log.error("gRPC error: {}", e.getMessage());
             return ConnectionResult.failure("Connection failed: " + e.getMessage());
         } catch (Exception e) {
+            log.error("Connection error: {}", e.getMessage());
             return ConnectionResult.failure("Connection failed: " + e.getMessage());
+        } finally {
+            if (insecureChannel != null) {
+                insecureChannel.shutdown();
+            }
         }
     }
 
@@ -190,7 +289,21 @@ public class SnifferGrpcClient {
         }
 
         try {
-            return callback.execute(session);
+            T result = callback.execute(session);
+            session.updateLastUsed();
+            return result;
+        } catch (StatusRuntimeException e) {
+            // Ошибка соединения - удаляем сессию
+            if (e.getStatus().getCode() == Status.Code.UNAVAILABLE ||
+                    e.getStatus().getCode() == Status.Code.UNAUTHENTICATED ||
+                    e.getStatus().getCode() == Status.Code.DEADLINE_EXCEEDED) {
+
+                log.warn("Connection error for {}: {}, removing session", sessionId, e.getStatus().getCode());
+                sessions.remove(sessionId);
+                session.shutdown();
+                throw new ConnectionException("Connection lost: " + e.getMessage());
+            }
+            throw new ServiceException("gRPC error: " + e.getMessage());
         } catch (Exception e) {
             throw new ServiceException("Operation failed: " + e.getMessage());
         }
@@ -206,8 +319,11 @@ public class SnifferGrpcClient {
                     .setMessage("test")
                     .build();
             session.stub.withDeadlineAfter(2, TimeUnit.SECONDS).ping(testRequest);
+            session.updateLastUsed();
             return true;
         } catch (Exception e) {
+            sessions.remove(host + ":" + port);
+            session.shutdown();
             return false;
         }
     }
@@ -215,8 +331,56 @@ public class SnifferGrpcClient {
     public void disconnect(String host, int port) {
         String sessionId = host + ":" + port;
         SnifferSession session = sessions.remove(sessionId);
+        lastReconnectAttempt.remove(sessionId);
         if (session != null) {
             session.shutdown();
+            log.info("Disconnected from {}", sessionId);
+        }
+    }
+
+    private SnifferSession createSessionWithCert(String host, int port, String certPEM, String sessionKey) {
+        try {
+            X509Certificate serverCert = parseCertificate(certPEM);
+
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            keyStore.load(null, null);
+            keyStore.setCertificateEntry("server", serverCert);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(keyStore);
+
+            SslContext sslContext = GrpcSslContexts.forClient()
+                    .trustManager(tmf)
+                    .build();
+
+            ManagedChannel channel = NettyChannelBuilder.forAddress(host, port)
+                    .sslContext(sslContext)
+                    .overrideAuthority("sniffer-server")
+                    .build();
+
+            SnifferServiceGrpc.SnifferServiceBlockingStub stub = SnifferServiceGrpc.newBlockingStub(channel);
+
+            // Проверяем соединение
+            PingRequest pingRequest = PingRequest.newBuilder()
+                    .setSessionKey(sessionKey)
+                    .setMessage("test")
+                    .build();
+
+            PingResponse pingResponse = stub.withDeadlineAfter(5, TimeUnit.SECONDS).ping(pingRequest);
+            log.info("Secure session verified, ping response: {}", pingResponse.getMessage());
+
+            SnifferSession session = new SnifferSession();
+            session.channel = channel;
+            session.stub = stub;
+            session.sessionKey = sessionKey;
+            session.certificate = certPEM;
+            session.updateLastUsed();
+
+            return session;
+
+        } catch (Exception e) {
+            log.error("Failed to create secure session: {}", e.getMessage());
+            return null;
         }
     }
 
@@ -234,62 +398,10 @@ public class SnifferGrpcClient {
         }
     }
 
-    private String getCertificateAsPEM(X509Certificate cert) {
-        if (cert == null) return null;
-        try {
-            byte[] certBytes = cert.getEncoded();
-            String base64 = Base64.getEncoder().encodeToString(certBytes);
-            return "-----BEGIN CERTIFICATE-----\n" +
-                    base64.replaceAll("(.{64})", "$1\n") +
-                    "\n-----END CERTIFICATE-----";
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private SnifferSession createSecureSession(String host, int port, X509Certificate serverCert, String sessionKey) {
-        try {
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(null, null);
-            keyStore.setCertificateEntry("server", serverCert);
-
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(keyStore);
-
-            SslContext sslContext = GrpcSslContexts.forClient()
-                    .trustManager(tmf)
-                    .build();
-
-            ManagedChannel channel = NettyChannelBuilder.forAddress(host, port)
-                    .sslContext(sslContext)
-                    .overrideAuthority(host)
-                    .build();
-
-            SnifferServiceGrpc.SnifferServiceBlockingStub stub = SnifferServiceGrpc.newBlockingStub(channel);
-
-            PingRequest pingRequest = PingRequest.newBuilder()
-                    .setSessionKey(sessionKey)
-                    .setMessage("test")
-                    .build();
-
-            stub.withDeadlineAfter(5, TimeUnit.SECONDS).ping(pingRequest);
-
-            SnifferSession session = new SnifferSession();
-            session.channel = channel;
-            session.stub = stub;
-            session.sessionKey = sessionKey;
-            session.serverCertificate = serverCert;
-
-            return session;
-
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
     @PreDestroy
     public void shutdown() {
         sessions.values().forEach(SnifferSession::shutdown);
         sessions.clear();
+        lastReconnectAttempt.clear();
     }
 }

@@ -12,8 +12,8 @@ services:
     volumes:
       - clickhouse-sniffer-data:/var/lib/clickhouse
     expose:
-      - "8123"  # HTTP порт
-      - "9000"  # Native порт
+      - "8123"
+      - "9000"
     networks:
       - sniffer-network
     healthcheck:
@@ -49,8 +49,9 @@ services:
     ports:
       - "${SNIFFER_GRPC_PORT}:3331"
     networks:
-      - sniffer-network
-      - mungos-shared
+      sniffer-network:
+      mungos-shared:
+        ipv4_address: 172.20.0.10
     develop:
       watch:
         - action: rebuild
@@ -66,6 +67,9 @@ networks:
   mungos-shared:
     name: mungos-shared-network
     external: true
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
 
 volumes:
   clickhouse-sniffer-data:

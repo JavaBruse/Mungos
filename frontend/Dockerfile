@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN echo "export const environment = { production: true, apiUrl: '${API_URL}', portSniffer: '${SNIFFER_GRPC_PORT}', SNIFFER_NAME: 'mungos-sniffer' };" > src/environments/environment.prod.ts
+RUN echo "export const environment = { production: true, apiUrl: '${API_URL}', portSniffer: '${SNIFFER_GRPC_PORT}', SNIFFER_NAME: '172.20.0.10' };" > src/environments/environment.prod.ts
 RUN npm run build --prod
 
 FROM nginx:alpine

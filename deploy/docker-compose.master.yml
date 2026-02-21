@@ -93,6 +93,9 @@ networks:
   mungos-shared:
     driver: bridge
     name: mungos-shared-network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
 
 volumes:
   postgres-core-data:

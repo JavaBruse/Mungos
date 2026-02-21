@@ -12,14 +12,24 @@ docker-compose -f deploy/docker-compose.sniffer.yml watch
 docker exec -it mungos-postgres-core psql -U mungos -d mungos_core
 
 
+docker-compose down
+
+# Удалить тома
+docker volume rm mungos_clickhouse_sniffer-data
+docker volume rm mungos_postgres-core-data
+docker volume rm mungos_prometheus-data
+
+# Или удалить все тома сразу
+docker volume prune -f
 
 
----СЕРТИФИКАТ---
-# Генерируем корневой CA
-openssl genrsa -out certs/ca.key 2048
-openssl req -new -x509 -key certs/ca.key -out certs/ca.crt -subj "/CN=SnifferCA"
+Кликхаус
+docker exec -it mungos-clickhouse-sniffer clickhouse-client
+USE snifferdb;
+SELECT * FROM sniffer_clients;
+TRUNCATE TABLE sniffer_clients;
 
-# Генерируем сертификат для снифера (без привязки к адресам)
-openssl genrsa -out certs/sniffer.key 2048
-openssl req -new -key certs/sniffer.key -out certs/sniffer.csr -subj "/CN=*"
-openssl x509 -req -in certs/sniffer.csr -CA certs/ca.crt -CAkey certs/ca.key -set_serial 01 -out certs/sniffer.crt
+
+ docker exec -it mungos-postgres-core psql -U mungos -d mungos_core
+ SELECT * FROM sniffers;
+ TRUNCATE TABLE sniffers;
