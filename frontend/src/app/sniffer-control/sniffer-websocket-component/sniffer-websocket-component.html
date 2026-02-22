@@ -1,28 +1,91 @@
-<div class="traffic-container">
-    <h2>Traffic Stream for Sniffer #123</h2>
-
-    <div class="traffic-stats">
-        <p>Packets received: {{ trafficData.length }}</p>
+<div class="page-container">
+    <h2>Traffic Stream for Sniffer #{{ id() }}</h2>
+    <div class="stats-bar">
+        <span>Packets: {{ trafficData().length }}</span>
+        @if (loading()) {
+        <span class="loading-spinner">⟳ Loading...</span>
+        }
     </div>
 
-    <div class="traffic-packets">
-        <div *ngFor="let packet of trafficData; let i = index" class="packet-item">
+    <div class="packets-list">
+        @for (packet of trafficData(); track $index; let i = $index) {
+        <div class="packet-card" [class.expanded]="expandedPacket() === i">
             <div class="packet-header" (click)="togglePacket(i)">
-                Packet {{ i + 1 }} - {{ packet.timestamp | date:'medium' }} - {{ packet.protocol || 'Unknown' }}
+                <span class="packet-index">#{{ i + 1 }}</span>
+                <span class="packet-time">{{ formatTimestamp(packet.timestamp) }}</span>
+                <span class="packet-protocol"
+                    [class]="'protocol-' + (packet.protocol ? packet.protocol.toLowerCase() : 'unknown')">
+                </span>
+                <span class="packet-summary">{{ getPacketSummary(packet) }}</span>
+                <span class="packet-length">{{ packet.length || 0 }} B</span>
             </div>
-            <div *ngIf="expandedPacket === i" class="packet-details">
-                <pre>{{ packet | json }}</pre>
+
+            @if (expandedPacket() === i) {
+            <div class="packet-details">
+                @if (packet.hasPayload && !packet.payload && !packet.loadingPayload) {
+                <div class="payload-control">
+                    <button class="load-payload-btn" (click)="loadPayload(packet)">
+                        🔽 Load Payload ({{ packet.length }} bytes)
+                    </button>
+                </div>
+                }
+
+                @if (packet.loadingPayload) {
+                <div class="payload-loading">
+                    <span class="spinner">⟳</span> Loading payload...
+                </div>
+                }
+                <table>
+                    <tr>
+                        <td class="field-name">Timestamp</td>
+                        <td>{{ formatTimestamp(packet.timestamp) }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Protocol</td>
+                        <td>{{ packet.protocol }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Source</td>
+                        <td>{{ packet.srcIp }}:{{ packet.srcPort }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Destination</td>
+                        <td>{{ packet.dstIp }}:{{ packet.dstPort }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">Length</td>
+                        <td>{{ packet.length }} bytes</td>
+                    </tr>
+                    @if (packet.headers && getKeys(packet.headers).length) {
+                    <tr>
+                        <td class="field-name">Headers</td>
+                        <td class="field-value">
+                            @for (key of getKeys(packet.headers); track key) {
+                            <div>{{ key }}: {{ packet.headers[key] }}</div>
+                            }
+                        </td>
+                    </tr>
+                    }
+                </table>
+                @if (packet.payload) {
+                <div class="payload-section">
+                    <h4>Payload ({{ packet.payload.length }} bytes):</h4>
+                    <pre class="payload">{{ formatPayload(packet.payload) }}</pre>
+                </div>
+                }
             </div>
+            }
         </div>
-    </div>
+        }
 
-    <div class="controls">
-        <button (click)="loadMore()" [disabled]="loading">
-            {{ loading ? 'Loading...' : 'Load More Packets' }}
-        </button>
-    </div>
+        @if (!hasMore() && trafficData().length > 0) {
+        <div class="end-message">— End of packets —</div>
+        }
 
-    <div *ngIf="trafficData.length === 0" class="empty-state">
-        <p>No traffic data yet. Click "Load More" to start.</p>
+        @if (trafficData().length === 0 && !loading()) {
+        <div class="empty-state">
+            <p>No traffic data available</p>
+        </div>
+        }
     </div>
 </div>

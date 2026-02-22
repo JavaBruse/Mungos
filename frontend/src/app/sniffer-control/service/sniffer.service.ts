@@ -5,6 +5,7 @@ import { HttpService } from '../../services/http.service';
 import { SnifferRequestDTO } from './sniffer-request.DTO';
 import { SnifferResponseDTO } from './sniffer-response.DTO';
 import { SnifferWebSocketService } from './sniffer-websocket.service';
+import { ErrorMessageService } from '../../services/error-message.service';
 
 @Injectable({
     providedIn: 'root',
@@ -18,7 +19,7 @@ export class SnifferService {
     private readonly sniffersSignal = signal<SnifferResponseDTO[]>([]);
     private readonly visibleAddSnifferSignal = signal(false);
     private wsService = inject(SnifferWebSocketService);
-
+    private errorMessageService = inject(ErrorMessageService)
     readonly sniffers = this.sniffersSignal.asReadonly();
     readonly visibleAdd = this.visibleAddSnifferSignal.asReadonly();
 
@@ -27,10 +28,6 @@ export class SnifferService {
             next: (sniffers) => this.sniffersSignal.set(sniffers),
             error: () => { },
         });
-    }
-
-    requestTrafficStream(snifferId: string, period: string) {
-        this.wsService.requestTraffic(snifferId, period);
     }
 
     add(snifferData: SnifferRequestDTO) {
@@ -49,7 +46,11 @@ export class SnifferService {
 
     ping(id: string) {
         this.http.get<void>(`${this.apiUrl}/ping/${id}`).subscribe({
-            next: () => { this.loadAll(); },
+            next: () => {
+                this.loadAll();
+                this.errorMessageService.showInfo("Ответ получен");
+
+            },
             error: () => { },
         });
     }

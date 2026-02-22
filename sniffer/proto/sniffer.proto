@@ -8,15 +8,25 @@ service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetStats(StatsRequest) returns (StatsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
-
   rpc GetFilteredTraffic(TrafficFilterRequest) returns (stream TrafficPacket);
+  rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
+}
+
+
+message PayloadRequest {
+  string session_key = 1;
+  string packet_id = 2;
+}
+
+message PayloadResponse {
+  bytes payload = 1;
 }
 
 message TrafficFilterRequest {
   string session_key = 1;
   FilterExpression filter = 2;
-  int32 limit = 3;          // сколько пакетов вернуть
-  int32 offset = 4;         // для пагинации
+  int32 limit = 3; 
+  int32 offset = 4;
 }
 
 message FilterExpression {
@@ -30,21 +40,23 @@ message FilterExpression {
 }
 
 message TrafficPacket {
-  int64 timestamp = 1;
-  string protocol = 2;
-  int32 src_port = 3;
-  int32 dst_port = 4;
-  string src_ip = 5;
-  string dst_ip = 6;
-  int32 length = 7;
-  bytes payload = 8;           // содержимое пакета
-  map<string, string> headers = 9;    // для HTTP заголовков
-  string method = 10;          // для HTTP (GET, POST)
-  string uri = 11;             // для HTTP
-  int32 status = 12;           // для HTTP ответов
-  string dns_query = 13;       // для DNS
-  string dns_answer = 14;      // для DNS
-  // можно добавлять дальше
+  string packet_id = 1;
+  int64 timestamp = 2;
+  string protocol = 3;
+  int32 src_port = 4;
+  int32 dst_port = 5;
+  string src_ip = 6;
+  string dst_ip = 7;
+  int32 length = 8;
+  bytes payload = 9;
+  map<string, string> headers = 10;
+  string method = 11;
+  string uri = 12;
+  int32 status = 13;
+  string dns_query = 14;
+  string dns_answer = 15;
+  int32 ttl = 16;
+  string tcp_flags = 17;
 }
 
 message RegisterRequest {

@@ -28,7 +28,7 @@ func NewPacketLogger(filename string) (*PacketLogger, error) {
 // Write сохраняет пакет
 func (l *PacketLogger) Write(p *capture.Packet) {
 	l.logger.Printf("%s %s:%d -> %s:%d [%s] len=%d ttl=%d flags=%s",
-		p.Timestamp.Format("2006-01-02T15:04:05.999999999Z"),
+		p.Timestamp.Format("2006-01-02 15:04:05.999"),
 		p.SrcIP, p.SrcPort,
 		p.DstIP, p.DstPort,
 		p.Protocol,

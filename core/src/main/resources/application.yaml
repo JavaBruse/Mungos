@@ -11,6 +11,8 @@ server:
     context-path: /
 
 spring:
+  jackson:
+    time-zone: ${TZ:Europe/Moscow}
   application:
     name: core
   datasource:

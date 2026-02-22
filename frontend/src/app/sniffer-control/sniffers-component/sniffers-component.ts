@@ -79,7 +79,6 @@ export class SniffersComponent implements OnInit, OnDestroy {
 
   ping(id: string) {
     this.snifferService.ping(id);
-    this.errorMessageService.showInfo("Ответ получен");
   }
 
   openDialog(enterAnimationDuration: string, exitAnimationDuration: string, id: string): void {

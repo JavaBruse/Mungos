@@ -19,6 +19,7 @@ import (
 
 	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
+	"sniffer/core/storage"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,31 +28,31 @@ import (
 )
 
 type Config struct {
-	MasterKey     string
-	SnifferID     string
-	GRPCPort      int
-	CertFile      string
-	KeyFile       string
-	DBHost        string
-	DBPort        int
-	DBUser        string
-	DBPass        string
-	DBName        string
-	DBProtocol    string
-	ClientStorage ClientStorage
+	MasterKey  string
+	SnifferID  string
+	GRPCPort   int
+	CertFile   string
+	KeyFile    string
+	DBHost     string
+	DBPort     int
+	DBUser     string
+	DBPass     string
+	DBName     string
+	DBProtocol string
+	Storage    *storage.ClickHouseStorage // Одно хранилище
 }
 
 type Server struct {
 	pb.UnimplementedSnifferServiceServer
-	config        *Config
-	clientKey     string
-	clientID      string
-	stats         *StatsCollector
-	mu            sync.RWMutex
-	serverCert    tls.Certificate
-	certPEM       []byte
-	keyPEM        []byte
-	clientStorage ClientStorage
+	config     *Config
+	clientKey  string
+	clientID   string
+	stats      *StatsCollector
+	mu         sync.RWMutex
+	serverCert tls.Certificate
+	certPEM    []byte
+	keyPEM     []byte
+	storage    *storage.ClickHouseStorage // Только одно поле!
 }
 
 type StatsCollector struct {
@@ -63,11 +64,11 @@ type StatsCollector struct {
 
 func NewServer(cfg *Config) *Server {
 	// Пытаемся восстановить сертификат и ключ из БД при старте
-	if cfg.ClientStorage != nil {
+	if cfg.Storage != nil && cfg.Storage.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		client, err := cfg.ClientStorage.GetClientByID(ctx, cfg.SnifferID)
+		client, err := cfg.Storage.GetClientByID(ctx, cfg.SnifferID)
 		if err == nil && client != nil && client.ServerPrivateKey != "" {
 			// Восстанавливаем сертификат и ключ из БД
 			cert, err := tls.X509KeyPair(
@@ -77,35 +78,31 @@ func NewServer(cfg *Config) *Server {
 			if err == nil {
 				log.Println("✅ Restored server certificate from DB")
 				return &Server{
-					config:        cfg,
-					stats:         &StatsCollector{},
-					serverCert:    cert,
-					certPEM:       []byte(client.ServerCertificate),
-					keyPEM:        []byte(client.ServerPrivateKey),
-					clientStorage: cfg.ClientStorage,
-					clientKey:     client.SessionKey,
-					clientID:      client.ClientID,
+					config:     cfg,
+					stats:      &StatsCollector{},
+					serverCert: cert,
+					certPEM:    []byte(client.ServerCertificate),
+					keyPEM:     []byte(client.ServerPrivateKey),
+					storage:    cfg.Storage,
+					clientKey:  client.SessionKey,
+					clientID:   client.ClientID,
 				}
 			}
 		}
 	}
 
-	// Если не удалось восстановить - генерируем новые (только при ПЕРВОМ запуске)
+	// Если не удалось восстановить - генерируем новые
 	serverCert, certPEM, keyPEM := generateServerCert()
 
-	if cfg.ClientStorage == nil {
-		log.Printf("⚠️ WARNING: ClientStorage is nil in NewServer!")
-	}
-
 	return &Server{
-		config:        cfg,
-		stats:         &StatsCollector{},
-		serverCert:    serverCert,
-		certPEM:       certPEM,
-		keyPEM:        keyPEM,
-		clientStorage: cfg.ClientStorage,
-		clientKey:     "",
-		clientID:      "",
+		config:     cfg,
+		stats:      &StatsCollector{},
+		serverCert: serverCert,
+		certPEM:    certPEM,
+		keyPEM:     keyPEM,
+		storage:    cfg.Storage,
+		clientKey:  "",
+		clientID:   "",
 	}
 }
 
@@ -167,7 +164,7 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	// Проверяем существующую сессию (восстановление после перезапуска клиента)
+	// Проверяем существующую сессию
 	if req.GetSessionKey() != "" {
 		// Проверяем в памяти
 		s.mu.RLock()
@@ -180,15 +177,14 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 				Success:           true,
 				SessionKey:        req.GetSessionKey(),
 				Message:           "session renewed",
-				ServerCertificate: string(s.certPEM), // Отправляем ТОТ ЖЕ сертификат
+				ServerCertificate: string(s.certPEM),
 			}, nil
 		}
 
-		// Если в памяти нет - проверяем в БД
-		if s.clientStorage != nil {
-			client, err := s.clientStorage.GetClientBySession(ctx, req.GetSessionKey())
+		// Если в памяти нет - проверяем в БД через storage
+		if s.storage != nil && s.storage.Enabled() {
+			client, err := s.storage.GetClientBySession(ctx, req.GetSessionKey())
 			if err == nil && client != nil {
-				// Восстанавливаем сессию в память
 				s.mu.Lock()
 				s.clientKey = client.SessionKey
 				s.clientID = client.ClientID
@@ -199,7 +195,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 					Success:           true,
 					SessionKey:        client.SessionKey,
 					Message:           "session restored",
-					ServerCertificate: string(s.certPEM), // Отправляем ТОТ ЖЕ сертификат
+					ServerCertificate: string(s.certPEM),
 				}, nil
 			}
 		}
@@ -223,9 +219,9 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 		return nil, status.Error(codes.AlreadyExists, "sniffer already has a client")
 	}
 
-	// Проверяем в БД
-	if s.clientStorage != nil {
-		exists, err := s.clientStorage.ClientExists(ctx)
+	// Проверяем в БД через storage
+	if s.storage != nil && s.storage.Enabled() {
+		exists, err := s.storage.ClientExists(ctx)
 		if err == nil && exists {
 			log.Printf("Rejected new client %s - client already exists in DB", req.GetSnifferId())
 			return nil, status.Error(codes.AlreadyExists, "sniffer already has a client in database")
@@ -241,9 +237,9 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	s.clientID = req.GetSnifferId()
 	s.mu.Unlock()
 
-	// Сохраняем в БД - сертификат уже есть (тот что сгенерирован при старте)
-	if s.clientStorage != nil {
-		clientData := &ClientData{
+	// Сохраняем в БД через storage
+	if s.storage != nil && s.storage.Enabled() {
+		clientData := &storage.ClientData{ // используем storage.ClientData
 			ClientID:          req.GetSnifferId(),
 			SessionKey:        sessionKey,
 			MasterKey:         req.GetMasterKey(),
@@ -252,7 +248,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 			CreatedAt:         time.Now(),
 		}
 
-		if err := s.clientStorage.SaveClient(ctx, clientData); err != nil {
+		if err := s.storage.SaveClient(ctx, clientData); err != nil {
 			log.Printf("Failed to save client to DB: %v", err)
 		} else {
 			log.Printf("Client saved to DB: %s", req.GetSnifferId())
@@ -266,7 +262,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 		Success:           true,
 		SessionKey:        sessionKey,
 		Message:           "registered successfully",
-		ServerCertificate: string(s.certPEM), // Отправляем ТОТ ЖЕ сертификат
+		ServerCertificate: string(s.certPEM),
 	}, nil
 }
 
@@ -295,6 +291,57 @@ func (s *Server) GetStats(ctx context.Context, req *pb.StatsRequest) (*pb.StatsR
 	}, nil
 }
 
+func (s *Server) GetFilteredTraffic(req *pb.TrafficFilterRequest, stream pb.SnifferService_GetFilteredTrafficServer) error {
+	log.Printf("GetFilteredTraffic called for sniffer: %s", s.config.SnifferID)
+	log.Printf("GetFilteredTraffic: limit=%d, offset=%d", req.GetLimit(), req.GetOffset())
+
+	// Проверяем storage
+	if s.storage == nil {
+		log.Printf("❌ storage is nil")
+		return status.Error(codes.Internal, "storage not available")
+	}
+
+	// Получаем пакеты
+	packets, err := s.storage.GetPackets(stream.Context(), req.GetFilter(),
+		req.GetLimit(), req.GetOffset(), s.config.SnifferID)
+	if err != nil {
+		log.Printf("❌ Failed to get packets: %v", err)
+		return err
+	}
+
+	log.Printf("Found %d packets", len(packets))
+	for _, pkt := range packets {
+		if err := stream.Send(pkt); err != nil {
+			log.Printf("❌ Failed to send packet: %v", err)
+			return err
+		}
+	}
+	log.Printf("Successfully sent %d packets for offset=%d", len(packets), req.GetOffset())
+
+	return nil
+}
+
+func (s *Server) GetPacketPayload(ctx context.Context, req *pb.PayloadRequest) (*pb.PayloadResponse, error) {
+	if !s.checkAuth(ctx, req.GetSessionKey()) {
+		return nil, status.Error(codes.Unauthenticated, "invalid session")
+	}
+
+	log.Printf("GetPacketPayload: packet_id=%s", req.GetPacketId())
+
+	if s.storage == nil || !s.storage.Enabled() {
+		return nil, status.Error(codes.Internal, "storage not available")
+	}
+
+	// Получаем payload из ClickHouse по packet_id
+	payload, err := s.storage.GetPacketPayload(ctx, req.GetPacketId())
+	if err != nil {
+		log.Printf("Failed to get payload: %v", err)
+		return nil, status.Error(codes.Internal, "failed to get payload")
+	}
+
+	return &pb.PayloadResponse{Payload: payload}, nil
+}
+
 func (s *Server) checkAuth(ctx context.Context, sessionKey string) bool {
 	// Проверяем в памяти
 	s.mu.RLock()
@@ -305,15 +352,15 @@ func (s *Server) checkAuth(ctx context.Context, sessionKey string) bool {
 		return true
 	}
 
-	// Если в памяти нет - проверяем в БД и восстанавливаем
-	if s.clientStorage != nil {
-		client, err := s.clientStorage.GetClientBySession(ctx, sessionKey)
+	// Если в памяти нет - проверяем в БД через storage
+	if s.storage != nil && s.storage.Enabled() {
+		client, err := s.storage.GetClientBySession(ctx, sessionKey)
 		if err == nil && client != nil {
 			s.mu.Lock()
 			s.clientKey = client.SessionKey
 			s.clientID = client.ClientID
 			s.mu.Unlock()
-			log.Printf("✅ Session restored from DB for %s", client.ClientID)
+			log.Printf("Session restored from DB for %s", client.ClientID)
 			return true
 		}
 	}

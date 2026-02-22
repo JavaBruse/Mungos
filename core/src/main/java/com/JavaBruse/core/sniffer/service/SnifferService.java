@@ -1,21 +1,29 @@
 package com.JavaBruse.core.sniffer.service;
 
-import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.BusyException;
+import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
+import com.JavaBruse.core.sniffer.grpc.command.PingCommand;
+import com.JavaBruse.core.sniffer.grpc.command.StatsCommand;
+import com.JavaBruse.core.sniffer.grpc.command.TrafficCommand;
 import com.JavaBruse.core.sniffer.converters.SnifferConverter;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
 import com.JavaBruse.core.sniffer.domain.model.SnifferEntity;
 import com.JavaBruse.core.sniffer.repository.SnifferRepository;
-import com.JavaBruse.proto.PingRequest;
-import com.JavaBruse.proto.StatsRequest;
+import com.JavaBruse.core.sniffer.grpc.client.ConnectionResult;
+import com.JavaBruse.core.sniffer.grpc.session.SessionManager;
+import com.JavaBruse.core.sniffer.grpc.retry.RetryPolicy;
+import com.JavaBruse.core.sniffer.grpc.retry.RetryStrategy;
+import com.JavaBruse.proto.FilterExpression;
 import com.JavaBruse.proto.StatsResponse;
+import com.JavaBruse.proto.TrafficPacket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,280 +33,143 @@ import java.util.Optional;
 public class SnifferService {
 
     private final SnifferRepository snifferRepository;
-    private final SnifferGrpcClient grpcClient;
+    private final SessionManager sessionManager;
+    private final PingCommand pingCommand;
+    private final StatsCommand statsCommand;
+    private final TrafficCommand trafficCommand;
+    private final RetryPolicy retryPolicy;
+    private final ConnectionValidator connectionValidator;
 
     public String ping(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
-                .orElseThrow(() -> new ConnectionException("Sniffer not found with id: " + id));
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
-        int maxRetries = 2;
-        int retryCount = 0;
-
-        while (retryCount < maxRetries) {
-            try {
-                String result = grpcClient.execute(sniffer.getHost(), sniffer.getPort(), session -> {
-                    PingRequest request = PingRequest.newBuilder()
-                            .setSessionKey(session.sessionKey)
-                            .setMessage("ping from mungos-core")
-                            .build();
-                    return session.stub.ping(request).getMessage();
-                });
-
-                // Обновляем время последнего контакта
-                sniffer.updateLastSeen();
-                sniffer.setConnected(true);
-                snifferRepository.save(sniffer);
-
-                log.info("Ping successful for sniffer: {}", sniffer.getId());
-                return result;
-
-            } catch (ConnectionException e) {
-                retryCount++;
-                if (retryCount >= maxRetries) {
-                    log.error("Ping failed after {} retries for sniffer {}", retryCount, id);
-                    sniffer.setConnected(false);
-                    snifferRepository.save(sniffer);
-                    throw new ConnectionException("Failed to ping sniffer after retries: " + e.getMessage());
-                }
-
-                log.info("Connection lost, attempt {}/{} to reconnect...", retryCount, maxRetries);
-
-                // Пытаемся переподключиться
-                boolean reconnected = reconnect(sniffer);
-
-                if (!reconnected) {
-                    log.error("Reconnection attempt {}/{} failed", retryCount, maxRetries);
-                    // Небольшая пауза перед следующей попыткой
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        throw new ConnectionException("Interrupted during reconnect");
-                    }
-                }
-            }
-        }
-
-        throw new ConnectionException("Failed to ping sniffer after " + maxRetries + " attempts");
-    }
-
-    private String executePing(SnifferEntity sniffer) {
-        try {
-            String result = grpcClient.execute(sniffer.getHost(), sniffer.getPort(), session -> {
-                PingRequest request = PingRequest.newBuilder()
-                        .setSessionKey(session.sessionKey)
-                        .setMessage("ping from mungos-core")
-                        .build();
-                return session.stub.ping(request).getMessage();
-            });
-
-            // Обновляем время последнего контакта
-            sniffer.updateLastSeen();
-            sniffer.setConnected(true);
-            snifferRepository.save(sniffer);
-
-            log.info("Ping successful for sniffer: {}", sniffer.getId());
-            return result;
-
-        } catch (Exception e) {
-            log.error("Ping execution failed: {}", e.getMessage());
-            throw new ConnectionException("Failed to execute ping: " + e.getMessage());
-        }
-    }
-
-    private boolean reconnect(SnifferEntity sniffer) {
-        log.info("Reconnecting to sniffer {}:{}", sniffer.getHost(), sniffer.getPort());
-
-        SnifferRequestDTO reconnectDTO = SnifferRequestDTO.builder()
-                .host(sniffer.getHost())
-                .port(sniffer.getPort())
-                .name(sniffer.getName())
-                .location(sniffer.getLocation())
-                .build();
-
-        try {
-            SnifferGrpcClient.ConnectionResult result = grpcClient.connect(
-                    sniffer.getHost(),
-                    sniffer.getPort(),
-                    sniffer.getSessionKey(),
-                    sniffer.getCertificate()
-            );
-
-            if (result.isSuccess()) {
-                // Обновляем данные в БД
-                sniffer.setSessionKey(result.getSessionKey());
-                if (result.getCertificate() != null) {
-                    sniffer.setCertificate(result.getCertificate());
-                }
-                sniffer.setConnected(true);
-                sniffer.updateLastSeen();
-                snifferRepository.save(sniffer);
-
-                log.info("Successfully reconnected to sniffer: {}", sniffer.getId());
-                return true;
-            } else if (result.isBusy()) {
-                log.error("Sniffer is busy with another client: {}", sniffer.getId());
-                sniffer.setConnected(false);
-                snifferRepository.save(sniffer);
-                return false;
-            } else {
-                log.error("Failed to reconnect: {}", result.getErrorMessage());
-                sniffer.setConnected(false);
-                snifferRepository.save(sniffer);
-                return false;
-            }
-        } catch (Exception e) {
-            log.error("Reconnection error: {}", e.getMessage());
-            sniffer.setConnected(false);
-            snifferRepository.save(sniffer);
-            return false;
-        }
+        return retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> pingCommand.execute(sniffer, null),
+                this::isRetryableError,
+                "ping-" + id
+        );
     }
 
     public StatsResponse getStats(String id, String period) {
         SnifferEntity sniffer = snifferRepository.findById(id)
-                .orElseThrow(() -> new ConnectionException("Sniffer not found with id: " + id));
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
-        try {
-            StatsResponse response = executeGetStats(sniffer, period);
-            return response;
-        } catch (ConnectionException e) {
-            log.info("Connection lost for sniffer {}, attempting to reconnect...", id);
-
-            boolean reconnected = reconnect(sniffer);
-
-            if (reconnected) {
-                sniffer = snifferRepository.findById(id)
-                        .orElseThrow(() -> new ConnectionException("Sniffer not found after reconnect"));
-                return executeGetStats(sniffer, period);
-            } else {
-                throw new ServiceException("Failed to get stats: " + e.getMessage());
-            }
-        }
+        return retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> statsCommand.execute(sniffer, period),
+                this::isRetryableError,
+                "stats-" + id
+        );
     }
 
-    private StatsResponse executeGetStats(SnifferEntity sniffer, String period) {
-        try {
-            StatsResponse response = grpcClient.execute(sniffer.getHost(), sniffer.getPort(), session -> {
-                StatsRequest request = StatsRequest.newBuilder()
-                        .setSessionKey(session.sessionKey)
-                        .setPeriod(period)
-                        .build();
-                return session.stub.getStats(request);
-            });
+    public Iterator<TrafficPacket> getFilteredTraffic(String id, FilterExpression filter, int limit, int offset) {
+        SnifferEntity sniffer = snifferRepository.findById(id)
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
-            sniffer.updateLastSeen();
-            sniffer.setConnected(true);
-            snifferRepository.save(sniffer);
-
-            return response;
-
-        } catch (Exception e) {
-            sniffer.setConnected(false);
-            snifferRepository.save(sniffer);
-            throw new ConnectionException("Failed to execute getStats: " + e.getMessage());
-        }
+        TrafficCommand.TrafficRequest request = TrafficCommand.TrafficRequest.builder()
+                .filter(filter)
+                .limit(limit)
+                .offset(offset)
+                .build();
+        log.info("Calling gRPC for sniffer: {}", id);
+        return trafficCommand.execute(sniffer, request);
     }
 
-    public List<SnifferResponseDTO> getAll() {
-        return snifferRepository.findAll().stream()
-                .filter(x -> !x.isDeleted())
-                .map(SnifferConverter::SnifferToSnifferResponseDTO)
-                .toList();
+    public byte[] getPacketPayload(String snifferId, String packetId) {
+        SnifferEntity sniffer = snifferRepository.findById(snifferId)
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + snifferId));
+
+        return trafficCommand.getPayload(sniffer, packetId);
     }
 
     @Transactional
-    public List<SnifferResponseDTO> addSniffer(SnifferRequestDTO snifferDTO) {
-        Optional<SnifferEntity> existingSniffer = snifferRepository.findByHostAndPort(
-                snifferDTO.getHost(), snifferDTO.getPort()
-        );
+    public List<SnifferResponseDTO> addSniffer(SnifferRequestDTO request) {
+        validateSnifferNotExists(request);
 
-        if (existingSniffer.isPresent() && !existingSniffer.get().isDeleted()) {
-            throw new ServiceException("Sniffer already exists with host: " + snifferDTO.getHost() + " and port: " + snifferDTO.getPort());
+        ConnectionResult result = establishConnection(request);
+        if (!result.isSuccess()) {
+            throw new ServiceException("Failed to connect to sniffer: " + result.getErrorMessage());
         }
 
-        if (!connect(snifferDTO)) {
-            throw new ServiceException("Failed to connect to sniffer");
-        }
-
+        SnifferEntity sniffer = save(request, result);
+        log.info("Successfully added sniffer: {}:{}", request.getHost(), request.getPort());
         return getAll();
     }
 
     @Transactional
     public List<SnifferResponseDTO> delete(String id) {
-        Optional<SnifferEntity> sniffer = snifferRepository.findById(id);
-        if (sniffer.isPresent()) {
-            SnifferEntity snifferEntity = sniffer.get();
-            grpcClient.disconnect(snifferEntity.getHost(), snifferEntity.getPort());
-            snifferEntity.setDeleted(true);
-            snifferEntity.setConnected(false);
-            snifferRepository.save(snifferEntity);
-            log.info("Deleted sniffer: {}", id);
-        }
+        snifferRepository.findById(id).ifPresent(this::deleteSniffer);
         return getAll();
     }
 
-    @Transactional
-    public boolean connect(SnifferRequestDTO snifferDTO) {
-        Optional<SnifferEntity> existingSniffer = snifferRepository.findByHostAndPort(
-                snifferDTO.getHost(), snifferDTO.getPort()
-        );
+    public boolean checkConnection(String id) {
+        return snifferRepository.findById(id)
+                .map(connectionValidator::validateConnection)
+                .orElse(false);
+    }
 
-        SnifferGrpcClient.ConnectionResult result = grpcClient.connect(
-                snifferDTO.getHost(),
-                snifferDTO.getPort(),
-                existingSniffer.map(SnifferEntity::getSessionKey).orElse(null),
-                existingSniffer.map(SnifferEntity::getCertificate).orElse(null)
+    public List<SnifferResponseDTO> getAll() {
+        return snifferRepository.findByDeletedFalse().stream()
+                .map(SnifferConverter::SnifferToSnifferResponseDTO)
+                .toList();
+    }
+
+    private void validateSnifferNotExists(SnifferRequestDTO request) {
+        snifferRepository.findByHostAndPort(request.getHost(), request.getPort())
+                .filter(sniffer -> !sniffer.isDeleted())
+                .ifPresent(sniffer -> {
+                    throw new ServiceException("Sniffer already exists: " +
+                            request.getHost() + ":" + request.getPort());
+                });
+    }
+
+    private ConnectionResult establishConnection(SnifferRequestDTO request) {
+        Optional<SnifferEntity> existing = snifferRepository.findByHostAndPort(
+                request.getHost(), request.getPort());
+
+        ConnectionResult result = sessionManager.createConnection(
+                request.getHost(),
+                request.getPort(),
+                existing.map(SnifferEntity::getSessionKey).orElse(null),
+                existing.map(SnifferEntity::getCertificate).orElse(null)
         );
 
         if (result.isBusy()) {
             throw new BusyException("Sniffer is busy with another client");
         }
 
-        if (!result.isSuccess()) {
-            log.error("Failed to connect to sniffer: {}", result.getErrorMessage());
-            return false;
-        }
+        return result;
+    }
 
-        SnifferEntity sniffer;
-        if (existingSniffer.isPresent()) {
-            sniffer = existingSniffer.get();
-            log.info("Updating existing sniffer: {}", snifferDTO.getHost());
-        } else {
-            sniffer = SnifferEntity.builder()
-                    .host(snifferDTO.getHost())
-                    .port(snifferDTO.getPort())
-                    .build();
-            log.info("Creating new sniffer: {}", snifferDTO.getHost());
-        }
+    private SnifferEntity save(SnifferRequestDTO request, ConnectionResult result) {
+        SnifferEntity sniffer = snifferRepository.findByHostAndPort(request.getHost(), request.getPort())
+                .orElse(SnifferEntity.builder()
+                        .host(request.getHost())
+                        .port(request.getPort())
+                        .build());
 
-        sniffer.setName(snifferDTO.getName());
-        sniffer.setLocation(snifferDTO.getLocation());
+        sniffer.setName(request.getName());
+        sniffer.setLocation(request.getLocation());
         sniffer.setSessionKey(result.getSessionKey());
-
-        if (result.getCertificate() != null) {
-            sniffer.setCertificate(result.getCertificate());
-        }
-
+        sniffer.setCertificate(result.getCertificate());
         sniffer.setConnected(true);
         sniffer.setDeleted(false);
         sniffer.updateLastSeen();
 
-        snifferRepository.save(sniffer);
-        log.info("Successfully connected to sniffer: {}:{}", snifferDTO.getHost(), snifferDTO.getPort());
-        return true;
+        return snifferRepository.save(sniffer);
     }
 
-    public boolean checkConnection(String id) {
-        return snifferRepository.findById(id)
-                .map(sniffer -> {
-                    boolean connected = grpcClient.isConnected(sniffer.getHost(), sniffer.getPort());
-                    if (connected != sniffer.isConnected()) {
-                        sniffer.setConnected(connected);
-                        snifferRepository.save(sniffer);
-                    }
-                    return connected;
-                })
-                .orElse(false);
+    private void deleteSniffer(SnifferEntity sniffer) {
+        sessionManager.invalidateSession(sniffer);
+        sniffer.setDeleted(true);
+        sniffer.setConnected(false);
+        snifferRepository.save(sniffer);
+        log.info("Deleted sniffer: {}", sniffer.getId());
+    }
+
+    private boolean isRetryableError(Exception e) {
+        return e instanceof ConnectionException;
     }
 }

@@ -23,6 +23,7 @@ const (
 	SnifferService_GetStats_FullMethodName           = "/sniffer.SnifferService/GetStats"
 	SnifferService_Ping_FullMethodName               = "/sniffer.SnifferService/Ping"
 	SnifferService_GetFilteredTraffic_FullMethodName = "/sniffer.SnifferService/GetFilteredTraffic"
+	SnifferService_GetPacketPayload_FullMethodName   = "/sniffer.SnifferService/GetPacketPayload"
 )
 
 // SnifferServiceClient is the client API for SnifferService service.
@@ -33,6 +34,7 @@ type SnifferServiceClient interface {
 	GetStats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 	GetFilteredTraffic(ctx context.Context, in *TrafficFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error)
+	GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error)
 }
 
 type snifferServiceClient struct {
@@ -92,6 +94,16 @@ func (c *snifferServiceClient) GetFilteredTraffic(ctx context.Context, in *Traff
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SnifferService_GetFilteredTrafficClient = grpc.ServerStreamingClient[TrafficPacket]
 
+func (c *snifferServiceClient) GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PayloadResponse)
+	err := c.cc.Invoke(ctx, SnifferService_GetPacketPayload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnifferServiceServer is the server API for SnifferService service.
 // All implementations must embed UnimplementedSnifferServiceServer
 // for forward compatibility.
@@ -100,6 +112,7 @@ type SnifferServiceServer interface {
 	GetStats(context.Context, *StatsRequest) (*StatsResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	GetFilteredTraffic(*TrafficFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error
+	GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error)
 	mustEmbedUnimplementedSnifferServiceServer()
 }
 
@@ -121,6 +134,9 @@ func (UnimplementedSnifferServiceServer) Ping(context.Context, *PingRequest) (*P
 }
 func (UnimplementedSnifferServiceServer) GetFilteredTraffic(*TrafficFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error {
 	return status.Error(codes.Unimplemented, "method GetFilteredTraffic not implemented")
+}
+func (UnimplementedSnifferServiceServer) GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPacketPayload not implemented")
 }
 func (UnimplementedSnifferServiceServer) mustEmbedUnimplementedSnifferServiceServer() {}
 func (UnimplementedSnifferServiceServer) testEmbeddedByValue()                        {}
@@ -208,6 +224,24 @@ func _SnifferService_GetFilteredTraffic_Handler(srv interface{}, stream grpc.Ser
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type SnifferService_GetFilteredTrafficServer = grpc.ServerStreamingServer[TrafficPacket]
 
+func _SnifferService_GetPacketPayload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PayloadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).GetPacketPayload(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_GetPacketPayload_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).GetPacketPayload(ctx, req.(*PayloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SnifferService_ServiceDesc is the grpc.ServiceDesc for SnifferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -226,6 +260,10 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Ping",
 			Handler:    _SnifferService_Ping_Handler,
+		},
+		{
+			MethodName: "GetPacketPayload",
+			Handler:    _SnifferService_GetPacketPayload_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
