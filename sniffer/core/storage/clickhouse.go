@@ -16,16 +16,45 @@ import (
 )
 
 type ClickHouseStorage struct {
-	conn    *sql.DB
-	enabled bool
+	conn     *sql.DB
+	enabled  bool
+	host     string
+	port     int
+	user     string
+	password string
+	db       string
 }
 
 func NewClickHouseStorage(host string, port int, user, password, db string) (*ClickHouseStorage, error) {
-	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s", user, password, host, port, db)
+	storage := &ClickHouseStorage{
+		host:     host,
+		port:     port,
+		user:     user,
+		password: password,
+		db:       db,
+	}
+
+	// Первое подключение
+	if err := storage.connect(); err != nil {
+		log.Printf("Initial ClickHouse connection failed: %v", err)
+		return storage, nil
+	}
+
+	// Создаем таблицы
+	createPacketsTable(storage.conn)
+	createClientsTable(storage.conn)
+
+	log.Println("✅ ClickHouse connected")
+	return storage, nil
+}
+
+func (c *ClickHouseStorage) connect() error {
+	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s", c.user, c.password, c.host, c.port, c.db)
 
 	conn, err := sql.Open("clickhouse", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect: %w", err)
+		c.enabled = false
+		return err
 	}
 
 	conn.SetMaxOpenConns(10)
@@ -36,23 +65,47 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 	defer cancel()
 
 	if err := conn.PingContext(ctx); err != nil {
-		log.Printf("ClickHouse not available: %v", err)
-		return &ClickHouseStorage{enabled: false}, nil
+		conn.Close()
+		c.enabled = false
+		return err
 	}
 
-	if err := createPacketsTable(conn); err != nil {
-		log.Printf("Failed to create packets table: %v", err)
+	c.conn = conn
+	c.enabled = true
+	return nil
+}
+
+func (c *ClickHouseStorage) reconnect() {
+	if c.enabled && c.conn != nil {
+		// Проверим текущее соединение
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		err := c.conn.PingContext(ctx)
+		cancel()
+		if err == nil {
+			return // Все ок
+		}
+		log.Printf("ClickHouse connection lost: %v", err)
 	}
 
-	if err := createClientsTable(conn); err != nil {
-		log.Printf("Failed to create clients table: %v", err)
+	log.Println("🔄 Reconnecting to ClickHouse...")
+
+	for i := 0; i < 30; i++ {
+		if err := c.connect(); err == nil {
+			log.Println("✅ Reconnected to ClickHouse")
+			return
+		}
+		time.Sleep(2 * time.Second)
 	}
 
-	log.Println("✅ ClickHouse connected")
-	return &ClickHouseStorage{
-		conn:    conn,
-		enabled: true,
-	}, nil
+	log.Println("❌ Failed to reconnect to ClickHouse")
+	c.enabled = false
+}
+
+func (c *ClickHouseStorage) ensureConnection() bool {
+	if !c.enabled || c.conn == nil {
+		c.reconnect()
+	}
+	return c.enabled && c.conn != nil
 }
 
 func createPacketsTable(conn *sql.DB) error {
@@ -93,9 +146,8 @@ func createClientsTable(conn *sql.DB) error {
 	return err
 }
 
-// Сохранение батча пакетов с UUID
 func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet, snifferID string) error {
-	if !c.enabled || c.conn == nil || len(packets) == 0 {
+	if !c.ensureConnection() || len(packets) == 0 {
 		return nil
 	}
 
@@ -104,7 +156,8 @@ func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet, snifferID str
 
 	tx, err := c.conn.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		c.reconnect()
+		return err
 	}
 	defer tx.Rollback()
 
@@ -117,7 +170,7 @@ func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet, snifferID str
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
+		return err
 	}
 	defer stmt.Close()
 
@@ -143,22 +196,17 @@ func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet, snifferID str
 			payload,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to insert packet: %w", err)
+			return err
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return nil
+	return tx.Commit()
 }
 
-// GetPackets с packet_id
 func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExpression,
 	limit, offset int32, snifferID string) ([]*pb.TrafficPacket, error) {
 
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
@@ -166,7 +214,8 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 
 	rows, err := c.conn.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
+		c.reconnect()
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -195,7 +244,7 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		}
 
 		pkt.Timestamp = timestamp.UnixNano()
-		pkt.PacketId = packetID // нужно добавить в proto
+		pkt.PacketId = packetID
 		pkt.Ttl = int32(ttl)
 		packets = append(packets, &pkt)
 	}
@@ -203,11 +252,10 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 	return packets, nil
 }
 
-// StreamPackets с packet_id
 func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.FilterExpression,
 	snifferID string, sendFunc func(*pb.TrafficPacket) error) error {
 
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
 
@@ -215,7 +263,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 
 	rows, err := c.conn.QueryContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("query failed: %w", err)
+		c.reconnect()
+		return err
 	}
 	defer rows.Close()
 
@@ -254,9 +303,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 	return nil
 }
 
-// GetPacketPayload по packet_id
 func (c *ClickHouseStorage) GetPacketPayload(ctx context.Context, packetID string) ([]byte, error) {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
@@ -269,13 +317,13 @@ func (c *ClickHouseStorage) GetPacketPayload(ctx context.Context, packetID strin
 		return nil, fmt.Errorf("packet not found")
 	}
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %w", err)
+		c.reconnect()
+		return nil, err
 	}
 
 	return []byte(payload), nil
 }
 
-// Вспомогательная функция
 func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferID string) (string, []interface{}) {
 	var conditions []string
 	var args []interface{}
@@ -337,9 +385,8 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferI
 	return query, args
 }
 
-// Остальные методы без изменений...
 func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *ClientData) error {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
 
@@ -356,11 +403,14 @@ func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *ClientData) er
 		data.ServerPrivateKey,
 		data.CreatedAt,
 	)
+	if err != nil {
+		c.reconnect()
+	}
 	return err
 }
 
 func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey string) (*ClientData, error) {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
@@ -386,13 +436,14 @@ func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey s
 		return nil, nil
 	}
 	if err != nil {
+		c.reconnect()
 		return nil, err
 	}
 	return &data, nil
 }
 
 func (c *ClickHouseStorage) GetClientByID(ctx context.Context, clientID string) (*ClientData, error) {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
@@ -418,13 +469,14 @@ func (c *ClickHouseStorage) GetClientByID(ctx context.Context, clientID string) 
 		return nil, nil
 	}
 	if err != nil {
+		c.reconnect()
 		return nil, err
 	}
 	return &data, nil
 }
 
 func (c *ClickHouseStorage) ClientExists(ctx context.Context) (bool, error) {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return false, fmt.Errorf("ClickHouse not available")
 	}
 
@@ -432,18 +484,22 @@ func (c *ClickHouseStorage) ClientExists(ctx context.Context) (bool, error) {
 	var count uint64
 	err := c.conn.QueryRowContext(ctx, query).Scan(&count)
 	if err != nil {
+		c.reconnect()
 		return false, err
 	}
 	return count > 0, nil
 }
 
 func (c *ClickHouseStorage) DeleteClient(ctx context.Context, sessionKey string) error {
-	if !c.enabled || c.conn == nil {
+	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
 
 	query := `ALTER TABLE sniffer_clients DELETE WHERE session_key = ?`
 	_, err := c.conn.ExecContext(ctx, query, sessionKey)
+	if err != nil {
+		c.reconnect()
+	}
 	return err
 }
 
@@ -458,7 +514,6 @@ func (c *ClickHouseStorage) Enabled() bool {
 	return c.enabled
 }
 
-// ClientData структура
 type ClientData struct {
 	ClientID          string
 	SessionKey        string

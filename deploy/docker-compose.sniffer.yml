@@ -15,7 +15,7 @@ services:
       - "8123"
       - "9000"
     networks:
-      - sniffer-network
+      - mungos-network
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
       interval: 10s
@@ -48,11 +48,9 @@ services:
         SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
         DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
     ports:
-      - "${SNIFFER_GRPC_PORT}:3331" 
       - "0.0.0.0:${SNIFFER_GRPC_PORT}:3331"
     networks:
-      sniffer-network:
-      mungos-shared:
+      mungos-network:
         ipv4_address: 172.20.0.10
     develop:
       watch:
@@ -64,10 +62,9 @@ services:
             - "*.log"
 
 networks:
-  sniffer-network:
+  mungos-network:
+    name: mungos-network
     driver: bridge
-  mungos-shared:
-    name: mungos-shared-network
     external: false
     ipam:
       config:
