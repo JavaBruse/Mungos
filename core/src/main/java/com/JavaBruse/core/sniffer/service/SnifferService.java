@@ -128,7 +128,6 @@ public class SnifferService {
     private ConnectionResult establishConnection(SnifferRequestDTO request) {
         Optional<SnifferEntity> existing = snifferRepository.findByHostAndPort(
                 request.getHost(), request.getPort());
-
         ConnectionResult result = sessionManager.createConnection(
                 request.getHost(),
                 request.getPort(),

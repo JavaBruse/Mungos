@@ -81,7 +81,7 @@ function getErrorMessage(error: HttpErrorResponse): string {
 
     // Специфичные ошибки для конкретных URL
     if (url.includes('/api/v1/sniffer/create') && status >= 500) {
-        return 'Сниффер уже существует';
+        return 'Ошибка добавления сниффера';
     }
 
     // Ошибка от сервера или стандартная

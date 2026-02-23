@@ -48,7 +48,8 @@ services:
         SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
         DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
     ports:
-      - "${SNIFFER_GRPC_PORT}:3331"
+      - "${SNIFFER_GRPC_PORT}:3331" 
+      - "0.0.0.0:${SNIFFER_GRPC_PORT}:3331"
     networks:
       sniffer-network:
       mungos-shared:
@@ -67,7 +68,7 @@ networks:
     driver: bridge
   mungos-shared:
     name: mungos-shared-network
-    external: true
+    external: false
     ipam:
       config:
         - subnet: 172.20.0.0/24

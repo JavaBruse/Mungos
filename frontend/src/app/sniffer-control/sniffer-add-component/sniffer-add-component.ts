@@ -77,7 +77,7 @@ export class SnifferAddComponent {
       host: this.form.value.host,
       port: this.form.value.port,
     };
-
+    console.log(snifferData);
     this.snifferuserService.add(snifferData);
     this.cancel();
   }
