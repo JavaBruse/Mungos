@@ -39,7 +39,7 @@ type Config struct {
 	DBPass     string
 	DBName     string
 	DBProtocol string
-	Storage    *storage.ClickHouseStorage // Одно хранилище
+	Storage    *storage.ClickHouseStorage
 }
 
 type Server struct {
@@ -52,7 +52,7 @@ type Server struct {
 	serverCert tls.Certificate
 	certPEM    []byte
 	keyPEM     []byte
-	storage    *storage.ClickHouseStorage // Только одно поле!
+	storage    *storage.ClickHouseStorage
 }
 
 type StatsCollector struct {

@@ -57,8 +57,6 @@ func New(cfg *config.Config) (*App, error) {
 		DBPass:     cfg.DBPass,
 		DBName:     cfg.DBName,
 		DBProtocol: cfg.DBProtocol,
-		CertFile:   cfg.CertFile,
-		KeyFile:    cfg.KeyFile,
 		Storage:    chStorage,
 	})
 
@@ -68,7 +66,7 @@ func New(cfg *config.Config) (*App, error) {
 		fileLogger: fileLogger,
 		chStorage:  chStorage,
 		grpc:       grpcServer,
-		packetChan: make(chan *capture.Packet, 500000), // УВЕЛИЧИЛИ ДО 500К
+		packetChan: make(chan *capture.Packet, 500000),
 		stopChan:   make(chan struct{}),
 	}, nil
 }

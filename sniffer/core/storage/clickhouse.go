@@ -25,6 +25,15 @@ type ClickHouseStorage struct {
 	db       string
 }
 
+type ClientData struct {
+	ClientID          string
+	SessionKey        string
+	MasterKey         string
+	ServerCertificate string
+	ServerPrivateKey  string
+	CreatedAt         time.Time
+}
+
 func NewClickHouseStorage(host string, port int, user, password, db string) (*ClickHouseStorage, error) {
 	storage := &ClickHouseStorage{
 		host:     host,
@@ -512,13 +521,4 @@ func (c *ClickHouseStorage) Close() error {
 
 func (c *ClickHouseStorage) Enabled() bool {
 	return c.enabled
-}
-
-type ClientData struct {
-	ClientID          string
-	SessionKey        string
-	MasterKey         string
-	ServerCertificate string
-	ServerPrivateKey  string
-	CreatedAt         time.Time
 }
