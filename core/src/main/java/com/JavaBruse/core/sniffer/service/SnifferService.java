@@ -18,6 +18,8 @@ import com.JavaBruse.core.sniffer.grpc.retry.RetryStrategy;
 import com.JavaBruse.proto.FilterExpression;
 import com.JavaBruse.proto.StatsResponse;
 import com.JavaBruse.proto.TrafficPacket;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -74,7 +76,13 @@ public class SnifferService {
                 .offset(offset)
                 .build();
         log.info("Calling gRPC for sniffer: {}", id);
-        return trafficCommand.execute(sniffer, request);
+
+        return retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> trafficCommand.execute(sniffer, request),
+                this::isRetryableError,
+                "traffic-" + id
+        );
     }
 
     public byte[] getPacketPayload(String snifferId, String packetId) {
@@ -169,6 +177,13 @@ public class SnifferService {
     }
 
     private boolean isRetryableError(Exception e) {
-        return e instanceof ConnectionException;
+        if (e instanceof ConnectionException) {
+            return true;
+        }
+        if (e instanceof StatusRuntimeException) {
+            Status.Code code = ((StatusRuntimeException) e).getStatus().getCode();
+            return code == Status.Code.UNAVAILABLE || code == Status.Code.UNAUTHENTICATED;
+        }
+        return false;
     }
 }

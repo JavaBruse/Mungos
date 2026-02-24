@@ -28,38 +28,46 @@ public class SnifferWebSocketController {
     public void requestTraffic(@Payload TrafficRequest request) {
         String destination = "/api/v1/topic/traffic/" + request.snifferId;
         try {
-            FilterExpression filter = FilterExpression.newBuilder()
-                    .addAllProtocols(request.protocols != null ? request.protocols : List.of())
-                    .addAllPorts(request.ports != null ? request.ports : List.of())
-                    .addAllIps(request.ips != null ? request.ips : List.of())
-                    .setStartTime(request.startTime != null ? request.startTime : 0)
-                    .setEndTime(request.endTime != null ? request.endTime : 0)
-                    .setTextSearch(request.textSearch != null ? request.textSearch : "")
-                    .build();
-
-            Iterator<TrafficPacket> packets = snifferService.getFilteredTraffic(
-                    request.snifferId,
-                    filter,
-                    request.limit,
-                    request.offset
-            );
-
-            int count = 0;
-            while (packets.hasNext()) {
-                TrafficPacket protoPacket = packets.next();
-                TrafficPacketDTO dto = TrafficPacketDTO.fromProto(protoPacket);
-                messagingTemplate.convertAndSend(destination + "/packet", dto);
-                count++;
-            }
-
-            messagingTemplate.convertAndSend(destination + "/complete",
-                    new CompletionMessage(count));
-
+            sendTraffic(request, destination);
         } catch (Exception e) {
             log.error("Traffic stream error: {}", e.getMessage());
-            messagingTemplate.convertAndSend(destination + "/error",
-                    new ErrorMessage(e.getMessage()));
+            try {
+                snifferService.ping(request.snifferId);
+                sendTraffic(request, destination);
+            } catch (Exception ex) {
+                messagingTemplate.convertAndSend(destination + "/error",
+                        new ErrorMessage(e.getMessage()));
+            }
         }
+    }
+
+    private void sendTraffic(TrafficRequest request, String destination) {
+        FilterExpression filter = FilterExpression.newBuilder()
+                .addAllProtocols(request.protocols != null ? request.protocols : List.of())
+                .addAllPorts(request.ports != null ? request.ports : List.of())
+                .addAllIps(request.ips != null ? request.ips : List.of())
+                .setStartTime(request.startTime != null ? request.startTime : 0)
+                .setEndTime(request.endTime != null ? request.endTime : 0)
+                .setTextSearch(request.textSearch != null ? request.textSearch : "")
+                .build();
+
+        Iterator<TrafficPacket> packets = snifferService.getFilteredTraffic(
+                request.snifferId,
+                filter,
+                request.limit,
+                request.offset
+        );
+
+        int count = 0;
+        while (packets.hasNext()) {
+            TrafficPacket protoPacket = packets.next();
+            TrafficPacketDTO dto = TrafficPacketDTO.fromProto(protoPacket);
+            messagingTemplate.convertAndSend(destination + "/packet", dto);
+            count++;
+        }
+
+        messagingTemplate.convertAndSend(destination + "/complete",
+                new CompletionMessage(count));
     }
 
     @MessageMapping("/traffic.payload")

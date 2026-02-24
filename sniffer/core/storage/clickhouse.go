@@ -44,7 +44,7 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 	createPacketsTable(storage.conn)
 	createClientsTable(storage.conn)
 
-	log.Println("✅ ClickHouse connected")
+	log.Println("ClickHouse connected")
 	return storage, nil
 }
 
@@ -87,17 +87,17 @@ func (c *ClickHouseStorage) reconnect() {
 		log.Printf("ClickHouse connection lost: %v", err)
 	}
 
-	log.Println("🔄 Reconnecting to ClickHouse...")
+	log.Println("Reconnecting to ClickHouse...")
 
 	for i := 0; i < 30; i++ {
 		if err := c.connect(); err == nil {
-			log.Println("✅ Reconnected to ClickHouse")
+			log.Println("Reconnected to ClickHouse")
 			return
 		}
 		time.Sleep(2 * time.Second)
 	}
 
-	log.Println("❌ Failed to reconnect to ClickHouse")
+	log.Println("Failed to reconnect to ClickHouse")
 	c.enabled = false
 }
 
