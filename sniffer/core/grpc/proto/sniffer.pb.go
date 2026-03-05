@@ -577,28 +577,27 @@ func (x *RegisterResponse) GetServerCertificate() string {
 	return ""
 }
 
-type StatsRequest struct {
+type MetricsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
-	Period        string                 `protobuf:"bytes,2,opt,name=period,proto3" json:"period,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StatsRequest) Reset() {
-	*x = StatsRequest{}
+func (x *MetricsRequest) Reset() {
+	*x = MetricsRequest{}
 	mi := &file_proto_sniffer_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StatsRequest) String() string {
+func (x *MetricsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StatsRequest) ProtoMessage() {}
+func (*MetricsRequest) ProtoMessage() {}
 
-func (x *StatsRequest) ProtoReflect() protoreflect.Message {
+func (x *MetricsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_sniffer_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -610,50 +609,85 @@ func (x *StatsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StatsRequest.ProtoReflect.Descriptor instead.
-func (*StatsRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use MetricsRequest.ProtoReflect.Descriptor instead.
+func (*MetricsRequest) Descriptor() ([]byte, []int) {
 	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *StatsRequest) GetSessionKey() string {
+func (x *MetricsRequest) GetSessionKey() string {
 	if x != nil {
 		return x.SessionKey
 	}
 	return ""
 }
 
-func (x *StatsRequest) GetPeriod() string {
-	if x != nil {
-		return x.Period
-	}
-	return ""
-}
-
-type StatsResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PacketsCount  int64                  `protobuf:"varint,1,opt,name=packets_count,json=packetsCount,proto3" json:"packets_count,omitempty"`
-	BytesTotal    int64                  `protobuf:"varint,2,opt,name=bytes_total,json=bytesTotal,proto3" json:"bytes_total,omitempty"`
-	Protocols     map[string]int64       `protobuf:"bytes,3,rep,name=protocols,proto3" json:"protocols,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	Applications  map[string]int64       `protobuf:"bytes,4,rep,name=applications,proto3" json:"applications,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
-	Error         string                 `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+type MetricsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// === Основные счетчики трафика ===
+	PacketsCount int64            `protobuf:"varint,1,opt,name=packets_count,json=packetsCount,proto3" json:"packets_count,omitempty"`                                                       // общее количество пакетов
+	BytesTotal   int64            `protobuf:"varint,2,opt,name=bytes_total,json=bytesTotal,proto3" json:"bytes_total,omitempty"`                                                             // общий трафик в байтах
+	Protocols    map[string]int64 `protobuf:"bytes,3,rep,name=protocols,proto3" json:"protocols,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`       // статистика по протоколам (TCP, UDP, ICMP...)
+	Applications map[string]int64 `protobuf:"bytes,4,rep,name=applications,proto3" json:"applications,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // статистика по приложениям (HTTP, DNS, HTTPS...)
+	Error        string           `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`                                                                                          // ошибка, если есть
+	// === Health метрики системы ===
+	CpuUsage         float64 `protobuf:"fixed64,6,opt,name=cpu_usage,json=cpuUsage,proto3" json:"cpu_usage,omitempty"`                          // загрузка CPU (0.0 - 100.0)
+	MemoryBytes      int64   `protobuf:"varint,7,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`                  // используемая память в байтах
+	MemoryTotalBytes int64   `protobuf:"varint,8,opt,name=memory_total_bytes,json=memoryTotalBytes,proto3" json:"memory_total_bytes,omitempty"` // всего доступно памяти в байтах
+	UptimeSeconds    int64   `protobuf:"varint,9,opt,name=uptime_seconds,json=uptimeSeconds,proto3" json:"uptime_seconds,omitempty"`            // время работы сниффера в секундах
+	PacketsDropped   int64   `protobuf:"varint,10,opt,name=packets_dropped,json=packetsDropped,proto3" json:"packets_dropped,omitempty"`        // сколько пакетов потеряно
+	Version          string  `protobuf:"bytes,11,opt,name=version,proto3" json:"version,omitempty"`                                             // версия сниффера
+	GoVersion        string  `protobuf:"bytes,12,opt,name=go_version,json=goVersion,proto3" json:"go_version,omitempty"`                        // версия Go
+	NumGoroutines    int32   `protobuf:"varint,13,opt,name=num_goroutines,json=numGoroutines,proto3" json:"num_goroutines,omitempty"`           // количество горутин
+	Device           string  `protobuf:"bytes,14,opt,name=device,proto3" json:"device,omitempty"`                                               // сетевой интерфейс (eth0, lo...)
+	PromiscMode      bool    `protobuf:"varint,15,opt,name=promisc_mode,json=promiscMode,proto3" json:"promisc_mode,omitempty"`                 // promiscuous mode включен?
+	Filter           string  `protobuf:"bytes,16,opt,name=filter,proto3" json:"filter,omitempty"`                                               // BPF фильтр
+	// === Временная аналитика ===
+	PacketsPerSecond  int64   `protobuf:"varint,20,opt,name=packets_per_second,json=packetsPerSecond,proto3" json:"packets_per_second,omitempty"`    // текущая скорость пакетов (пакетов/сек)
+	BytesPerSecond    float64 `protobuf:"fixed64,21,opt,name=bytes_per_second,json=bytesPerSecond,proto3" json:"bytes_per_second,omitempty"`         // текущая скорость трафика (байт/сек)
+	PacketsLastMinute int64   `protobuf:"varint,22,opt,name=packets_last_minute,json=packetsLastMinute,proto3" json:"packets_last_minute,omitempty"` // пакеты за последнюю минуту
+	BytesLastMinute   int64   `protobuf:"varint,23,opt,name=bytes_last_minute,json=bytesLastMinute,proto3" json:"bytes_last_minute,omitempty"`       // трафик за последнюю минуту (байт)
+	// === TCP специфика ===
+	TcpConnections     int64 `protobuf:"varint,30,opt,name=tcp_connections,json=tcpConnections,proto3" json:"tcp_connections,omitempty"`             // активные TCP соединения
+	TcpSynPackets      int64 `protobuf:"varint,31,opt,name=tcp_syn_packets,json=tcpSynPackets,proto3" json:"tcp_syn_packets,omitempty"`              // SYN пакеты (новые соединения)
+	TcpFinPackets      int64 `protobuf:"varint,32,opt,name=tcp_fin_packets,json=tcpFinPackets,proto3" json:"tcp_fin_packets,omitempty"`              // FIN пакеты (закрытые соединения)
+	TcpRstPackets      int64 `protobuf:"varint,33,opt,name=tcp_rst_packets,json=tcpRstPackets,proto3" json:"tcp_rst_packets,omitempty"`              // RST пакеты (сброшенные/ошибочные)
+	TcpRetransmissions int64 `protobuf:"varint,34,opt,name=tcp_retransmissions,json=tcpRetransmissions,proto3" json:"tcp_retransmissions,omitempty"` // ретрансмиссии (проблемы сети)
+	// === Размеры пакетов ===
+	AvgPacketSize          float64         `protobuf:"fixed64,40,opt,name=avg_packet_size,json=avgPacketSize,proto3" json:"avg_packet_size,omitempty"`                                                                                                      // средний размер пакета в байтах
+	MinPacketSize          int64           `protobuf:"varint,41,opt,name=min_packet_size,json=minPacketSize,proto3" json:"min_packet_size,omitempty"`                                                                                                       // минимальный размер пакета
+	MaxPacketSize          int64           `protobuf:"varint,42,opt,name=max_packet_size,json=maxPacketSize,proto3" json:"max_packet_size,omitempty"`                                                                                                       // максимальный размер пакета
+	PacketSizeDistribution map[int32]int64 `protobuf:"bytes,43,rep,name=packet_size_distribution,json=packetSizeDistribution,proto3" json:"packet_size_distribution,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // распределение по размерам
+	// === IP специфика ===
+	Ipv4Packets       int64 `protobuf:"varint,50,opt,name=ipv4_packets,json=ipv4Packets,proto3" json:"ipv4_packets,omitempty"`                   // IPv4 трафик
+	Ipv6Packets       int64 `protobuf:"varint,51,opt,name=ipv6_packets,json=ipv6Packets,proto3" json:"ipv6_packets,omitempty"`                   // IPv6 трафик
+	FragmentedPackets int64 `protobuf:"varint,52,opt,name=fragmented_packets,json=fragmentedPackets,proto3" json:"fragmented_packets,omitempty"` // фрагментированные пакеты
+	MalformedPackets  int64 `protobuf:"varint,53,opt,name=malformed_packets,json=malformedPackets,proto3" json:"malformed_packets,omitempty"`    // битые/ошибочные пакеты
+	// === Топ портов ===
+	TopSrcPorts map[int32]int64 `protobuf:"bytes,60,rep,name=top_src_ports,json=topSrcPorts,proto3" json:"top_src_ports,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // топ источников по портам (max 10)
+	TopDstPorts map[int32]int64 `protobuf:"bytes,61,rep,name=top_dst_ports,json=topDstPorts,proto3" json:"top_dst_ports,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // топ назначений по портам (max 10)
+	// === Топ IP адресов ===
+	TopSrcIps map[string]int64 `protobuf:"bytes,70,rep,name=top_src_ips,json=topSrcIps,proto3" json:"top_src_ips,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // кто больше всего отправляет (max 10)
+	TopDstIps map[string]int64 `protobuf:"bytes,71,rep,name=top_dst_ips,json=topDstIps,proto3" json:"top_dst_ips,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // кому больше всего отправляют (max 10)
+	// === География (если будет реализовано) ===
+	GeoCountries  map[string]int64 `protobuf:"bytes,80,rep,name=geo_countries,json=geoCountries,proto3" json:"geo_countries,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // распределение по странам (ISO коды)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *StatsResponse) Reset() {
-	*x = StatsResponse{}
+func (x *MetricsResponse) Reset() {
+	*x = MetricsResponse{}
 	mi := &file_proto_sniffer_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *StatsResponse) String() string {
+func (x *MetricsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*StatsResponse) ProtoMessage() {}
+func (*MetricsResponse) ProtoMessage() {}
 
-func (x *StatsResponse) ProtoReflect() protoreflect.Message {
+func (x *MetricsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_sniffer_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -665,44 +699,275 @@ func (x *StatsResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use StatsResponse.ProtoReflect.Descriptor instead.
-func (*StatsResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use MetricsResponse.ProtoReflect.Descriptor instead.
+func (*MetricsResponse) Descriptor() ([]byte, []int) {
 	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *StatsResponse) GetPacketsCount() int64 {
+func (x *MetricsResponse) GetPacketsCount() int64 {
 	if x != nil {
 		return x.PacketsCount
 	}
 	return 0
 }
 
-func (x *StatsResponse) GetBytesTotal() int64 {
+func (x *MetricsResponse) GetBytesTotal() int64 {
 	if x != nil {
 		return x.BytesTotal
 	}
 	return 0
 }
 
-func (x *StatsResponse) GetProtocols() map[string]int64 {
+func (x *MetricsResponse) GetProtocols() map[string]int64 {
 	if x != nil {
 		return x.Protocols
 	}
 	return nil
 }
 
-func (x *StatsResponse) GetApplications() map[string]int64 {
+func (x *MetricsResponse) GetApplications() map[string]int64 {
 	if x != nil {
 		return x.Applications
 	}
 	return nil
 }
 
-func (x *StatsResponse) GetError() string {
+func (x *MetricsResponse) GetError() string {
 	if x != nil {
 		return x.Error
 	}
 	return ""
+}
+
+func (x *MetricsResponse) GetCpuUsage() float64 {
+	if x != nil {
+		return x.CpuUsage
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetMemoryBytes() int64 {
+	if x != nil {
+		return x.MemoryBytes
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetMemoryTotalBytes() int64 {
+	if x != nil {
+		return x.MemoryTotalBytes
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetUptimeSeconds() int64 {
+	if x != nil {
+		return x.UptimeSeconds
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetPacketsDropped() int64 {
+	if x != nil {
+		return x.PacketsDropped
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *MetricsResponse) GetGoVersion() string {
+	if x != nil {
+		return x.GoVersion
+	}
+	return ""
+}
+
+func (x *MetricsResponse) GetNumGoroutines() int32 {
+	if x != nil {
+		return x.NumGoroutines
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *MetricsResponse) GetPromiscMode() bool {
+	if x != nil {
+		return x.PromiscMode
+	}
+	return false
+}
+
+func (x *MetricsResponse) GetFilter() string {
+	if x != nil {
+		return x.Filter
+	}
+	return ""
+}
+
+func (x *MetricsResponse) GetPacketsPerSecond() int64 {
+	if x != nil {
+		return x.PacketsPerSecond
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetBytesPerSecond() float64 {
+	if x != nil {
+		return x.BytesPerSecond
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetPacketsLastMinute() int64 {
+	if x != nil {
+		return x.PacketsLastMinute
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetBytesLastMinute() int64 {
+	if x != nil {
+		return x.BytesLastMinute
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTcpConnections() int64 {
+	if x != nil {
+		return x.TcpConnections
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTcpSynPackets() int64 {
+	if x != nil {
+		return x.TcpSynPackets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTcpFinPackets() int64 {
+	if x != nil {
+		return x.TcpFinPackets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTcpRstPackets() int64 {
+	if x != nil {
+		return x.TcpRstPackets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTcpRetransmissions() int64 {
+	if x != nil {
+		return x.TcpRetransmissions
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetAvgPacketSize() float64 {
+	if x != nil {
+		return x.AvgPacketSize
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetMinPacketSize() int64 {
+	if x != nil {
+		return x.MinPacketSize
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetMaxPacketSize() int64 {
+	if x != nil {
+		return x.MaxPacketSize
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetPacketSizeDistribution() map[int32]int64 {
+	if x != nil {
+		return x.PacketSizeDistribution
+	}
+	return nil
+}
+
+func (x *MetricsResponse) GetIpv4Packets() int64 {
+	if x != nil {
+		return x.Ipv4Packets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetIpv6Packets() int64 {
+	if x != nil {
+		return x.Ipv6Packets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetFragmentedPackets() int64 {
+	if x != nil {
+		return x.FragmentedPackets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetMalformedPackets() int64 {
+	if x != nil {
+		return x.MalformedPackets
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetTopSrcPorts() map[int32]int64 {
+	if x != nil {
+		return x.TopSrcPorts
+	}
+	return nil
+}
+
+func (x *MetricsResponse) GetTopDstPorts() map[int32]int64 {
+	if x != nil {
+		return x.TopDstPorts
+	}
+	return nil
+}
+
+func (x *MetricsResponse) GetTopSrcIps() map[string]int64 {
+	if x != nil {
+		return x.TopSrcIps
+	}
+	return nil
+}
+
+func (x *MetricsResponse) GetTopDstIps() map[string]int64 {
+	if x != nil {
+		return x.TopDstIps
+	}
+	return nil
+}
+
+func (x *MetricsResponse) GetGeoCountries() map[string]int64 {
+	if x != nil {
+		return x.GeoCountries
+	}
+	return nil
 }
 
 type PingRequest struct {
@@ -874,22 +1139,74 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\vsession_key\x18\x02 \x01(\tR\n" +
 	"sessionKey\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12-\n" +
-	"\x12server_certificate\x18\x04 \x01(\tR\x11serverCertificate\"G\n" +
-	"\fStatsRequest\x12\x1f\n" +
+	"\x12server_certificate\x18\x04 \x01(\tR\x11serverCertificate\"1\n" +
+	"\x0eMetricsRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
-	"sessionKey\x12\x16\n" +
-	"\x06period\x18\x02 \x01(\tR\x06period\"\xfd\x02\n" +
-	"\rStatsResponse\x12#\n" +
+	"sessionKey\"\x8d\x12\n" +
+	"\x0fMetricsResponse\x12#\n" +
 	"\rpackets_count\x18\x01 \x01(\x03R\fpacketsCount\x12\x1f\n" +
 	"\vbytes_total\x18\x02 \x01(\x03R\n" +
-	"bytesTotal\x12C\n" +
-	"\tprotocols\x18\x03 \x03(\v2%.sniffer.StatsResponse.ProtocolsEntryR\tprotocols\x12L\n" +
-	"\fapplications\x18\x04 \x03(\v2(.sniffer.StatsResponse.ApplicationsEntryR\fapplications\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05error\x1a<\n" +
+	"bytesTotal\x12E\n" +
+	"\tprotocols\x18\x03 \x03(\v2'.sniffer.MetricsResponse.ProtocolsEntryR\tprotocols\x12N\n" +
+	"\fapplications\x18\x04 \x03(\v2*.sniffer.MetricsResponse.ApplicationsEntryR\fapplications\x12\x14\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\x12\x1b\n" +
+	"\tcpu_usage\x18\x06 \x01(\x01R\bcpuUsage\x12!\n" +
+	"\fmemory_bytes\x18\a \x01(\x03R\vmemoryBytes\x12,\n" +
+	"\x12memory_total_bytes\x18\b \x01(\x03R\x10memoryTotalBytes\x12%\n" +
+	"\x0euptime_seconds\x18\t \x01(\x03R\ruptimeSeconds\x12'\n" +
+	"\x0fpackets_dropped\x18\n" +
+	" \x01(\x03R\x0epacketsDropped\x12\x18\n" +
+	"\aversion\x18\v \x01(\tR\aversion\x12\x1d\n" +
+	"\n" +
+	"go_version\x18\f \x01(\tR\tgoVersion\x12%\n" +
+	"\x0enum_goroutines\x18\r \x01(\x05R\rnumGoroutines\x12\x16\n" +
+	"\x06device\x18\x0e \x01(\tR\x06device\x12!\n" +
+	"\fpromisc_mode\x18\x0f \x01(\bR\vpromiscMode\x12\x16\n" +
+	"\x06filter\x18\x10 \x01(\tR\x06filter\x12,\n" +
+	"\x12packets_per_second\x18\x14 \x01(\x03R\x10packetsPerSecond\x12(\n" +
+	"\x10bytes_per_second\x18\x15 \x01(\x01R\x0ebytesPerSecond\x12.\n" +
+	"\x13packets_last_minute\x18\x16 \x01(\x03R\x11packetsLastMinute\x12*\n" +
+	"\x11bytes_last_minute\x18\x17 \x01(\x03R\x0fbytesLastMinute\x12'\n" +
+	"\x0ftcp_connections\x18\x1e \x01(\x03R\x0etcpConnections\x12&\n" +
+	"\x0ftcp_syn_packets\x18\x1f \x01(\x03R\rtcpSynPackets\x12&\n" +
+	"\x0ftcp_fin_packets\x18  \x01(\x03R\rtcpFinPackets\x12&\n" +
+	"\x0ftcp_rst_packets\x18! \x01(\x03R\rtcpRstPackets\x12/\n" +
+	"\x13tcp_retransmissions\x18\" \x01(\x03R\x12tcpRetransmissions\x12&\n" +
+	"\x0favg_packet_size\x18( \x01(\x01R\ravgPacketSize\x12&\n" +
+	"\x0fmin_packet_size\x18) \x01(\x03R\rminPacketSize\x12&\n" +
+	"\x0fmax_packet_size\x18* \x01(\x03R\rmaxPacketSize\x12n\n" +
+	"\x18packet_size_distribution\x18+ \x03(\v24.sniffer.MetricsResponse.PacketSizeDistributionEntryR\x16packetSizeDistribution\x12!\n" +
+	"\fipv4_packets\x182 \x01(\x03R\vipv4Packets\x12!\n" +
+	"\fipv6_packets\x183 \x01(\x03R\vipv6Packets\x12-\n" +
+	"\x12fragmented_packets\x184 \x01(\x03R\x11fragmentedPackets\x12+\n" +
+	"\x11malformed_packets\x185 \x01(\x03R\x10malformedPackets\x12M\n" +
+	"\rtop_src_ports\x18< \x03(\v2).sniffer.MetricsResponse.TopSrcPortsEntryR\vtopSrcPorts\x12M\n" +
+	"\rtop_dst_ports\x18= \x03(\v2).sniffer.MetricsResponse.TopDstPortsEntryR\vtopDstPorts\x12G\n" +
+	"\vtop_src_ips\x18F \x03(\v2'.sniffer.MetricsResponse.TopSrcIpsEntryR\ttopSrcIps\x12G\n" +
+	"\vtop_dst_ips\x18G \x03(\v2'.sniffer.MetricsResponse.TopDstIpsEntryR\ttopDstIps\x12O\n" +
+	"\rgeo_countries\x18P \x03(\v2*.sniffer.MetricsResponse.GeoCountriesEntryR\fgeoCountries\x1a<\n" +
 	"\x0eProtocolsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a?\n" +
 	"\x11ApplicationsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1aI\n" +
+	"\x1bPacketSizeDistributionEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a>\n" +
+	"\x10TopSrcPortsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a>\n" +
+	"\x10TopDstPortsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a<\n" +
+	"\x0eTopSrcIpsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a<\n" +
+	"\x0eTopDstIpsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a?\n" +
+	"\x11GeoCountriesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"H\n" +
 	"\vPingRequest\x12\x1f\n" +
@@ -898,10 +1215,11 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"F\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xd7\x02\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xdd\x02\n" +
 	"\x0eSnifferService\x12?\n" +
-	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x129\n" +
-	"\bGetStats\x12\x15.sniffer.StatsRequest\x1a\x16.sniffer.StatsResponse\x123\n" +
+	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x12?\n" +
+	"\n" +
+	"GetMetrics\x12\x17.sniffer.MetricsRequest\x1a\x18.sniffer.MetricsResponse\x123\n" +
 	"\x04Ping\x12\x14.sniffer.PingRequest\x1a\x15.sniffer.PingResponse\x12M\n" +
 	"\x12GetFilteredTraffic\x12\x1d.sniffer.TrafficFilterRequest\x1a\x16.sniffer.TrafficPacket0\x01\x12E\n" +
 	"\x10GetPacketPayload\x12\x17.sniffer.PayloadRequest\x1a\x18.sniffer.PayloadResponseB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
@@ -918,7 +1236,7 @@ func file_proto_sniffer_proto_rawDescGZIP() []byte {
 	return file_proto_sniffer_proto_rawDescData
 }
 
-var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_proto_sniffer_proto_goTypes = []any{
 	(*PayloadRequest)(nil),       // 0: sniffer.PayloadRequest
 	(*PayloadResponse)(nil),      // 1: sniffer.PayloadResponse
@@ -927,36 +1245,48 @@ var file_proto_sniffer_proto_goTypes = []any{
 	(*TrafficPacket)(nil),        // 4: sniffer.TrafficPacket
 	(*RegisterRequest)(nil),      // 5: sniffer.RegisterRequest
 	(*RegisterResponse)(nil),     // 6: sniffer.RegisterResponse
-	(*StatsRequest)(nil),         // 7: sniffer.StatsRequest
-	(*StatsResponse)(nil),        // 8: sniffer.StatsResponse
+	(*MetricsRequest)(nil),       // 7: sniffer.MetricsRequest
+	(*MetricsResponse)(nil),      // 8: sniffer.MetricsResponse
 	(*PingRequest)(nil),          // 9: sniffer.PingRequest
 	(*PingResponse)(nil),         // 10: sniffer.PingResponse
 	nil,                          // 11: sniffer.FilterExpression.CustomEntry
 	nil,                          // 12: sniffer.TrafficPacket.HeadersEntry
-	nil,                          // 13: sniffer.StatsResponse.ProtocolsEntry
-	nil,                          // 14: sniffer.StatsResponse.ApplicationsEntry
+	nil,                          // 13: sniffer.MetricsResponse.ProtocolsEntry
+	nil,                          // 14: sniffer.MetricsResponse.ApplicationsEntry
+	nil,                          // 15: sniffer.MetricsResponse.PacketSizeDistributionEntry
+	nil,                          // 16: sniffer.MetricsResponse.TopSrcPortsEntry
+	nil,                          // 17: sniffer.MetricsResponse.TopDstPortsEntry
+	nil,                          // 18: sniffer.MetricsResponse.TopSrcIpsEntry
+	nil,                          // 19: sniffer.MetricsResponse.TopDstIpsEntry
+	nil,                          // 20: sniffer.MetricsResponse.GeoCountriesEntry
 }
 var file_proto_sniffer_proto_depIdxs = []int32{
 	3,  // 0: sniffer.TrafficFilterRequest.filter:type_name -> sniffer.FilterExpression
 	11, // 1: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
 	12, // 2: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
-	13, // 3: sniffer.StatsResponse.protocols:type_name -> sniffer.StatsResponse.ProtocolsEntry
-	14, // 4: sniffer.StatsResponse.applications:type_name -> sniffer.StatsResponse.ApplicationsEntry
-	5,  // 5: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
-	7,  // 6: sniffer.SnifferService.GetStats:input_type -> sniffer.StatsRequest
-	9,  // 7: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
-	2,  // 8: sniffer.SnifferService.GetFilteredTraffic:input_type -> sniffer.TrafficFilterRequest
-	0,  // 9: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
-	6,  // 10: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
-	8,  // 11: sniffer.SnifferService.GetStats:output_type -> sniffer.StatsResponse
-	10, // 12: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
-	4,  // 13: sniffer.SnifferService.GetFilteredTraffic:output_type -> sniffer.TrafficPacket
-	1,  // 14: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
-	10, // [10:15] is the sub-list for method output_type
-	5,  // [5:10] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	13, // 3: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
+	14, // 4: sniffer.MetricsResponse.applications:type_name -> sniffer.MetricsResponse.ApplicationsEntry
+	15, // 5: sniffer.MetricsResponse.packet_size_distribution:type_name -> sniffer.MetricsResponse.PacketSizeDistributionEntry
+	16, // 6: sniffer.MetricsResponse.top_src_ports:type_name -> sniffer.MetricsResponse.TopSrcPortsEntry
+	17, // 7: sniffer.MetricsResponse.top_dst_ports:type_name -> sniffer.MetricsResponse.TopDstPortsEntry
+	18, // 8: sniffer.MetricsResponse.top_src_ips:type_name -> sniffer.MetricsResponse.TopSrcIpsEntry
+	19, // 9: sniffer.MetricsResponse.top_dst_ips:type_name -> sniffer.MetricsResponse.TopDstIpsEntry
+	20, // 10: sniffer.MetricsResponse.geo_countries:type_name -> sniffer.MetricsResponse.GeoCountriesEntry
+	5,  // 11: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
+	7,  // 12: sniffer.SnifferService.GetMetrics:input_type -> sniffer.MetricsRequest
+	9,  // 13: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
+	2,  // 14: sniffer.SnifferService.GetFilteredTraffic:input_type -> sniffer.TrafficFilterRequest
+	0,  // 15: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
+	6,  // 16: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
+	8,  // 17: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
+	10, // 18: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
+	4,  // 19: sniffer.SnifferService.GetFilteredTraffic:output_type -> sniffer.TrafficPacket
+	1,  // 20: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_proto_sniffer_proto_init() }
@@ -970,7 +1300,7 @@ func file_proto_sniffer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_sniffer_proto_rawDesc), len(file_proto_sniffer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

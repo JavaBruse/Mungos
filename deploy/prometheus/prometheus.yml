@@ -2,6 +2,6 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'core-app'
-    static_configs:
-      - targets: ['core-app:8080']
+  - job_name: 'dynamic-sniffers'
+    http_sd_configs:
+      - url: 'http://core-app:7779/metrics/sniffers'

@@ -81,10 +81,12 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - mungos-network
+      mungos-network:
+        ipv4_address: 172.20.0.100
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d' 
 
 networks:
   mungos-network:

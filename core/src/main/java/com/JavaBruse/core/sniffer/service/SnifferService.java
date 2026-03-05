@@ -3,8 +3,8 @@ package com.JavaBruse.core.sniffer.service;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
+import com.JavaBruse.core.sniffer.grpc.command.MetricsCommand;
 import com.JavaBruse.core.sniffer.grpc.command.PingCommand;
-import com.JavaBruse.core.sniffer.grpc.command.StatsCommand;
 import com.JavaBruse.core.sniffer.grpc.command.TrafficCommand;
 import com.JavaBruse.core.sniffer.converters.SnifferConverter;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
@@ -16,7 +16,7 @@ import com.JavaBruse.core.sniffer.grpc.session.SessionManager;
 import com.JavaBruse.core.sniffer.grpc.retry.RetryPolicy;
 import com.JavaBruse.core.sniffer.grpc.retry.RetryStrategy;
 import com.JavaBruse.proto.FilterExpression;
-import com.JavaBruse.proto.StatsResponse;
+import com.JavaBruse.proto.MetricsResponse;
 import com.JavaBruse.proto.TrafficPacket;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -37,7 +37,7 @@ public class SnifferService {
     private final SnifferRepository snifferRepository;
     private final SessionManager sessionManager;
     private final PingCommand pingCommand;
-    private final StatsCommand statsCommand;
+    private final MetricsCommand metricsCommand;
     private final TrafficCommand trafficCommand;
     private final RetryPolicy retryPolicy;
     private final ConnectionValidator connectionValidator;
@@ -54,15 +54,15 @@ public class SnifferService {
         );
     }
 
-    public StatsResponse getStats(String id, String period) {
+    public MetricsResponse getMetrics(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
         return retryPolicy.executeWithRetry(
                 RetryStrategy.defaultPingStrategy(),
-                () -> statsCommand.execute(sniffer, period),
+                () -> metricsCommand.execute(sniffer, null),
                 this::isRetryableError,
-                "stats-" + id
+                "metrics-" + id
         );
     }
 

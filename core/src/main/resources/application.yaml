@@ -38,6 +38,9 @@ admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
 
+metric:
+  port: ${METRICS_PORT}
+
 sniffer:
   host: mungos-sniffer
   port: ${SNIFFER_GRPC_PORT}

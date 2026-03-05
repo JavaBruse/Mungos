@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	SnifferService_Register_FullMethodName           = "/sniffer.SnifferService/Register"
-	SnifferService_GetStats_FullMethodName           = "/sniffer.SnifferService/GetStats"
+	SnifferService_GetMetrics_FullMethodName         = "/sniffer.SnifferService/GetMetrics"
 	SnifferService_Ping_FullMethodName               = "/sniffer.SnifferService/Ping"
 	SnifferService_GetFilteredTraffic_FullMethodName = "/sniffer.SnifferService/GetFilteredTraffic"
 	SnifferService_GetPacketPayload_FullMethodName   = "/sniffer.SnifferService/GetPacketPayload"
@@ -31,7 +31,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SnifferServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	GetStats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
+	GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 	GetFilteredTraffic(ctx context.Context, in *TrafficFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error)
 	GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error)
@@ -55,10 +55,10 @@ func (c *snifferServiceClient) Register(ctx context.Context, in *RegisterRequest
 	return out, nil
 }
 
-func (c *snifferServiceClient) GetStats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error) {
+func (c *snifferServiceClient) GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StatsResponse)
-	err := c.cc.Invoke(ctx, SnifferService_GetStats_FullMethodName, in, out, cOpts...)
+	out := new(MetricsResponse)
+	err := c.cc.Invoke(ctx, SnifferService_GetMetrics_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (c *snifferServiceClient) GetPacketPayload(ctx context.Context, in *Payload
 // for forward compatibility.
 type SnifferServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	GetStats(context.Context, *StatsRequest) (*StatsResponse, error)
+	GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	GetFilteredTraffic(*TrafficFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error
 	GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error)
@@ -126,8 +126,8 @@ type UnimplementedSnifferServiceServer struct{}
 func (UnimplementedSnifferServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedSnifferServiceServer) GetStats(context.Context, *StatsRequest) (*StatsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetStats not implemented")
+func (UnimplementedSnifferServiceServer) GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
 }
 func (UnimplementedSnifferServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
@@ -177,20 +177,20 @@ func _SnifferService_Register_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SnifferService_GetStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StatsRequest)
+func _SnifferService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MetricsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SnifferServiceServer).GetStats(ctx, in)
+		return srv.(SnifferServiceServer).GetMetrics(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SnifferService_GetStats_FullMethodName,
+		FullMethod: SnifferService_GetMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SnifferServiceServer).GetStats(ctx, req.(*StatsRequest))
+		return srv.(SnifferServiceServer).GetMetrics(ctx, req.(*MetricsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -254,8 +254,8 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SnifferService_Register_Handler,
 		},
 		{
-			MethodName: "GetStats",
-			Handler:    _SnifferService_GetStats_Handler,
+			MethodName: "GetMetrics",
+			Handler:    _SnifferService_GetMetrics_Handler,
 		},
 		{
 			MethodName: "Ping",

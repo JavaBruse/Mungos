@@ -27,6 +27,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var startTime = time.Now()
+
 type Config struct {
 	MasterKey  string
 	SnifferID  string
@@ -276,18 +278,6 @@ func (s *Server) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingRespons
 	return &pb.PingResponse{
 		Message:   "pong from Go",
 		Timestamp: time.Now().Unix(),
-	}, nil
-}
-
-func (s *Server) GetStats(ctx context.Context, req *pb.StatsRequest) (*pb.StatsResponse, error) {
-	if !s.checkAuth(ctx, req.GetSessionKey()) {
-		return nil, status.Error(codes.Unauthenticated, "invalid session key")
-	}
-
-	return &pb.StatsResponse{
-		PacketsCount: s.stats.packetsTotal.Load(),
-		BytesTotal:   s.stats.bytesTotal.Load(),
-		Error:        "",
 	}, nil
 }
 

@@ -75,8 +75,8 @@ public class GrpcConnectionManager {
                 return ConnectionResult.failure("No certificate received");
             }
 
-            closeChannel(insecureChannel);
-            Thread.sleep(500);
+//            closeChannel(insecureChannel);
+//            Thread.sleep(100);
 
             ManagedChannel secureChannel = createSecureChannel(host, port, newCertPEM);
             if (secureChannel != null) {
@@ -124,8 +124,8 @@ public class GrpcConnectionManager {
                 return ConnectionResult.failure("No certificate received");
             }
 
-            closeChannel(insecureChannel);
-            Thread.sleep(500);
+//            closeChannel(insecureChannel);
+//            Thread.sleep(100);
 
             ManagedChannel secureChannel = createSecureChannel(host, port, certPEM);
             if (secureChannel != null) {

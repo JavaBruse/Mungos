@@ -9,7 +9,7 @@ option java_multiple_files = true;
 
 service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc GetStats(StatsRequest) returns (StatsResponse);
+  rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
   rpc GetFilteredTraffic(TrafficFilterRequest) returns (stream TrafficPacket);
   rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
@@ -76,17 +76,67 @@ message RegisterResponse {
   string server_certificate = 4;
 }
 
-message StatsRequest {
+message MetricsRequest {
   string session_key = 1;
-  string period = 2;
 }
 
-message StatsResponse {
-  int64 packets_count = 1;
-  int64 bytes_total = 2;
-  map<string, int64> protocols = 3;
-  map<string, int64> applications = 4;
-  string error = 5;
+message MetricsResponse {
+  // === Основные счетчики трафика ===
+  int64 packets_count = 1;           // общее количество пакетов
+  int64 bytes_total = 2;              // общий трафик в байтах
+  map<string, int64> protocols = 3;   // статистика по протоколам (TCP, UDP, ICMP...)
+  map<string, int64> applications = 4; // статистика по приложениям (HTTP, DNS, HTTPS...)
+  string error = 5;                    // ошибка, если есть
+
+  // === Health метрики системы ===
+  double cpu_usage = 6;                // загрузка CPU (0.0 - 100.0)
+  int64 memory_bytes = 7;              // используемая память в байтах
+  int64 memory_total_bytes = 8;         // всего доступно памяти в байтах
+  int64 uptime_seconds = 9;             // время работы сниффера в секундах
+  int64 packets_dropped = 10;           // сколько пакетов потеряно
+  string version = 11;                   // версия сниффера
+  string go_version = 12;                // версия Go
+  int32 num_goroutines = 13;             // количество горутин
+  string device = 14;                    // сетевой интерфейс (eth0, lo...)
+  bool promisc_mode = 15;                // promiscuous mode включен?
+  string filter = 16;                     // BPF фильтр
+
+  // === Временная аналитика ===
+  int64 packets_per_second = 20;         // текущая скорость пакетов (пакетов/сек)
+  double bytes_per_second = 21;           // текущая скорость трафика (байт/сек)
+  int64 packets_last_minute = 22;         // пакеты за последнюю минуту
+  int64 bytes_last_minute = 23;            // трафик за последнюю минуту (байт)
+
+  // === TCP специфика ===
+  int64 tcp_connections = 30;              // активные TCP соединения
+  int64 tcp_syn_packets = 31;              // SYN пакеты (новые соединения)
+  int64 tcp_fin_packets = 32;              // FIN пакеты (закрытые соединения)
+  int64 tcp_rst_packets = 33;              // RST пакеты (сброшенные/ошибочные)
+  int64 tcp_retransmissions = 34;           // ретрансмиссии (проблемы сети)
+
+  // === Размеры пакетов ===
+  double avg_packet_size = 40;              // средний размер пакета в байтах
+  int64 min_packet_size = 41;               // минимальный размер пакета
+  int64 max_packet_size = 42;               // максимальный размер пакета
+  map<int32, int64> packet_size_distribution = 43;  // распределение по размерам
+  // ключи: 64, 128, 256, 512, 1024, 1500 - количество пакетов каждого размера
+
+  // === IP специфика ===
+  int64 ipv4_packets = 50;                   // IPv4 трафик
+  int64 ipv6_packets = 51;                   // IPv6 трафик
+  int64 fragmented_packets = 52;             // фрагментированные пакеты
+  int64 malformed_packets = 53;               // битые/ошибочные пакеты
+
+  // === Топ портов ===
+  map<int32, int64> top_src_ports = 60;       // топ источников по портам (max 10)
+  map<int32, int64> top_dst_ports = 61;       // топ назначений по портам (max 10)
+
+  // === Топ IP адресов ===
+  map<string, int64> top_src_ips = 70;        // кто больше всего отправляет (max 10)
+  map<string, int64> top_dst_ips = 71;        // кому больше всего отправляют (max 10)
+
+  // === География (если будет реализовано) ===
+  map<string, int64> geo_countries = 80;      // распределение по странам (ISO коды)
 }
 
 message PingRequest {

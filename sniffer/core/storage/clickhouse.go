@@ -34,6 +34,10 @@ type ClientData struct {
 	CreatedAt         time.Time
 }
 
+func (c *ClickHouseStorage) GetConn() *sql.DB {
+	return c.conn
+}
+
 func NewClickHouseStorage(host string, port int, user, password, db string) (*ClickHouseStorage, error) {
 	storage := &ClickHouseStorage{
 		host:     host,
