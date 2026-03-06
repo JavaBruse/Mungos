@@ -100,6 +100,9 @@
     background: linear-gradient(135deg, var(--gradient1) 0%, var(--gradient2) 100%);
     display: flex;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
 }
 
 .brand-logo {
@@ -140,15 +143,32 @@
     display: inline;
 }
 
+.icon-wrapper {
+    position: absolute;
+    right: -55px;
+    top: 30%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+}
+
 .bruse-icon {
     width: 50px;
     height: 50px;
+    display: block;
+}
+
+.icon-link-top-left {
     position: absolute;
-    right: -55px;
-    // top: 0px;
-    /* подвинуть вправо */
-    top: 30%;
-    transform: translateY(-50%);
+    top: 11.4px;
+    left: 8px;
+    width: 11px;
+    height: 13px;
+    cursor: pointer;
+    // background: rgba(255, 0, 0, 0.3);
+    // border: 2px solid red;
+    border-radius: 50%;
+    box-sizing: border-box;
 }
 
 @keyframes fadeInText {

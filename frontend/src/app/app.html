@@ -5,10 +5,13 @@
     @if (loginService.userData().isLogin) {
     <div class="full-with horizontal-box brand-header">
       <img src="label_clear.png" alt="" class="brand-logo">
-      <span class="brand-label">Created by<br><span class="author-wrapper"><a class="brand-author">JavaBruse</a><a
-            href="https://github.com/JavaBruse" target="_blank">
+      <span class="brand-label">Created by<br><span class="author-wrapper">
+          <a class="brand-author">JavaBruse</a>
+          <div class="icon-wrapper">
             <img src="javaBruse.png" alt="" class="bruse-icon">
-          </a></span></span>
+            <a href="https://github.com/JavaBruse" target="_blank" class="icon-link-top-left"></a>
+          </div>
+        </span></span>
     </div>
 
     <a class="item" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">
