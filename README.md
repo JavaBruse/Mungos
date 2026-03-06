@@ -1,5 +1,5 @@
 <h1>
-  <img src="frontend/public/label_clear.png" width="50" height="50" alt="Mungos logo" style="vertical-align: middle;">
+  <img src="frontend/public/label_clear.png" width="100" height="100" alt="Mungos logo" style="vertical-align: middle;">
   Mungos — проект анализа трафика
 </h1>
 
