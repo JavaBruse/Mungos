@@ -9,6 +9,7 @@ git clone https://github.com/JavaBruse/Mungos.git
 docker-compose -f deploy/docker-compose.master.yml up -d --build
 ```
 - Сборка и запуск сниффера
+
 Сниффер работает как отдельный модуль. Для его подключения к системе необходимо знать IP-адрес сервера.
 При локальном запуске (на одной машине с сервером) веб-форма добавления сниффера всегда будет содержать корректные host (имя контейнера) и port настроенных по умолчанию.
 ```sh
@@ -28,7 +29,46 @@ password: admin
 
 - admin имеет роль ADMIN_ROLE, у коротой все права на любые действия. У остальных ролей только просмотр.
 
+Все переменные задаются в файле [`/deploy/.env`](/deploy/.env)
 
+```text
+# Core
+DB_NAME=mungos_core
+DB_USER=mungos
+DB_PASS=mungos123
+DB_HOST=postgres-core
+DB_PORT=5432
+CORE_PORT=7779
+FRONT_PORT=80
+SPRING_PROFILES_ACTIVE=docker
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin
+BACKEND_HOST=localhost
+JWT_SECRET=9f8e7d6c5b4a3z2y1x0w9v8u7t6s5r4q3p2o1n2m3l4k5j6i7h8g9f8e7d6c5b4a3z
+# настройки для фронта, на адрес бэка
+API_URL=http://localhost:7779/ 
+
+TZ=Europe/Moscow
+# Sniffer
+SNIFFER_DB_NAME=snifferdb
+SNIFFER_DB_USER=snifferuser
+SNIFFER_DB_PASS=snifferpass
+SNIFFER_DB_HOST=clickhouse-sniffer
+SNIFFER_DB_PORT=9000
+SNIFFER_DB_PROTOCOL=native
+SNIFFER_GRPC_PORT=3331
+SNIFFER_NAME=172.20.0.10
+SNIFFER_DEVICE=eth0
+SNIFFER_PROMISC=true
+SNIFFER_FILTER=
+SNIFFER_LOG=packets.log
+SNIFFER_ID=sniffer-1
+DEFAULT_MASTER_KEY=default-master-key-123
+DB_TYPE=clickhouse
+
+# Prometheus
+PROMETHEUS_URL=http://prometheus:9090
+```
 
 
 
