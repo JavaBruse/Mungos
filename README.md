@@ -17,7 +17,7 @@ docker-compose -f deploy/docker-compose.master.yml up -d --build
 Сниффер работает как отдельный модуль. Для его подключения к системе необходимо знать IP-адрес сервера.
 При локальном запуске (на одной машине с сервером) веб-форма добавления сниффера всегда будет содержать корректные host (имя контейнера) и port настроенных по умолчанию.
 ```sh
-docker-compose -f deploy/docker-compose.sniffer.yml up -d
+docker-compose -f deploy/docker-compose.sniffer.yml up -d --build
 ```
 - Для доступа к WEB перейдите по ссылке: 
 ```text
