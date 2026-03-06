@@ -3,9 +3,12 @@
 <nav class="sidebar" [class.open]="menuVisible" id="sidebar" appCloseOnClickOutside (clickOutside)="closeMenu()">
   <div class="sidebar-top">
     @if (loginService.userData().isLogin) {
-    <div class="full-with horizontal-box "
-      style="background: linear-gradient(135deg, var(--gradient1) 0%, var(--gradient2) 100%);">
-      <img src="label_clear.png" alt="" style="width: 50px;">
+    <div class="full-with horizontal-box brand-header">
+      <img src="label_clear.png" alt="" class="brand-logo">
+      <span class="brand-label">Created by<br><span class="author-wrapper"><a class="brand-author">JavaBruse</a><a
+            href="https://github.com/JavaBruse" target="_blank">
+            <img src="javaBruse.png" alt="" class="bruse-icon">
+          </a></span></span>
     </div>
 
     <a class="item" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">
