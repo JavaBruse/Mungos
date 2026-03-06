@@ -41,6 +41,9 @@ admin:
 metric:
   port: ${METRICS_PORT}
 
+prometheus:
+  url: ${PROMETHEUS_URL}
+
 sniffer:
   host: mungos-sniffer
   port: ${SNIFFER_GRPC_PORT}

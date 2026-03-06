@@ -45,6 +45,7 @@ services:
       SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
       DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
       JWT_SECRET: ${JWT_SECRET}
+      PROMETHEUS_URL: ${PROMETHEUS_URL}
     ports:
       - "${CORE_PORT}:7779"
     networks:

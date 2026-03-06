@@ -1,6 +1,8 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { NgxEchartsModule } from 'ngx-echarts';
+import * as echarts from 'echarts';
 
 import { routes } from './app.routes';
 import { LoadingInterceptor } from './interceptors/loading.interceptor';
@@ -14,5 +16,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([LoadingInterceptor, ErrorInterceptor, AuthInterceptor])
     ),
+    importProvidersFrom(
+      NgxEchartsModule.forRoot({ echarts })
+    )
   ],
 };

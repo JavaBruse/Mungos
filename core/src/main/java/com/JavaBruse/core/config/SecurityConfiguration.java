@@ -38,8 +38,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/api/v1/auth/**", "/metrics/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/sniffer/**").authenticated()
-                        .requestMatchers("/api/v1/ws-sniffer/**").permitAll()
+                        .requestMatchers("/api/v1/sniffer/**", "/api/proxy/prometheus/**").authenticated()
+                        .requestMatchers("/api/v1/ws-sniffer/**").permitAll() // этот адрес для всех, потому что это webSocket и там авторизация своя, т.к. спринг не умеет
                         .requestMatchers("/api/v1/users-control/**").hasAuthority(Role.ROLE_ADMIN.name())
 //                        .requestMatchers( "/metrics/**").access((authentication, context) ->
 //                                new AuthorizationDecision(

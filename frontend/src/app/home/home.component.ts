@@ -4,10 +4,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { LoginService } from '../services/login.service';
+import { MetricChart } from "../metrics/metric-chart/metric-chart";
 
 @Component({
   selector: 'app-home',
-  imports: [MatFormFieldModule, MatSelectModule, MatInputModule, FormsModule],
+  imports: [MatFormFieldModule, MatSelectModule, MatInputModule, FormsModule, MetricChart],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })

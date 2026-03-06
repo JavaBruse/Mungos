@@ -1,0 +1,33 @@
+<div class="chart-container" [style.height]="height">
+    @if (title && !loading && !error && hasData) {
+    <div class="chart-header">
+        <span class="chart-title">{{ title }}</span>
+    </div>
+    }
+
+    <div class="chart-wrapper">
+        @if (loading) {
+        <div class="overlay">
+            <div class="spinner"></div>
+            <span>Загрузка...</span>
+        </div>
+        }
+
+        @if (error) {
+        <div class="overlay error">
+            <span class="error-icon">⚠️</span>
+            <span>{{ error }}</span>
+        </div>
+        }
+
+        @if (!loading && !error && !hasData) {
+        <div class="overlay">
+            <span class="empty-icon">📊</span>
+            <span>Нет данных</span>
+        </div>
+        }
+
+        <div echarts [options]="chartOptions" class="chart" [class.hidden]="!hasData || loading || error">
+        </div>
+    </div>
+</div>
