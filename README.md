@@ -2,6 +2,7 @@
   <img src="frontend/public/label_clear.png" width="50" height="50" alt="Mungos logo" style="vertical-align: middle;">
   Mungos — проект анализа трафика
 </h1>
+
 - Клонируем проект
 ```sh
 git clone https://github.com/JavaBruse/Mungos.git
