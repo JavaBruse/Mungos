@@ -1,17 +1,64 @@
 <div class="page-container">
-    <h2>Traffic Stream for Sniffer #{{ id() }}</h2>
-    <div class="stats-bar">
-        <span>Packets: {{ trafficData().length }}</span>
-        @if (loading()) {
-        <span class="loading-spinner">⟳ Loading...</span>
-        }
+    <div class="horisontal-box">
+        <h2>Поток трафика со сниффера: {{ id() }}</h2>
+        <div class="stats-bar">
+            <span>Пакеты загружены: {{ trafficData().length }}</span>
+            @if (filterActive()) {
+            <span class="filter-badge">Фильтр активен</span>
+            <button mat-icon-button color="primary" (click)="clearFilters()" matTooltip="Сбросить фильтры">
+                <mat-icon>filter_alt_off</mat-icon>
+            </button>
+            }
+        </div>
     </div>
 
+    <div class="filters-section">
+        <form [formGroup]="filterForm">
+            <div class="filters-row">
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Поиск по тексту</mat-label>
+                    <input matInput type="text" formControlName="textSearch">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Диапазон дат</mat-label>
+                    <mat-date-range-input [rangePicker]="rangePicker">
+                        <input matStartDate formControlName="startTime">
+                        <input matEndDate formControlName="endTime">
+                    </mat-date-range-input>
+                    <mat-datepicker-toggle matSuffix [for]="rangePicker"></mat-datepicker-toggle>
+                    <mat-date-range-picker #rangePicker></mat-date-range-picker>
+                </mat-form-field>
+            </div>
+
+            <div class="filters-row">
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Протокол</mat-label>
+                    <mat-select formControlName="protocols" multiple>
+                        @for (protocol of availableProtocols; track protocol) {
+                        <mat-option [value]="protocol">{{ protocol | uppercase }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Порты</mat-label>
+                    <input matInput type="text" formControlName="ports" placeholder="80,443,8080">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>IP Адреса</mat-label>
+                    <input matInput type="text" formControlName="ips" placeholder="192.168.1.1,10.0.0.1">
+                </mat-form-field>
+            </div>
+
+
+        </form>
+    </div>
     <div class="packets-list">
         @for (packet of trafficData(); track $index; let i = $index) {
         <div class="packet-card" [class.expanded]="expandedPacket() === i">
             <div class="packet-header" (click)="togglePacket(i)">
-                <span class="packet-index">#{{ i + 1 }}</span>
                 <span class="packet-time">{{ formatTimestamp(packet.timestamp) }}</span>
                 <span class="packet-protocol"
                     [class]="'protocol-' + (packet.protocol ? packet.protocol.toLowerCase() : 'unknown')">
@@ -22,19 +69,6 @@
 
             @if (expandedPacket() === i) {
             <div class="packet-details">
-                @if (packet.hasPayload && !packet.payload && !packet.loadingPayload) {
-                <div class="payload-control">
-                    <button class="load-payload-btn" (click)="loadPayload(packet)">
-                        🔽 Load Payload ({{ packet.length }} bytes)
-                    </button>
-                </div>
-                }
-
-                @if (packet.loadingPayload) {
-                <div class="payload-loading">
-                    <span class="spinner">⟳</span> Loading payload...
-                </div>
-                }
                 <table>
                     <tr>
                         <td class="field-name">Timestamp</td>
@@ -54,7 +88,21 @@
                     </tr>
                     <tr>
                         <td class="field-name">Length</td>
-                        <td>{{ packet.length }} bytes</td>
+                        <td>
+                            @if (packet.hasPayload) {
+                            <button mat-button color="primary" (click)="togglePayload(packet)"
+                                class="payload-length-btn">
+                                {{ packet.length }} bytes
+                                @if (packet.payload) {
+                                <mat-icon>visibility_off</mat-icon>
+                                } @else {
+                                <mat-icon>cloud_download</mat-icon>
+                                }
+                            </button>
+                            } @else {
+                            {{ packet.length }} bytes
+                            }
+                        </td>
                     </tr>
                     @if (packet.headers && getKeys(packet.headers).length) {
                     <tr>
@@ -80,12 +128,6 @@
 
         @if (!hasMore() && trafficData().length > 0) {
         <div class="end-message">— End of packets —</div>
-        }
-
-        @if (trafficData().length === 0 && !loading()) {
-        <div class="empty-state">
-            <p>No traffic data available</p>
-        </div>
         }
     </div>
 </div>

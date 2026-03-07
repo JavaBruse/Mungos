@@ -22,7 +22,8 @@ public class MetricsService {
     private String port;
 
     public List<Map<String, Object>> getClients() {
-        List<SnifferEntity> sniffers = snifferRepository.findAll();
+        List<SnifferEntity> sniffers = snifferRepository.findAll().stream()
+                .filter(x -> !x.isDeleted()).toList();
         List<Map<String, Object>> result = new ArrayList<>();
         String baseTarget = "core-app:" + port;
         for (SnifferEntity s : sniffers) {

@@ -1,7 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Client, Message } from '@stomp/stompjs';
 import { environment } from '../../../environments/environment';
 import { Subject, Observable } from 'rxjs';
+import { LoadingService } from '../../services/loading.service';
+import { ErrorMessageService } from '../../services/error-message.service';
+
 
 export interface TrafficPacket {
     packetId: string;
@@ -46,9 +49,9 @@ export class SnifferWebSocketService {
     private completeSubject = new Subject<number>();
     private errorSubject = new Subject<string>();
     private payloadSubjects = new Map<string, Subject<string>>();
-
     private offsets = new Map<string, number>();
-
+    loadingService = inject(LoadingService);
+    messageService = inject(ErrorMessageService)
     get packets$(): Observable<TrafficPacket> {
         return this.packetSubject.asObservable();
     }
@@ -100,12 +103,12 @@ export class SnifferWebSocketService {
         });
 
         this.stompClient.onConnect = () => {
-            console.log('WebSocket connected');
+            this.messageService.showSuccess('WebSocket connected');
             this.connected = true;
         };
 
         this.stompClient.onDisconnect = () => {
-            console.log('WebSocket disconnected');
+            this.messageService.showSuccess('WebSocket disconnected');
             this.connected = false;
         };
 
@@ -114,52 +117,45 @@ export class SnifferWebSocketService {
 
     subscribeToTraffic(snifferId: string) {
         if (!this.stompClient || !this.connected) {
-            console.error('WebSocket not connected');
+            this.messageService.showError('WebSocket not connected');
             return;
         }
 
-        // Подписка на пакеты
         this.stompClient.subscribe(`/api/v1/topic/traffic/${snifferId}/packet`, (message: Message) => {
             const packet = JSON.parse(message.body);
             this.packetSubject.next(packet);
         });
 
-        // Подписка на завершение
         this.stompClient.subscribe(`/api/v1/topic/traffic/${snifferId}/complete`, (message: Message) => {
             const data = JSON.parse(message.body);
             this.completeSubject.next(data.totalPackets);
+            this.loadingService.setLoading(false);
         });
 
-        // Подписка на ошибки
         this.stompClient.subscribe(`/api/v1/topic/traffic/${snifferId}/error`, (message: Message) => {
             const data = JSON.parse(message.body);
             this.errorSubject.next(data.error);
+            this.loadingService.setLoading(false);
         });
     }
 
     getPayload$(packetId: string): Observable<string> {
-        if (!this.payloadSubjects.has(packetId)) {
-            this.payloadSubjects.set(packetId, new Subject<string>());
+        const subject = new Subject<string>();
 
-            // Добавить проверку
-            if (this.stompClient) {
-                this.stompClient.subscribe(`/api/v1/topic/payload/${packetId}`, (message: Message) => {
-                    const payload = message.body;
-                    this.payloadSubjects.get(packetId)?.next(payload);
-                    this.payloadSubjects.get(packetId)?.complete();
-                });
-            } else {
-                console.error('STOMP client not initialized');
-                this.payloadSubjects.get(packetId)?.error('STOMP client not initialized');
-            }
+        if (this.stompClient) {
+            this.stompClient.subscribe(`/api/v1/topic/payload/${packetId}`, (message: Message) => {
+                const payload = message.body;
+                subject.next(payload);
+                subject.complete();
+            });
         }
 
-        return this.payloadSubjects.get(packetId)!.asObservable();
+        return subject.asObservable();
     }
 
     requestPayload(snifferId: string, packetId: string) {
         if (!this.stompClient) {
-            console.error('STOMP client not initialized');
+            this.messageService.showWarning('STOMP client not initialized');
             return;
         }
 
@@ -174,9 +170,12 @@ export class SnifferWebSocketService {
 
     requestTraffic(request: TrafficRequest) {
         if (!this.stompClient || !this.connected) {
-            console.error('WebSocket not connected');
+            this.messageService.showError('WebSocket not connected');
             return;
         }
+        // Включить загрузку перед запросом
+        this.loadingService.setLoading(true);
+
         this.stompClient.publish({
             destination: '/api/v1/app/traffic.request',
             body: JSON.stringify(request)

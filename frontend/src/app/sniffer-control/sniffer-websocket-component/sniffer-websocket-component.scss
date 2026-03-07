@@ -10,12 +10,10 @@
     display: flex;
     align-items: center;
     color: var(--color-secondary);
-    margin-bottom: 16px;
 
     .loading-spinner {
         color: var(--primary);
         animation: pulse 1.5s infinite;
-        margin-left: 16px;
     }
 }
 
@@ -211,6 +209,39 @@
     }
 }
 
+.payload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+
+    h4 {
+        margin: 0;
+    }
+}
+
+.payload-control {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 16px;
+}
+
+.payload-length-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+
+    mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
 @keyframes spin {
     from {
         transform: rotate(0deg);
@@ -218,5 +249,76 @@
 
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+
+.filters-section {
+    .filters-row {
+        display: flex;
+        gap: 16px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-field {
+            flex: 1;
+            min-width: 230px;
+        }
+
+        .search-field {
+            flex: 2;
+        }
+
+        .date-range-field {
+            flex: 1.5;
+        }
+    }
+}
+
+.filter-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.stats-bar {
+    display: flex;
+    align-items: center;
+}
+
+.filters-row:last-child {
+    margin-bottom: 0;
+}
+
+.horisontal-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+    min-height: 48px;
+
+    h2 {
+        margin: 0;
+    }
+
+    .stats-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
     }
 }
