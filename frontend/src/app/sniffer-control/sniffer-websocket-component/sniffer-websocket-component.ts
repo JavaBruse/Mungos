@@ -43,7 +43,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private scrollDispatcher = inject(ScrollDispatcher);
   private fb = inject(FormBuilder);
-  private newPackets: TrafficPacket[] = [];
+
   trafficData = signal<TrafficPacket[]>([]);
   expandedPacket = signal<number | null>(null);
   id = signal('');
@@ -124,8 +124,8 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   }
 
   resetAndLoad() {
-    this.newPackets = [];
     this.wsService.setOffset(this.id(), 0);
+    this.trafficData.set([]);
     this.hasMore.set(true);
     this.loadMore();
   }
@@ -204,22 +204,12 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
 
     this.subscriptions = [
       this.wsService.packets$.subscribe(packet => {
-        if (this.filterActive()) {
-          this.newPackets.push(packet);
-        } else {
-          this.trafficData.update(data => [...data, packet]);
-        }
+        this.trafficData.update(data => [...data, packet]);
       }),
 
       this.wsService.complete$.subscribe(total => {
-        if (this.filterActive()) {
-          this.trafficData.set([...this.newPackets]);
-          this.newPackets = [];
-          this.wsService.setOffset(this.id(), total);
-        } else {
-          const newOffset = this.wsService.getOffset(this.id()) + total;
-          this.wsService.setOffset(this.id(), newOffset);
-        }
+        const newOffset = this.wsService.getOffset(this.id()) + total;
+        this.wsService.setOffset(this.id(), newOffset);
 
         if (total < this.LIMIT) {
           this.hasMore.set(false);
