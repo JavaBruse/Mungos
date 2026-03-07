@@ -49,7 +49,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   id = signal('');
   hasMore = signal(true);
   filterActive = signal(false);
-
+  isLoading = signal(false);
   filterForm: FormGroup;
 
   availableProtocols = ['TCP', 'UDP', 'HTTP', 'HTTPS', 'DNS', 'ICMP', 'ARM', 'FTP', 'SSH', 'SMTP'];
@@ -91,12 +91,22 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
     if (formValues.ips) {
       request.ips = formValues.ips.split(',').map((s: string) => s.trim());
     }
+
+
     if (formValues.startTime) {
-      request.startTime = new Date(formValues.startTime).getTime() * 1000000;
+      const startDate = new Date(formValues.startTime);
+      startDate.setHours(0, 0, 0, 0);
+      request.startTime = startDate.getTime() * 1000000;
     }
+
     if (formValues.endTime) {
-      request.endTime = new Date(formValues.endTime).getTime() * 1000000;
+      const endDate = new Date(formValues.endTime);
+      endDate.setHours(23, 59, 59, 999);
+      request.endTime = endDate.getTime() * 1000000;
     }
+
+
+
     if (formValues.textSearch) {
       request.textSearch = formValues.textSearch;
     }
@@ -125,7 +135,8 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
 
   resetAndLoad() {
     this.wsService.setOffset(this.id(), 0);
-    this.trafficData.set([]);
+    // this.trafficData.set([]);
+    this.isLoading.set(true);
     this.hasMore.set(true);
     this.loadMore();
   }
@@ -204,7 +215,12 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
 
     this.subscriptions = [
       this.wsService.packets$.subscribe(packet => {
-        this.trafficData.update(data => [...data, packet]);
+        if (this.isLoading()) {
+          this.trafficData.set([packet]);
+          this.isLoading.set(false);
+        } else {
+          this.trafficData.update(data => [...data, packet]);
+        }
       }),
 
       this.wsService.complete$.subscribe(total => {

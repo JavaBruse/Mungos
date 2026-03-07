@@ -36,7 +36,10 @@
                     <mat-label>Протокол</mat-label>
                     <mat-select formControlName="protocols" multiple>
                         @for (protocol of availableProtocols; track protocol) {
-                        <mat-option [value]="protocol">{{ protocol | uppercase }}</mat-option>
+                        <mat-option [value]="protocol">
+                            <span class="protocol-dot" [class]="'protocol-' + protocol.toLowerCase()"></span>
+                            {{ protocol | uppercase }}
+                        </mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
@@ -72,23 +75,23 @@
                 <table>
                     <tr>
                         <td class="field-name">Timestamp</td>
-                        <td>{{ formatTimestamp(packet.timestamp) }}</td>
+                        <td class="field-value">{{ formatTimestamp(packet.timestamp) }}</td>
                     </tr>
                     <tr>
                         <td class="field-name">Protocol</td>
-                        <td>{{ packet.protocol }}</td>
+                        <td class="field-value">{{ packet.protocol }}</td>
                     </tr>
                     <tr>
                         <td class="field-name">Source</td>
-                        <td>{{ packet.srcIp }}:{{ packet.srcPort }}</td>
+                        <td class="field-value">{{ packet.srcIp }}:{{ packet.srcPort }}</td>
                     </tr>
                     <tr>
                         <td class="field-name">Destination</td>
-                        <td>{{ packet.dstIp }}:{{ packet.dstPort }}</td>
+                        <td class="field-value">{{ packet.dstIp }}:{{ packet.dstPort }}</td>
                     </tr>
                     <tr>
                         <td class="field-name">Length</td>
-                        <td>
+                        <td class="field-value">
                             @if (packet.hasPayload) {
                             <button mat-button color="primary" (click)="togglePayload(packet)"
                                 class="payload-length-btn">

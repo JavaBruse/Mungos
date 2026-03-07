@@ -48,7 +48,7 @@ export class SnifferService {
         this.http.get<void>(`${this.apiUrl}/ping/${id}`).subscribe({
             next: () => {
                 this.loadAll();
-                this.errorMessageService.showInfo("Ответ получен");
+                this.errorMessageService.showSuccess("Ответ получен");
 
             },
             error: () => { },

@@ -18,7 +18,7 @@
 }
 
 .packets-list {
-    padding: 16px 0;
+    padding: 0 0;
 }
 
 .packet-card {
@@ -32,7 +32,7 @@
 }
 
 .packet-header {
-    padding: 12px 16px;
+    padding: 7px 5px;
     display: flex;
     gap: 16px;
     align-items: center;
@@ -48,8 +48,6 @@
 
 .packet-time {
     color: var(--color-secondary);
-    font-family: monospace;
-    min-width: 180px;
     font-size: 0.9em;
 }
 
@@ -59,31 +57,43 @@
     font-size: 0.85em;
     min-width: 60px;
     text-align: center;
+}
 
-    &.protocol-tcp {
-        background: rgba(0, 188, 212, 0.2);
-        color: var(--primary);
-    }
+.protocol-dot {
+    display: inline-block;
+    width: 60px;
+    height: 8px;
+    margin-right: 10px;
+}
 
-    &.protocol-udp {
-        background: rgba(76, 175, 80, 0.2);
-        color: #4caf50;
-    }
+@mixin protocol-colors($name, $bg) {
 
-    &.protocol-http {
-        background: rgba(255, 152, 0, 0.2);
-        color: var(--accent);
+    .packet-protocol.protocol-#{$name},
+    .protocol-dot.protocol-#{$name} {
+        background: $bg;
+        border: 2px solid var(--color);
     }
+}
 
-    &.protocol-dns {
-        background: rgba(156, 39, 176, 0.2);
-        color: #9c27b0;
-    }
+@include protocol-colors('tcp', rgba(0, 255, 255, 0.3));
+@include protocol-colors('udp', rgba(255, 0, 255, 0.3));
+@include protocol-colors('http', rgba(255, 0, 0, 0.3));
+@include protocol-colors('https', rgba(255, 128, 0, 0.3));
+@include protocol-colors('dns', rgba(0, 0, 255, 0.3));
+@include protocol-colors('icmp', rgba(255, 255, 0, 0.3));
+@include protocol-colors('arm', rgba(128, 0, 255, 0.3));
+@include protocol-colors('ftp', rgba(0, 255, 128, 0.3));
+@include protocol-colors('ssh', rgba(255, 0, 128, 0.3));
+@include protocol-colors('smtp', rgba(255, 128, 64, 0.3));
+@include protocol-colors('unknown',
+    linear-gradient(90deg,
+        #ff0000, #ff8000, #ffff00, #00ff00,
+        #00ffff, #0000ff, #8000ff, #ff00ff, #ff0080));
 
-    &.protocol-unknown {
-        background: var(--sidebar-devider);
-        color: var(--color-secondary);
-    }
+.protocol-icon {
+    margin-right: 8px;
+    font-size: 18px;
+    vertical-align: middle;
 }
 
 .packet-summary {
@@ -103,7 +113,7 @@
 }
 
 .packet-details {
-    padding: 16px;
+    padding: 10px;
     border-top: 1px solid var(--sidebar-devider);
     background: var(--background);
 
@@ -113,20 +123,22 @@
 
         .field-name {
             width: 120px;
-            padding: 8px;
+            padding: 3px;
             font-weight: 500;
             color: var(--color);
-            vertical-align: top;
+            text-align: center;
+
+            vertical-align: center;
             background: var(--card);
             border: 1px solid var(--sidebar-devider);
         }
 
         .field-value {
-            padding: 8px;
+            padding: 0px 0px 0px 10px;
             font-family: monospace;
             word-break: break-word;
             color: var(--color);
-            border: 1px solid var(--sidebar-devider);
+            vertical-align: top;
         }
     }
 }
@@ -136,7 +148,7 @@
     overflow: auto;
     background: var(--card);
     color: var(--color);
-    padding: 12px;
+    padding: 5px;
     font-size: 12px;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -175,15 +187,6 @@
 .payload-control {
     margin-bottom: 16px;
     text-align: center;
-}
-
-.load-payload-btn {
-    background: var(--primary);
-    color: var(--color);
-    border: 1px solid var(--sidebar-devider);
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
 }
 
 .payload-loading {
@@ -228,14 +231,9 @@
 
 .payload-length-btn {
     display: inline-flex;
-    align-items: center;
-    gap: 4px;
-
-    mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-    }
+    padding: 0px;
+    margin: 0px;
+    border-radius: 0;
 }
 
 .spinning {
@@ -252,17 +250,6 @@
     }
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
 
 .filters-section {
     .filters-row {
@@ -275,7 +262,7 @@
 
         .filter-field {
             flex: 1;
-            min-width: 230px;
+            min-width: 250px;
         }
 
         .search-field {
