@@ -7,13 +7,11 @@ import (
 	"sniffer/core/capture"
 )
 
-// PacketLogger сохраняет пакеты в файл
 type PacketLogger struct {
 	logger *log.Logger
 	file   *os.File
 }
 
-// NewPacketLogger создаёт логгер в файл
 func NewPacketLogger(filename string) (*PacketLogger, error) {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -25,7 +23,6 @@ func NewPacketLogger(filename string) (*PacketLogger, error) {
 	}, nil
 }
 
-// Write сохраняет пакет
 func (l *PacketLogger) Write(p *capture.Packet) {
 	l.logger.Printf("%s %s:%d -> %s:%d [%s] len=%d ttl=%d flags=%s",
 		p.Timestamp.Format("2006-01-02 15:04:05.999"),
@@ -38,7 +35,6 @@ func (l *PacketLogger) Write(p *capture.Packet) {
 	)
 }
 
-// Close закрывает файл
 func (l *PacketLogger) Close() error {
 	return l.file.Close()
 }

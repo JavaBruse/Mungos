@@ -19,7 +19,7 @@ import (
 
 	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
-	"sniffer/core/storage"
+	"sniffer/core/storage/clickhouse"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -41,7 +41,7 @@ type Config struct {
 	DBPass     string
 	DBName     string
 	DBProtocol string
-	Storage    *storage.ClickHouseStorage
+	Storage    *clickhouse.ClickHouseStorage
 }
 
 type Server struct {
@@ -54,7 +54,7 @@ type Server struct {
 	serverCert tls.Certificate
 	certPEM    []byte
 	keyPEM     []byte
-	storage    *storage.ClickHouseStorage
+	storage    *clickhouse.ClickHouseStorage
 }
 
 type StatsCollector struct {
@@ -241,7 +241,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 
 	// Сохраняем в БД через storage
 	if s.storage != nil && s.storage.Enabled() {
-		clientData := &storage.ClientData{ // используем storage.ClientData
+		clientData := &clickhouse.ClientData{ // используем storage.ClientData
 			ClientID:          req.GetSnifferId(),
 			SessionKey:        sessionKey,
 			MasterKey:         req.GetMasterKey(),

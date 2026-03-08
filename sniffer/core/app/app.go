@@ -11,13 +11,14 @@ import (
 	"sniffer/core/config"
 	"sniffer/core/grpc"
 	"sniffer/core/storage"
+	"sniffer/core/storage/clickhouse"
 )
 
 type App struct {
 	config     *config.Config
 	sniffer    *capture.Sniffer
 	fileLogger *storage.PacketLogger
-	chStorage  *storage.ClickHouseStorage
+	chStorage  *clickhouse.ClickHouseStorage
 	grpc       *grpc.Server
 	packetChan chan *capture.Packet
 	stopChan   chan struct{}
@@ -39,7 +40,7 @@ func New(cfg *config.Config) (*App, error) {
 		fileLogger = nil
 	}
 
-	chStorage, _ := storage.NewClickHouseStorage(
+	chStorage, _ := clickhouse.NewClickHouseStorage(
 		cfg.DBHost,
 		cfg.DBPort,
 		cfg.DBUser,
