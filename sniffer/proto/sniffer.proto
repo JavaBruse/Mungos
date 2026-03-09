@@ -8,8 +8,10 @@ service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
-  rpc GetFilteredTraffic(TrafficFilterRequest) returns (stream TrafficPacket);
+  rpc GetFilteredPackage(PackageFilterRequest) returns (stream TrafficPacket);
   rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
+  rpc GetSettings(SettingRequest) returns (SettingResponse);
+  rpc SetSettings(SettingRequest) returns (SettingResponse);
 }
 
 
@@ -22,7 +24,7 @@ message PayloadResponse {
   bytes payload = 1;
 }
 
-message TrafficFilterRequest {
+message PackageFilterRequest {
   string session_key = 1;
   FilterExpression filter = 2;
   int32 limit = 3; 
@@ -61,8 +63,7 @@ message TrafficPacket {
 
 message RegisterRequest {
   string master_key = 1;
-  string sniffer_id = 2;
-  string session_key = 3;
+  string session_key = 2;
 }
 
 message RegisterResponse {
@@ -70,6 +71,17 @@ message RegisterResponse {
   string session_key = 2;
   string message = 3;
   string server_certificate = 4;
+}
+
+
+message SettingRequest {
+  string session_key = 1;
+  repeated string filters = 2;
+}
+
+message SettingResponse {
+  repeated string filters = 1;
+  int64 timestamp = 2;
 }
 
 message MetricsRequest {

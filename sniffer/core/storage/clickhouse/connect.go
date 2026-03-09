@@ -4,12 +4,23 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"sniffer/core/capture"
+	"sniffer/core/logger"
 	"time"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/google/uuid"
 )
+
+type ClickHouseStorage struct {
+	conn     *sql.DB
+	enabled  bool
+	host     string
+	port     int
+	user     string
+	password string
+	db       string
+}
 
 func (c *ClickHouseStorage) GetConn() *sql.DB {
 	return c.conn
@@ -25,7 +36,7 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 	}
 
 	if err := storage.connect(); err != nil {
-		log.Printf("Initial ClickHouse connection failed: %v", err)
+		logger.Info("Initial ClickHouse connection failed: %v", err)
 		return storage, nil
 	}
 
@@ -33,7 +44,7 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 	createClientsTable(storage.conn)
 	createSettingTable(storage.conn)
 
-	log.Println("ClickHouse connected")
+	logger.Info("ClickHouse connected")
 	return storage, nil
 }
 
@@ -72,20 +83,20 @@ func (c *ClickHouseStorage) reconnect() {
 		if err == nil {
 			return
 		}
-		log.Printf("ClickHouse connection lost: %v", err)
+		logger.Info("ClickHouse connection lost: %v", err)
 	}
 
-	log.Println("Reconnecting to ClickHouse...")
+	logger.Info("Reconnecting to ClickHouse...")
 
 	for i := 0; i < 30; i++ {
 		if err := c.connect(); err == nil {
-			log.Println("Reconnected to ClickHouse")
+			logger.Info("Reconnected to ClickHouse")
 			return
 		}
 		time.Sleep(2 * time.Second)
 	}
 
-	log.Println("Failed to reconnect to ClickHouse")
+	logger.Error("Failed to reconnect to ClickHouse")
 	c.enabled = false
 }
 

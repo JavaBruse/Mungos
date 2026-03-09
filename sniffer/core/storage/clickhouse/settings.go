@@ -4,17 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
+
+type SettingsData struct {
+	BPFFilter []string
+	CreatedAt time.Time
+}
 
 func createSettingTable(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS sniffer_settings (
-			client_id String,
-			port_filter Array(Int32),
-			ip_filter Array(String),
+			filters Array(String),  // одно поле вместо двух
 			create_at DateTime
 		) ENGINE = ReplacingMergeTree(create_at)
-		ORDER BY (client_id)
+		 ORDER BY create_at 
 	`
 
 	_, err := conn.Exec(query)
@@ -28,13 +32,11 @@ func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData
 
 	query := `
 		INSERT INTO sniffer_settings (
-			client_id, port_filter, ip_filter, create_at
-		) VALUES (?, ?, ?, ?)
+			filters, create_at
+		) VALUES (?, ?)
 	`
 	_, err := c.conn.ExecContext(ctx, query,
-		data.ClientID,
-		data.PortFilter,
-		data.IPFilter,
+		data.BPFFilter,
 		data.CreatedAt,
 	)
 	if err != nil {
@@ -43,24 +45,21 @@ func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData
 	return err
 }
 
-func (c *ClickHouseStorage) GetSetting(ctx context.Context, client_id string) (*SettingsData, error) {
+func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*SettingsData, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
 	query := `
-		SELECT client_id, port_filter, ip_filter, create_at 
+		SELECT filters, create_at 
 		FROM sniffer_settings 
-		WHERE client_id = ?
 		ORDER BY create_at DESC 
 		LIMIT 1
 	`
 
 	var data SettingsData
-	err := c.conn.QueryRowContext(ctx, query, client_id).Scan(
-		&data.ClientID,
-		&data.PortFilter,
-		&data.IPFilter,
+	err := c.conn.QueryRowContext(ctx, query).Scan(
+		&data.BPFFilter,
 		&data.CreatedAt,
 	)
 
@@ -72,4 +71,19 @@ func (c *ClickHouseStorage) GetSetting(ctx context.Context, client_id string) (*
 		return nil, err
 	}
 	return &data, nil
+}
+
+func (c *ClickHouseStorage) SettingsExists(ctx context.Context, clientID string) (bool, error) {
+	if !c.ensureConnection() {
+		return false, fmt.Errorf("ClickHouse not available")
+	}
+
+	query := `SELECT COUNT() FROM sniffer_settings`
+	var count uint64
+	err := c.conn.QueryRowContext(ctx, query, clientID).Scan(&count)
+	if err != nil {
+		c.reconnect()
+		return false, err
+	}
+	return count > 0, nil
 }

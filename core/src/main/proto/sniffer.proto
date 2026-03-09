@@ -11,9 +11,12 @@ service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
-  rpc GetFilteredTraffic(TrafficFilterRequest) returns (stream TrafficPacket);
+  rpc GetFilteredPackage(PackageFilterRequest) returns (stream TrafficPacket);
   rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
+  rpc GetSettings(SettingRequest) returns (SettingResponse);
+  rpc SetSettings(SettingRequest) returns (SettingResponse);
 }
+
 
 message PayloadRequest {
   string session_key = 1;
@@ -24,23 +27,22 @@ message PayloadResponse {
   bytes payload = 1;
 }
 
-message TrafficFilterRequest {
+message PackageFilterRequest {
   string session_key = 1;
   FilterExpression filter = 2;
-  int32 limit = 3;          // сколько пакетов вернуть
-  int32 offset = 4;         // для пагинации
+  int32 limit = 3;
+  int32 offset = 4;
 }
 
 message FilterExpression {
-  repeated string protocols = 1;
-  repeated int32 ports = 2;
-  repeated string ips = 3;
-  int64 start_time = 4;
-  int64 end_time = 5;
-  string text_search = 6;
-  map<string, string> custom = 7;
+  repeated string protocols = 1;      // ["TCP", "UDP", "HTTP"]
+  repeated int32 ports = 2;           // [80, 443, 53]
+  repeated string ips = 3;            // ["192.168.1.1", "10.0.0.1"]
+  int64 start_time = 4;                // с какого времени
+  int64 end_time = 5;                  // по какое время
+  string text_search = 6;              // поиск по содержимому
+  map<string, string> custom = 7;      // кастомные фильтры
 }
-
 
 message TrafficPacket {
   string packet_id = 1;
@@ -62,11 +64,9 @@ message TrafficPacket {
   string tcp_flags = 17;
 }
 
-
 message RegisterRequest {
   string master_key = 1;
-  string sniffer_id = 2;
-  string session_key = 3;
+  string session_key = 2;
 }
 
 message RegisterResponse {
@@ -74,6 +74,17 @@ message RegisterResponse {
   string session_key = 2;
   string message = 3;
   string server_certificate = 4;
+}
+
+
+message SettingRequest {
+  string session_key = 1;
+  repeated string filters = 2;
+}
+
+message SettingResponse {
+  repeated string filters = 1;
+  int64 timestamp = 2;
 }
 
 message MetricsRequest {
@@ -145,6 +156,6 @@ message PingRequest {
 }
 
 message PingResponse {
-  string message = 3;
-  int64 timestamp = 4;
+  string message = 1;
+  int64 timestamp = 2;
 }

@@ -8,13 +8,14 @@ import (
 
 	"sniffer/core/app"
 	"sniffer/core/config"
+	"sniffer/core/logger"
 )
 
 func main() {
 	if tz := os.Getenv("TZ"); tz != "" {
 		loc, err := time.LoadLocation(tz)
 		if err != nil {
-			log.Printf("Invalid TZ %s, using local: %v", tz, err)
+			logger.Error("Invalid TZ %s, using local: %v", tz, err)
 		} else {
 			time.Local = loc
 		}

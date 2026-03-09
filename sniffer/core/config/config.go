@@ -2,15 +2,16 @@ package config
 
 import (
 	"os"
+	"sniffer/core/logger"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
 	Device     string
 	Snaplen    int
 	Promisc    bool
-	BPFFilter  string
-	LogFile    string
+	BPFFilter  []string
 	GRPCPort   int
 	MasterKey  string
 	SnifferID  string
@@ -28,8 +29,7 @@ func Load() *Config {
 		Device:     getEnv("SNIFFER_DEVICE", ""),
 		Snaplen:    getEnvAsInt("SNIFFER_SNAPLEN", 0),
 		Promisc:    getEnvAsBool("SNIFFER_PROMISC", false),
-		BPFFilter:  getEnv("SNIFFER_FILTER", ""),
-		LogFile:    getEnv("SNIFFER_LOG", ""),
+		BPFFilter:  getEnvAsStringSlice("SNIFFER_FILTERS", []string{}),
 		GRPCPort:   getEnvAsInt("SNIFFER_GRPC_PORT", 0),
 		MasterKey:  getEnv("DEFAULT_MASTER_KEY", ""),
 		SnifferID:  getEnv("SNIFFER_ID", ""),
@@ -67,4 +67,19 @@ func getEnvAsBool(key string, defaultValue bool) bool {
 		}
 	}
 	return defaultValue
+}
+
+func getEnvAsStringSlice(key string, defaultVal []string) []string {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultVal
+	}
+	parts := strings.Split(val, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		result = append(result, strings.TrimSpace(p))
+	}
+	logger.Info("filter: %v", result)
+
+	return result
 }

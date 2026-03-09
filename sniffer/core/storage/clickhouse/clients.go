@@ -4,19 +4,25 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
+
+type ClientData struct {
+	SessionKey        string
+	ServerCertificate string
+	ServerPrivateKey  string
+	CreatedAt         time.Time
+}
 
 func createClientsTable(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS sniffer_clients (
-			client_id String,
 			session_key String,
-			master_key String,
 			server_certificate String,
 			server_private_key String,
 			created_at DateTime
 		) ENGINE = MergeTree()
-		ORDER BY (client_id)
+		ORDER BY (session_key)
 	`
 	_, err := conn.Exec(query)
 	return err
@@ -29,13 +35,11 @@ func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *ClientData) er
 
 	query := `
 		INSERT INTO sniffer_clients (
-			client_id, session_key, master_key, server_certificate, server_private_key, created_at
-		) VALUES (?, ?, ?, ?, ?, ?)
+			session_key, server_certificate, server_private_key, created_at
+		) VALUES (?, ?, ?, ?)
 	`
 	_, err := c.conn.ExecContext(ctx, query,
-		data.ClientID,
 		data.SessionKey,
-		data.MasterKey,
 		data.ServerCertificate,
 		data.ServerPrivateKey,
 		data.CreatedAt,
@@ -53,18 +57,16 @@ func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey s
 
 	query := `
 		SELECT 
-			client_id, session_key, master_key, server_certificate, server_private_key, created_at
+			session_key, server_certificate, server_private_key, created_at
 		FROM sniffer_clients 
 		WHERE session_key = ?
-		ORDER BY create_at DESC 
+		ORDER BY created_at
 		LIMIT 1
 	`
 
 	var data ClientData
 	err := c.conn.QueryRowContext(ctx, query, sessionKey).Scan(
-		&data.ClientID,
 		&data.SessionKey,
-		&data.MasterKey,
 		&data.ServerCertificate,
 		&data.ServerPrivateKey,
 		&data.CreatedAt,
@@ -80,25 +82,22 @@ func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey s
 	return &data, nil
 }
 
-func (c *ClickHouseStorage) GetClientByID(ctx context.Context, clientID string) (*ClientData, error) {
+func (c *ClickHouseStorage) GetClient(ctx context.Context, clientID string) (*ClientData, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
 	query := `
 		SELECT 
-			client_id, session_key, master_key, server_certificate, server_private_key, created_at
+			session_key, server_certificate, server_private_key, created_at
 		FROM sniffer_clients 
-		WHERE client_id = ?
-		ORDER BY create_at DESC 
+		ORDER BY created_at 
 		LIMIT 1
 	`
 
 	var data ClientData
 	err := c.conn.QueryRowContext(ctx, query, clientID).Scan(
-		&data.ClientID,
 		&data.SessionKey,
-		&data.MasterKey,
 		&data.ServerCertificate,
 		&data.ServerPrivateKey,
 		&data.CreatedAt,

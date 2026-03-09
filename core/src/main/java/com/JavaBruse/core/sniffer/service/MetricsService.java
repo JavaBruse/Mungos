@@ -1,6 +1,7 @@
 package com.JavaBruse.core.sniffer.service;
 
 import com.JavaBruse.core.exaption.ConnectionException;
+import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
 import com.JavaBruse.core.sniffer.domain.model.SnifferEntity;
 import com.JavaBruse.core.sniffer.repository.SnifferRepository;
 import com.JavaBruse.proto.MetricsResponse;
@@ -15,18 +16,16 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class MetricsService {
-    private final SnifferRepository snifferRepository;
     private final SnifferService snifferService;
 
     @Value("${server.port}")
     private String port;
 
     public List<Map<String, Object>> getClients() {
-        List<SnifferEntity> sniffers = snifferRepository.findAll().stream()
-                .filter(x -> !x.isDeleted()).toList();
+        List<SnifferResponseDTO> sniffers = snifferService.getAll();
         List<Map<String, Object>> result = new ArrayList<>();
         String baseTarget = "core-app:" + port;
-        for (SnifferEntity s : sniffers) {
+        for (SnifferResponseDTO s : sniffers) {
             Map<String, Object> client = new HashMap<>();
             client.put("targets", Collections.singletonList(baseTarget));
             Map<String, String> labels = new HashMap<>();
@@ -40,8 +39,10 @@ public class MetricsService {
     }
 
     public String getMetricsInPrometheusFormat(UUID uuid) {
-        SnifferEntity sniffer = snifferRepository.findById(uuid.toString())
-                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + uuid));
+        SnifferResponseDTO sniffer = snifferService.getAll().stream()
+                .filter(x -> x.getId().equals(uuid))
+                .findFirst()
+                .orElseThrow(() -> new ConnectionException("Sniffer not found with id: " + uuid));
 
         MetricsResponse metrics = snifferService.getMetrics(sniffer.getId());
 

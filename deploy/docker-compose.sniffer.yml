@@ -47,6 +47,7 @@ services:
         SNIFFER_ID: ${SNIFFER_ID}
         SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
         DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
+        SNIFFER_FILTERS: ${SNIFFER_FILTERS}
     ports:
       - "0.0.0.0:${SNIFFER_GRPC_PORT}:3331"
     networks:

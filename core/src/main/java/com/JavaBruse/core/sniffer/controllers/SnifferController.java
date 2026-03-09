@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.net.ssl.SSLEngineResult;
 import java.util.List;
 
 @RestController
@@ -47,22 +48,16 @@ public class SnifferController {
     }
 
     @GetMapping("/ping/{id}")
-    public ResponseEntity<String> ping(@PathVariable String id) {
+    public ResponseEntity<Void> ping(@PathVariable String id) {
         try {
-            String result = snifferService.ping(id);
-            return ResponseEntity.ok(result);
-
+            snifferService.ping(id);
+            return ResponseEntity.ok().build();
         } catch (BusyException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("ERROR: " + e.getMessage());
-
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (ConnectionException e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body("ERROR: " + e.getMessage());
-
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         } catch (ServiceException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("ERROR: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

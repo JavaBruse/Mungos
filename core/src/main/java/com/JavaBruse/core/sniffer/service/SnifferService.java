@@ -101,7 +101,7 @@ public class SnifferService {
             throw new ServiceException("Failed to connect to sniffer: " + result.getErrorMessage());
         }
 
-        SnifferEntity sniffer = save(request, result);
+        save(request, result);
         log.info("Successfully added sniffer: {}:{}", request.getHost(), request.getPort());
         return getAll();
     }

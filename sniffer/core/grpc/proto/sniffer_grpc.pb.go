@@ -22,8 +22,10 @@ const (
 	SnifferService_Register_FullMethodName           = "/sniffer.SnifferService/Register"
 	SnifferService_GetMetrics_FullMethodName         = "/sniffer.SnifferService/GetMetrics"
 	SnifferService_Ping_FullMethodName               = "/sniffer.SnifferService/Ping"
-	SnifferService_GetFilteredTraffic_FullMethodName = "/sniffer.SnifferService/GetFilteredTraffic"
+	SnifferService_GetFilteredPackage_FullMethodName = "/sniffer.SnifferService/GetFilteredPackage"
 	SnifferService_GetPacketPayload_FullMethodName   = "/sniffer.SnifferService/GetPacketPayload"
+	SnifferService_GetSettings_FullMethodName        = "/sniffer.SnifferService/GetSettings"
+	SnifferService_SetSettings_FullMethodName        = "/sniffer.SnifferService/SetSettings"
 )
 
 // SnifferServiceClient is the client API for SnifferService service.
@@ -33,8 +35,10 @@ type SnifferServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
-	GetFilteredTraffic(ctx context.Context, in *TrafficFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error)
+	GetFilteredPackage(ctx context.Context, in *PackageFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error)
 	GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error)
+	GetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error)
+	SetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error)
 }
 
 type snifferServiceClient struct {
@@ -75,13 +79,13 @@ func (c *snifferServiceClient) Ping(ctx context.Context, in *PingRequest, opts .
 	return out, nil
 }
 
-func (c *snifferServiceClient) GetFilteredTraffic(ctx context.Context, in *TrafficFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error) {
+func (c *snifferServiceClient) GetFilteredPackage(ctx context.Context, in *PackageFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[0], SnifferService_GetFilteredTraffic_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[0], SnifferService_GetFilteredPackage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[TrafficFilterRequest, TrafficPacket]{ClientStream: stream}
+	x := &grpc.GenericClientStream[PackageFilterRequest, TrafficPacket]{ClientStream: stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -92,12 +96,32 @@ func (c *snifferServiceClient) GetFilteredTraffic(ctx context.Context, in *Traff
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SnifferService_GetFilteredTrafficClient = grpc.ServerStreamingClient[TrafficPacket]
+type SnifferService_GetFilteredPackageClient = grpc.ServerStreamingClient[TrafficPacket]
 
 func (c *snifferServiceClient) GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PayloadResponse)
 	err := c.cc.Invoke(ctx, SnifferService_GetPacketPayload_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *snifferServiceClient) GetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SettingResponse)
+	err := c.cc.Invoke(ctx, SnifferService_GetSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *snifferServiceClient) SetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SettingResponse)
+	err := c.cc.Invoke(ctx, SnifferService_SetSettings_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +135,10 @@ type SnifferServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
-	GetFilteredTraffic(*TrafficFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error
+	GetFilteredPackage(*PackageFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error
 	GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error)
+	GetSettings(context.Context, *SettingRequest) (*SettingResponse, error)
+	SetSettings(context.Context, *SettingRequest) (*SettingResponse, error)
 	mustEmbedUnimplementedSnifferServiceServer()
 }
 
@@ -132,11 +158,17 @@ func (UnimplementedSnifferServiceServer) GetMetrics(context.Context, *MetricsReq
 func (UnimplementedSnifferServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Ping not implemented")
 }
-func (UnimplementedSnifferServiceServer) GetFilteredTraffic(*TrafficFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error {
-	return status.Error(codes.Unimplemented, "method GetFilteredTraffic not implemented")
+func (UnimplementedSnifferServiceServer) GetFilteredPackage(*PackageFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error {
+	return status.Error(codes.Unimplemented, "method GetFilteredPackage not implemented")
 }
 func (UnimplementedSnifferServiceServer) GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPacketPayload not implemented")
+}
+func (UnimplementedSnifferServiceServer) GetSettings(context.Context, *SettingRequest) (*SettingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSettings not implemented")
+}
+func (UnimplementedSnifferServiceServer) SetSettings(context.Context, *SettingRequest) (*SettingResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetSettings not implemented")
 }
 func (UnimplementedSnifferServiceServer) mustEmbedUnimplementedSnifferServiceServer() {}
 func (UnimplementedSnifferServiceServer) testEmbeddedByValue()                        {}
@@ -213,16 +245,16 @@ func _SnifferService_Ping_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SnifferService_GetFilteredTraffic_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(TrafficFilterRequest)
+func _SnifferService_GetFilteredPackage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(PackageFilterRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(SnifferServiceServer).GetFilteredTraffic(m, &grpc.GenericServerStream[TrafficFilterRequest, TrafficPacket]{ServerStream: stream})
+	return srv.(SnifferServiceServer).GetFilteredPackage(m, &grpc.GenericServerStream[PackageFilterRequest, TrafficPacket]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type SnifferService_GetFilteredTrafficServer = grpc.ServerStreamingServer[TrafficPacket]
+type SnifferService_GetFilteredPackageServer = grpc.ServerStreamingServer[TrafficPacket]
 
 func _SnifferService_GetPacketPayload_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PayloadRequest)
@@ -238,6 +270,42 @@ func _SnifferService_GetPacketPayload_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SnifferServiceServer).GetPacketPayload(ctx, req.(*PayloadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SnifferService_GetSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SettingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).GetSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_GetSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).GetSettings(ctx, req.(*SettingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SnifferService_SetSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SettingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).SetSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_SetSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).SetSettings(ctx, req.(*SettingRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -265,11 +333,19 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetPacketPayload",
 			Handler:    _SnifferService_GetPacketPayload_Handler,
 		},
+		{
+			MethodName: "GetSettings",
+			Handler:    _SnifferService_GetSettings_Handler,
+		},
+		{
+			MethodName: "SetSettings",
+			Handler:    _SnifferService_SetSettings_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetFilteredTraffic",
-			Handler:       _SnifferService_GetFilteredTraffic_Handler,
+			StreamName:    "GetFilteredPackage",
+			Handler:       _SnifferService_GetFilteredPackage_Handler,
 			ServerStreams: true,
 		},
 	},

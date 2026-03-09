@@ -49,9 +49,9 @@ export class SnifferService {
             next: () => {
                 this.loadAll();
                 this.errorMessageService.showSuccess("Ответ получен");
-
             },
-            error: () => { },
+            error: () => {
+            },
         });
     }
 

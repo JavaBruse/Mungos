@@ -1,77 +1,54 @@
 package capture
 
 import (
-	"fmt"
+	"sniffer/core/logger"
 	"time"
-
-	"github.com/google/gopacket"
-	"github.com/google/gopacket/pcap"
 )
 
-// Sniffer отвечает за захват трафика
 type Sniffer struct {
-	device   string
-	snaplen  int
-	promisc  bool
-	timeout  time.Duration
-	filter   string
-	packetCh chan *Packet
-	stopCh   chan struct{}
+	device    string
+	snaplen   int
+	promisc   bool
+	timeout   time.Duration
+	BPFFilter []string
+	packetCh  chan *Packet
+	controlCh chan string
+	stopCh    chan struct{}
+	worker    *captureWorker
 }
 
-// NewSniffer создаёт новый экземпляр Sniffer
-func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration, filter string, bufferSize int) *Sniffer {
+func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration, BPFFilter []string, bufferSize int) *Sniffer {
 	return &Sniffer{
-		device:   device,
-		snaplen:  snaplen,
-		promisc:  promisc,
-		timeout:  timeout,
-		filter:   filter,
-		packetCh: make(chan *Packet, bufferSize),
-		stopCh:   make(chan struct{}),
+		device:    device,
+		snaplen:   snaplen,
+		promisc:   promisc,
+		timeout:   timeout,
+		BPFFilter: BPFFilter,
+		packetCh:  make(chan *Packet, bufferSize),
+		controlCh: make(chan string),
+		stopCh:    make(chan struct{}),
 	}
 }
 
-// Start запускает захват трафика (блокирующий)
 func (s *Sniffer) Start() error {
-	handle, err := pcap.OpenLive(s.device, int32(s.snaplen), s.promisc, s.timeout)
-	if err != nil {
-		return fmt.Errorf("open device: %w", err)
-	}
-	defer handle.Close()
-
-	if s.filter != "" {
-		if err := handle.SetBPFFilter(s.filter); err != nil {
-			return fmt.Errorf("set filter: %w", err)
-		}
-	}
-
-	fmt.Printf("Sniffer started on %s\n", s.device)
-	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-
-	for {
-		select {
-		case <-s.stopCh:
-			fmt.Println("Sniffer stopped")
-			return nil
-		case pkt := <-packetSource.Packets():
-			if packet := NewPacketFromGopacket(pkt); packet != nil {
-				select {
-				case s.packetCh <- packet:
-				default:
-					// Канал переполнен — пропускаем
-				}
-			}
-		}
-	}
+	filterString := s.BuildBPFFilter(s.BPFFilter)
+	s.worker = newCaptureWorker(s.device, s.snaplen, s.promisc, s.timeout, filterString, s.packetCh, s.controlCh, s.stopCh)
+	go s.worker.run()
+	return nil
 }
 
-// Stop останавливает захват
 func (s *Sniffer) Stop() {
 	close(s.stopCh)
 }
 
-// Packets возвращает канал с пакетами
 func (s *Sniffer) Packets() <-chan *Packet {
 	return s.packetCh
+}
+
+func (s *Sniffer) UpdateFilter(newFilter string) {
+	select {
+	case s.controlCh <- newFilter:
+	default:
+		logger.Warn("Control channel full, filter update dropped")
+	}
 }

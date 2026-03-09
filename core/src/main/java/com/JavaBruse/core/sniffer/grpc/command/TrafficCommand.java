@@ -5,8 +5,8 @@ import com.JavaBruse.core.sniffer.grpc.session.SessionInfo;
 import com.JavaBruse.core.sniffer.grpc.session.SessionManager;
 import com.JavaBruse.core.sniffer.domain.model.SnifferEntity;
 import com.JavaBruse.proto.FilterExpression;
+import com.JavaBruse.proto.PackageFilterRequest;
 import com.JavaBruse.proto.PayloadRequest;
-import com.JavaBruse.proto.TrafficFilterRequest;
 import com.JavaBruse.proto.TrafficPacket;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -27,7 +27,7 @@ public class TrafficCommand extends GrpcCommand<TrafficCommand.TrafficRequest, I
 
     @Override
     protected Iterator<TrafficPacket> executeWithSession(SessionInfo session, TrafficRequest request) {
-        TrafficFilterRequest protoRequest = TrafficFilterRequest.newBuilder()
+        PackageFilterRequest protoRequest = PackageFilterRequest.newBuilder()
                 .setSessionKey(session.getSessionKey())
                 .setFilter(request.getFilter())
                 .setLimit(request.getLimit())
@@ -36,7 +36,7 @@ public class TrafficCommand extends GrpcCommand<TrafficCommand.TrafficRequest, I
 
         try {
             return sessionManager.getStub(session)
-                    .getFilteredTraffic(protoRequest);
+                    .getFilteredPackage(protoRequest);
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.UNAVAILABLE) {
                 log.error("Connection lost to sniffer", e);

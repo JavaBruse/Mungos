@@ -107,7 +107,6 @@ public class GrpcConnectionManager {
 
             RegisterRequest request = RegisterRequest.newBuilder()
                     .setMasterKey(masterKey)
-                    .setSnifferId("java-server-" + System.currentTimeMillis())
                     .build();
 
             RegisterResponse response = insecureStub.withDeadlineAfter(10, TimeUnit.SECONDS)

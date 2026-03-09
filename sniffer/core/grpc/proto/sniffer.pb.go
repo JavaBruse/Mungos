@@ -117,7 +117,7 @@ func (x *PayloadResponse) GetPayload() []byte {
 	return nil
 }
 
-type TrafficFilterRequest struct {
+type PackageFilterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
 	Filter        *FilterExpression      `protobuf:"bytes,2,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -127,20 +127,20 @@ type TrafficFilterRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *TrafficFilterRequest) Reset() {
-	*x = TrafficFilterRequest{}
+func (x *PackageFilterRequest) Reset() {
+	*x = PackageFilterRequest{}
 	mi := &file_proto_sniffer_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *TrafficFilterRequest) String() string {
+func (x *PackageFilterRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*TrafficFilterRequest) ProtoMessage() {}
+func (*PackageFilterRequest) ProtoMessage() {}
 
-func (x *TrafficFilterRequest) ProtoReflect() protoreflect.Message {
+func (x *PackageFilterRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_sniffer_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -152,33 +152,33 @@ func (x *TrafficFilterRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use TrafficFilterRequest.ProtoReflect.Descriptor instead.
-func (*TrafficFilterRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use PackageFilterRequest.ProtoReflect.Descriptor instead.
+func (*PackageFilterRequest) Descriptor() ([]byte, []int) {
 	return file_proto_sniffer_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *TrafficFilterRequest) GetSessionKey() string {
+func (x *PackageFilterRequest) GetSessionKey() string {
 	if x != nil {
 		return x.SessionKey
 	}
 	return ""
 }
 
-func (x *TrafficFilterRequest) GetFilter() *FilterExpression {
+func (x *PackageFilterRequest) GetFilter() *FilterExpression {
 	if x != nil {
 		return x.Filter
 	}
 	return nil
 }
 
-func (x *TrafficFilterRequest) GetLimit() int32 {
+func (x *PackageFilterRequest) GetLimit() int32 {
 	if x != nil {
 		return x.Limit
 	}
 	return 0
 }
 
-func (x *TrafficFilterRequest) GetOffset() int32 {
+func (x *PackageFilterRequest) GetOffset() int32 {
 	if x != nil {
 		return x.Offset
 	}
@@ -452,8 +452,7 @@ func (x *TrafficPacket) GetTcpFlags() string {
 type RegisterRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MasterKey     string                 `protobuf:"bytes,1,opt,name=master_key,json=masterKey,proto3" json:"master_key,omitempty"`
-	SnifferId     string                 `protobuf:"bytes,2,opt,name=sniffer_id,json=snifferId,proto3" json:"sniffer_id,omitempty"`
-	SessionKey    string                 `protobuf:"bytes,3,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
+	SessionKey    string                 `protobuf:"bytes,2,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -491,13 +490,6 @@ func (*RegisterRequest) Descriptor() ([]byte, []int) {
 func (x *RegisterRequest) GetMasterKey() string {
 	if x != nil {
 		return x.MasterKey
-	}
-	return ""
-}
-
-func (x *RegisterRequest) GetSnifferId() string {
-	if x != nil {
-		return x.SnifferId
 	}
 	return ""
 }
@@ -577,6 +569,110 @@ func (x *RegisterResponse) GetServerCertificate() string {
 	return ""
 }
 
+type SettingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
+	Filters       []string               `protobuf:"bytes,2,rep,name=filters,proto3" json:"filters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SettingRequest) Reset() {
+	*x = SettingRequest{}
+	mi := &file_proto_sniffer_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SettingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SettingRequest) ProtoMessage() {}
+
+func (x *SettingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SettingRequest.ProtoReflect.Descriptor instead.
+func (*SettingRequest) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SettingRequest) GetSessionKey() string {
+	if x != nil {
+		return x.SessionKey
+	}
+	return ""
+}
+
+func (x *SettingRequest) GetFilters() []string {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+type SettingResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filters       []string               `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SettingResponse) Reset() {
+	*x = SettingResponse{}
+	mi := &file_proto_sniffer_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SettingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SettingResponse) ProtoMessage() {}
+
+func (x *SettingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SettingResponse.ProtoReflect.Descriptor instead.
+func (*SettingResponse) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SettingResponse) GetFilters() []string {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+func (x *SettingResponse) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
+	}
+	return 0
+}
+
 type MetricsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
@@ -586,7 +682,7 @@ type MetricsRequest struct {
 
 func (x *MetricsRequest) Reset() {
 	*x = MetricsRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[7]
+	mi := &file_proto_sniffer_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -598,7 +694,7 @@ func (x *MetricsRequest) String() string {
 func (*MetricsRequest) ProtoMessage() {}
 
 func (x *MetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[7]
+	mi := &file_proto_sniffer_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -611,7 +707,7 @@ func (x *MetricsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricsRequest.ProtoReflect.Descriptor instead.
 func (*MetricsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *MetricsRequest) GetSessionKey() string {
@@ -676,7 +772,7 @@ type MetricsResponse struct {
 
 func (x *MetricsResponse) Reset() {
 	*x = MetricsResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[8]
+	mi := &file_proto_sniffer_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +784,7 @@ func (x *MetricsResponse) String() string {
 func (*MetricsResponse) ProtoMessage() {}
 
 func (x *MetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[8]
+	mi := &file_proto_sniffer_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +797,7 @@ func (x *MetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricsResponse.ProtoReflect.Descriptor instead.
 func (*MetricsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *MetricsResponse) GetPacketsCount() int64 {
@@ -980,7 +1076,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[9]
+	mi := &file_proto_sniffer_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -992,7 +1088,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[9]
+	mi := &file_proto_sniffer_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1005,7 +1101,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{9}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PingRequest) GetSessionKey() string {
@@ -1032,7 +1128,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[10]
+	mi := &file_proto_sniffer_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1140,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[10]
+	mi := &file_proto_sniffer_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,7 +1153,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{10}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -1085,7 +1181,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\tpacket_id\x18\x02 \x01(\tR\bpacketId\"+\n" +
 	"\x0fPayloadResponse\x12\x18\n" +
 	"\apayload\x18\x01 \x01(\fR\apayload\"\x98\x01\n" +
-	"\x14TrafficFilterRequest\x12\x1f\n" +
+	"\x14PackageFilterRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\x121\n" +
 	"\x06filter\x18\x02 \x01(\v2\x19.sniffer.FilterExpressionR\x06filter\x12\x14\n" +
@@ -1126,20 +1222,25 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\ttcp_flags\x18\x11 \x01(\tR\btcpFlags\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"p\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
 	"\x0fRegisterRequest\x12\x1d\n" +
 	"\n" +
-	"master_key\x18\x01 \x01(\tR\tmasterKey\x12\x1d\n" +
-	"\n" +
-	"sniffer_id\x18\x02 \x01(\tR\tsnifferId\x12\x1f\n" +
-	"\vsession_key\x18\x03 \x01(\tR\n" +
+	"master_key\x18\x01 \x01(\tR\tmasterKey\x12\x1f\n" +
+	"\vsession_key\x18\x02 \x01(\tR\n" +
 	"sessionKey\"\x96\x01\n" +
 	"\x10RegisterResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1f\n" +
 	"\vsession_key\x18\x02 \x01(\tR\n" +
 	"sessionKey\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12-\n" +
-	"\x12server_certificate\x18\x04 \x01(\tR\x11serverCertificate\"1\n" +
+	"\x12server_certificate\x18\x04 \x01(\tR\x11serverCertificate\"K\n" +
+	"\x0eSettingRequest\x12\x1f\n" +
+	"\vsession_key\x18\x01 \x01(\tR\n" +
+	"sessionKey\x12\x18\n" +
+	"\afilters\x18\x02 \x03(\tR\afilters\"I\n" +
+	"\x0fSettingResponse\x12\x18\n" +
+	"\afilters\x18\x01 \x03(\tR\afilters\x12\x1c\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"1\n" +
 	"\x0eMetricsRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\"\x8d\x12\n" +
@@ -1215,14 +1316,16 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"F\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xdd\x02\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xe1\x03\n" +
 	"\x0eSnifferService\x12?\n" +
 	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x12?\n" +
 	"\n" +
 	"GetMetrics\x12\x17.sniffer.MetricsRequest\x1a\x18.sniffer.MetricsResponse\x123\n" +
 	"\x04Ping\x12\x14.sniffer.PingRequest\x1a\x15.sniffer.PingResponse\x12M\n" +
-	"\x12GetFilteredTraffic\x12\x1d.sniffer.TrafficFilterRequest\x1a\x16.sniffer.TrafficPacket0\x01\x12E\n" +
-	"\x10GetPacketPayload\x12\x17.sniffer.PayloadRequest\x1a\x18.sniffer.PayloadResponseB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
+	"\x12GetFilteredPackage\x12\x1d.sniffer.PackageFilterRequest\x1a\x16.sniffer.TrafficPacket0\x01\x12E\n" +
+	"\x10GetPacketPayload\x12\x17.sniffer.PayloadRequest\x1a\x18.sniffer.PayloadResponse\x12@\n" +
+	"\vGetSettings\x12\x17.sniffer.SettingRequest\x1a\x18.sniffer.SettingResponse\x12@\n" +
+	"\vSetSettings\x12\x17.sniffer.SettingRequest\x1a\x18.sniffer.SettingResponseB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
 
 var (
 	file_proto_sniffer_proto_rawDescOnce sync.Once
@@ -1236,54 +1339,60 @@ func file_proto_sniffer_proto_rawDescGZIP() []byte {
 	return file_proto_sniffer_proto_rawDescData
 }
 
-var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_proto_sniffer_proto_goTypes = []any{
 	(*PayloadRequest)(nil),       // 0: sniffer.PayloadRequest
 	(*PayloadResponse)(nil),      // 1: sniffer.PayloadResponse
-	(*TrafficFilterRequest)(nil), // 2: sniffer.TrafficFilterRequest
+	(*PackageFilterRequest)(nil), // 2: sniffer.PackageFilterRequest
 	(*FilterExpression)(nil),     // 3: sniffer.FilterExpression
 	(*TrafficPacket)(nil),        // 4: sniffer.TrafficPacket
 	(*RegisterRequest)(nil),      // 5: sniffer.RegisterRequest
 	(*RegisterResponse)(nil),     // 6: sniffer.RegisterResponse
-	(*MetricsRequest)(nil),       // 7: sniffer.MetricsRequest
-	(*MetricsResponse)(nil),      // 8: sniffer.MetricsResponse
-	(*PingRequest)(nil),          // 9: sniffer.PingRequest
-	(*PingResponse)(nil),         // 10: sniffer.PingResponse
-	nil,                          // 11: sniffer.FilterExpression.CustomEntry
-	nil,                          // 12: sniffer.TrafficPacket.HeadersEntry
-	nil,                          // 13: sniffer.MetricsResponse.ProtocolsEntry
-	nil,                          // 14: sniffer.MetricsResponse.ApplicationsEntry
-	nil,                          // 15: sniffer.MetricsResponse.PacketSizeDistributionEntry
-	nil,                          // 16: sniffer.MetricsResponse.TopSrcPortsEntry
-	nil,                          // 17: sniffer.MetricsResponse.TopDstPortsEntry
-	nil,                          // 18: sniffer.MetricsResponse.TopSrcIpsEntry
-	nil,                          // 19: sniffer.MetricsResponse.TopDstIpsEntry
-	nil,                          // 20: sniffer.MetricsResponse.GeoCountriesEntry
+	(*SettingRequest)(nil),       // 7: sniffer.SettingRequest
+	(*SettingResponse)(nil),      // 8: sniffer.SettingResponse
+	(*MetricsRequest)(nil),       // 9: sniffer.MetricsRequest
+	(*MetricsResponse)(nil),      // 10: sniffer.MetricsResponse
+	(*PingRequest)(nil),          // 11: sniffer.PingRequest
+	(*PingResponse)(nil),         // 12: sniffer.PingResponse
+	nil,                          // 13: sniffer.FilterExpression.CustomEntry
+	nil,                          // 14: sniffer.TrafficPacket.HeadersEntry
+	nil,                          // 15: sniffer.MetricsResponse.ProtocolsEntry
+	nil,                          // 16: sniffer.MetricsResponse.ApplicationsEntry
+	nil,                          // 17: sniffer.MetricsResponse.PacketSizeDistributionEntry
+	nil,                          // 18: sniffer.MetricsResponse.TopSrcPortsEntry
+	nil,                          // 19: sniffer.MetricsResponse.TopDstPortsEntry
+	nil,                          // 20: sniffer.MetricsResponse.TopSrcIpsEntry
+	nil,                          // 21: sniffer.MetricsResponse.TopDstIpsEntry
+	nil,                          // 22: sniffer.MetricsResponse.GeoCountriesEntry
 }
 var file_proto_sniffer_proto_depIdxs = []int32{
-	3,  // 0: sniffer.TrafficFilterRequest.filter:type_name -> sniffer.FilterExpression
-	11, // 1: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
-	12, // 2: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
-	13, // 3: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
-	14, // 4: sniffer.MetricsResponse.applications:type_name -> sniffer.MetricsResponse.ApplicationsEntry
-	15, // 5: sniffer.MetricsResponse.packet_size_distribution:type_name -> sniffer.MetricsResponse.PacketSizeDistributionEntry
-	16, // 6: sniffer.MetricsResponse.top_src_ports:type_name -> sniffer.MetricsResponse.TopSrcPortsEntry
-	17, // 7: sniffer.MetricsResponse.top_dst_ports:type_name -> sniffer.MetricsResponse.TopDstPortsEntry
-	18, // 8: sniffer.MetricsResponse.top_src_ips:type_name -> sniffer.MetricsResponse.TopSrcIpsEntry
-	19, // 9: sniffer.MetricsResponse.top_dst_ips:type_name -> sniffer.MetricsResponse.TopDstIpsEntry
-	20, // 10: sniffer.MetricsResponse.geo_countries:type_name -> sniffer.MetricsResponse.GeoCountriesEntry
+	3,  // 0: sniffer.PackageFilterRequest.filter:type_name -> sniffer.FilterExpression
+	13, // 1: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
+	14, // 2: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
+	15, // 3: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
+	16, // 4: sniffer.MetricsResponse.applications:type_name -> sniffer.MetricsResponse.ApplicationsEntry
+	17, // 5: sniffer.MetricsResponse.packet_size_distribution:type_name -> sniffer.MetricsResponse.PacketSizeDistributionEntry
+	18, // 6: sniffer.MetricsResponse.top_src_ports:type_name -> sniffer.MetricsResponse.TopSrcPortsEntry
+	19, // 7: sniffer.MetricsResponse.top_dst_ports:type_name -> sniffer.MetricsResponse.TopDstPortsEntry
+	20, // 8: sniffer.MetricsResponse.top_src_ips:type_name -> sniffer.MetricsResponse.TopSrcIpsEntry
+	21, // 9: sniffer.MetricsResponse.top_dst_ips:type_name -> sniffer.MetricsResponse.TopDstIpsEntry
+	22, // 10: sniffer.MetricsResponse.geo_countries:type_name -> sniffer.MetricsResponse.GeoCountriesEntry
 	5,  // 11: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
-	7,  // 12: sniffer.SnifferService.GetMetrics:input_type -> sniffer.MetricsRequest
-	9,  // 13: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
-	2,  // 14: sniffer.SnifferService.GetFilteredTraffic:input_type -> sniffer.TrafficFilterRequest
+	9,  // 12: sniffer.SnifferService.GetMetrics:input_type -> sniffer.MetricsRequest
+	11, // 13: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
+	2,  // 14: sniffer.SnifferService.GetFilteredPackage:input_type -> sniffer.PackageFilterRequest
 	0,  // 15: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
-	6,  // 16: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
-	8,  // 17: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
-	10, // 18: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
-	4,  // 19: sniffer.SnifferService.GetFilteredTraffic:output_type -> sniffer.TrafficPacket
-	1,  // 20: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
-	16, // [16:21] is the sub-list for method output_type
-	11, // [11:16] is the sub-list for method input_type
+	7,  // 16: sniffer.SnifferService.GetSettings:input_type -> sniffer.SettingRequest
+	7,  // 17: sniffer.SnifferService.SetSettings:input_type -> sniffer.SettingRequest
+	6,  // 18: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
+	10, // 19: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
+	12, // 20: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
+	4,  // 21: sniffer.SnifferService.GetFilteredPackage:output_type -> sniffer.TrafficPacket
+	1,  // 22: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
+	8,  // 23: sniffer.SnifferService.GetSettings:output_type -> sniffer.SettingResponse
+	8,  // 24: sniffer.SnifferService.SetSettings:output_type -> sniffer.SettingResponse
+	18, // [18:25] is the sub-list for method output_type
+	11, // [11:18] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
 	11, // [11:11] is the sub-list for extension extendee
 	0,  // [0:11] is the sub-list for field type_name
@@ -1300,7 +1409,7 @@ func file_proto_sniffer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_sniffer_proto_rawDesc), len(file_proto_sniffer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
