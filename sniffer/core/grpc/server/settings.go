@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"time"
+
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
 	"sniffer/core/storage/clickhouse"
-	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -28,7 +29,7 @@ func (s *Server) GetSettings(ctx context.Context, req *pb.SettingRequest) (*pb.S
 
 	if settings == nil {
 		return &pb.SettingResponse{
-			Filters:   []string{},
+			Filters:   "",
 			Timestamp: time.Now().Unix(),
 		}, nil
 	}
@@ -57,12 +58,13 @@ func (s *Server) SetSettings(ctx context.Context, req *pb.SettingRequest) (*pb.S
 		logger.Error("Failed to save settings: %v", err)
 		return nil, status.Error(codes.Internal, "failed to save settings")
 	}
-
+	logger.Info("%v", s.app != nil)
 	if s.app != nil {
 		s.app.UpdateSnifferFilter(req.GetFilters())
+		logger.Info("UpdateSnifferFilter called with filters: %v", req.GetFilters())
 	}
 
-	logger.Info("Settings saved")
+	logger.Info("Settings saved %v", req.GetFilters())
 
 	return &pb.SettingResponse{
 		Filters:   req.GetFilters(),

@@ -572,7 +572,7 @@ func (x *RegisterResponse) GetServerCertificate() string {
 type SettingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
-	Filters       []string               `protobuf:"bytes,2,rep,name=filters,proto3" json:"filters,omitempty"`
+	Filters       string                 `protobuf:"bytes,2,opt,name=filters,proto3" json:"filters,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -614,16 +614,16 @@ func (x *SettingRequest) GetSessionKey() string {
 	return ""
 }
 
-func (x *SettingRequest) GetFilters() []string {
+func (x *SettingRequest) GetFilters() string {
 	if x != nil {
 		return x.Filters
 	}
-	return nil
+	return ""
 }
 
 type SettingResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filters       []string               `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
+	Filters       string                 `protobuf:"bytes,1,opt,name=filters,proto3" json:"filters,omitempty"`
 	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -659,11 +659,11 @@ func (*SettingResponse) Descriptor() ([]byte, []int) {
 	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *SettingResponse) GetFilters() []string {
+func (x *SettingResponse) GetFilters() string {
 	if x != nil {
 		return x.Filters
 	}
-	return nil
+	return ""
 }
 
 func (x *SettingResponse) GetTimestamp() int64 {
@@ -1237,9 +1237,9 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x0eSettingRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\x12\x18\n" +
-	"\afilters\x18\x02 \x03(\tR\afilters\"I\n" +
+	"\afilters\x18\x02 \x01(\tR\afilters\"I\n" +
 	"\x0fSettingResponse\x12\x18\n" +
-	"\afilters\x18\x01 \x03(\tR\afilters\x12\x1c\n" +
+	"\afilters\x18\x01 \x01(\tR\afilters\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"1\n" +
 	"\x0eMetricsRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +

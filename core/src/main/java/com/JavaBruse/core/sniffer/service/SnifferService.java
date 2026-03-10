@@ -67,7 +67,7 @@ public class SnifferService {
         );
         return SettingDTO.builder()
                 .date(settingResponse.getTimestamp())
-                .filters(settingResponse.getFiltersList())
+                .filters(settingResponse.getFilters())
                 .build();
     }
 

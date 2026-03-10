@@ -1,28 +1,29 @@
 <div [class.active]="snifferId" class="card-layout" [formGroup]="form">
     <div class="card-main card-component-padding">
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Фильтрованные адреса и порты</mat-label>
-            <mat-chip-grid #chipGrid>
-                @for (word of filterArray.controls; track word; let i = $index) {
-                <mat-chip-row (removed)="removeWord(i)">
-                    {{ word.value }}
-                    <button matChipRemove [attr.aria-label]="'remove ' + word.value">
-                        <mat-icon>cancel</mat-icon>
-                    </button>
-                </mat-chip-row>
-                }
-            </mat-chip-grid>
-            <input placeholder="ip:port или ip или port" #wordInput
-                (keyup.enter)="addFilter(wordInput.value); wordInput.value='';" [matChipInputFor]="chipGrid" />
+            <mat-label>BPF фильтр</mat-label>
+            <textarea matInput formControlName="filters"
+                placeholder="not (host 172.20.0.10 and port 3331) and not port 3123" rows="4">
+            </textarea>
+            <mat-hint>
+                <a href="https://biot.com/capstats/bpf.html" target="_blank" rel="noopener">BPF syntax</a>
+                Примеры: "not port 80", "not (host 192.168.1.1 and port 443)",
+                "not (host 172.20.0.10 or host 172.20.0.5)"
+            </mat-hint>
+            @if (form.get('filters')?.hasError('required') && form.get('filters')?.touched) {
+            <mat-error>Фильтр обязателен</mat-error>
+            }
+            @if (form.get('filters')?.hasError('bpfInvalid') && form.get('filters')?.touched) {
+            <mat-error>{{form.get('filters')?.getError('bpfInvalid')}}</mat-error>
+            }
         </mat-form-field>
     </div>
 
-    <!-- Кнопки -->
     <div class="card-side">
         <a class="button-size" (click)="cancel()" matTooltip="Отмена">
             <mat-icon>cancel</mat-icon>
         </a>
-        <a class="button-size" (click)="save()" matTooltip="Сохранить">
+        <a class="button-size" (click)="save()" matTooltip="Сохранить" [class.disabled]="form.invalid">
             <mat-icon>save</mat-icon>
         </a>
     </div>

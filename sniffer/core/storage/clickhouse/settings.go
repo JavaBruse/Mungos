@@ -8,17 +8,17 @@ import (
 )
 
 type SettingsData struct {
-	BPFFilter []string
+	BPFFilter string
 	CreatedAt time.Time
 }
 
 func createSettingTable(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS sniffer_settings (
-			filters Array(String),  // одно поле вместо двух
+			filters String,
 			create_at DateTime
 		) ENGINE = ReplacingMergeTree(create_at)
-		 ORDER BY create_at 
+		ORDER BY create_at
 	`
 
 	_, err := conn.Exec(query)

@@ -28,7 +28,7 @@ import (
 )
 
 type SnifferController interface {
-	UpdateSnifferFilter(filters []string)
+	UpdateSnifferFilter(filters string)
 }
 
 type Config struct {
@@ -69,7 +69,7 @@ type StatsCollector struct {
 
 var startTime = time.Now()
 
-func NewServer(cfg *Config) *Server {
+func NewServer(cfg *Config, app SnifferController) *Server {
 	if cfg.Storage != nil && cfg.Storage.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -90,6 +90,7 @@ func NewServer(cfg *Config) *Server {
 					keyPEM:     []byte(client.ServerPrivateKey),
 					storage:    cfg.Storage,
 					clientKey:  client.SessionKey,
+					app:        app,
 				}
 			}
 		}
@@ -106,6 +107,7 @@ func NewServer(cfg *Config) *Server {
 		storage:    cfg.Storage,
 		clientKey:  "",
 		clientID:   "",
+		app:        app,
 	}
 }
 
@@ -116,13 +118,13 @@ func generateServerCert() (tls.Certificate, []byte, []byte) {
 	}
 
 	template := x509.Certificate{
-		SerialNumber: big.NewInt(1), // Фиксированный серийный номер
+		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			Organization: []string{"Sniffer"},
 			CommonName:   "sniffer-server",
 		},
 		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(1, 0, 0), // Срок действия 1 год
+		NotAfter:              time.Now().AddDate(1, 0, 0),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,

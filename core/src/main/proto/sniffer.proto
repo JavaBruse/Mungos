@@ -79,11 +79,11 @@ message RegisterResponse {
 
 message SettingRequest {
   string session_key = 1;
-  repeated string filters = 2;
+  string filters = 2;
 }
 
 message SettingResponse {
-  repeated string filters = 1;
+  string filters = 1;
   int64 timestamp = 2;
 }
 

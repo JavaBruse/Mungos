@@ -42,6 +42,29 @@ func New(cfg *config.Config) (*App, error) {
 		cfg.DBName,
 	)
 
+	app := &App{
+		config:     cfg,
+		sniffer:    sniffer,
+		chStorage:  chStorage,
+		packetChan: make(chan *capture.Packet, 500000),
+		stopChan:   make(chan struct{}),
+	}
+
+	grpcServer := server.NewServer(&server.Config{
+		MasterKey:  cfg.MasterKey,
+		SnifferID:  cfg.SnifferID,
+		GRPCPort:   cfg.GRPCPort,
+		DBHost:     cfg.DBHost,
+		DBPort:     cfg.DBPort,
+		DBUser:     cfg.DBUser,
+		DBPass:     cfg.DBPass,
+		DBName:     cfg.DBName,
+		DBProtocol: cfg.DBProtocol,
+		Storage:    chStorage,
+	}, app)
+
+	app.grpc = grpcServer
+
 	if chStorage != nil && chStorage.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -59,69 +82,42 @@ func New(cfg *config.Config) (*App, error) {
 			} else {
 				logger.Info("Initial settings saved for %s: %v", cfg.SnifferID, cfg.BPFFilter)
 				if len(cfg.BPFFilter) > 0 {
-					bpfFilter := sniffer.BuildBPFFilter(cfg.BPFFilter)
-					sniffer.UpdateFilter(bpfFilter)
+					sniffer.UpdateFilter(cfg.BPFFilter)
 				}
 			}
 		} else {
 			logger.Info("Settings loaded for %s", cfg.SnifferID)
 			if len(settings.BPFFilter) > 0 {
-				bpfFilter := sniffer.BuildBPFFilter(settings.BPFFilter)
-				sniffer.UpdateFilter(bpfFilter)
+				sniffer.UpdateFilter(cfg.BPFFilter)
 			}
 		}
 	} else {
 		if len(cfg.BPFFilter) > 0 {
-			bpfFilter := sniffer.BuildBPFFilter(cfg.BPFFilter)
-			sniffer.UpdateFilter(bpfFilter)
+			sniffer.UpdateFilter(cfg.BPFFilter)
 		}
 	}
 
-	grpcServer := server.NewServer(&server.Config{
-		MasterKey:  cfg.MasterKey,
-		SnifferID:  cfg.SnifferID,
-		GRPCPort:   cfg.GRPCPort,
-		DBHost:     cfg.DBHost,
-		DBPort:     cfg.DBPort,
-		DBUser:     cfg.DBUser,
-		DBPass:     cfg.DBPass,
-		DBName:     cfg.DBName,
-		DBProtocol: cfg.DBProtocol,
-		Storage:    chStorage,
-	})
-
-	return &App{
-		config:     cfg,
-		sniffer:    sniffer,
-		chStorage:  chStorage,
-		grpc:       grpcServer,
-		packetChan: make(chan *capture.Packet, 500000),
-		stopChan:   make(chan struct{}),
-	}, nil
+	return app, nil
 }
 
 func (a *App) Run() error {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Запускаем батчевый воркер
 	go a.batchWorker()
 
-	// gRPC
 	go func() {
 		if err := a.grpc.Start(); err != nil {
 			logger.Error("gRPC error: %v", err)
 		}
 	}()
 
-	// Сниффер
 	go func() {
 		if err := a.sniffer.Start(); err != nil {
 			logger.Error("Sniffer error: %v", err)
 		}
 	}()
 
-	// Обработка пакетов
 	go func() {
 		for pkt := range a.sniffer.Packets() {
 			select {
@@ -129,7 +125,6 @@ func (a *App) Run() error {
 			default:
 				logger.Warn("packet channel full, dropping packet")
 			}
-
 			a.grpc.UpdateStats(pkt)
 		}
 	}()
@@ -137,7 +132,6 @@ func (a *App) Run() error {
 	logger.Info("App started")
 	<-sigChan
 
-	// Завершение работы
 	close(a.stopChan)
 	time.Sleep(2 * time.Second)
 
@@ -182,10 +176,9 @@ func (a *App) saveBatch(packets []*capture.Packet) {
 	}
 }
 
-func (a *App) UpdateSnifferFilter(filters []string) {
+func (a *App) UpdateSnifferFilter(filters string) {
 	if a.sniffer != nil {
-		bpfFilter := a.sniffer.BuildBPFFilter(filters)
-		a.sniffer.UpdateFilter(bpfFilter)
-		logger.Info("Sniffer filter updated")
+		a.sniffer.UpdateFilter(filters)
+		logger.Info("Sniffer filter updated with: %v", filters)
 	}
 }

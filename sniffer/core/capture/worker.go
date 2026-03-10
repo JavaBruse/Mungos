@@ -42,7 +42,7 @@ func (w *captureWorker) run() {
 			return
 		case newFilter := <-w.controlCh:
 			w.BPFFilter = newFilter
-			logger.Info("Sniffer filter updated to: %s", newFilter)
+			logger.Info("Filter updated, restarting capture with: %s", newFilter)
 		}
 	}
 }
@@ -71,9 +71,7 @@ func (w *captureWorker) runCapture() {
 		case <-w.stopCh:
 			logger.Info("Sniffer stopped")
 			return
-		case newFilter := <-w.controlCh:
-			w.BPFFilter = newFilter
-			logger.Info("Restarting sniffer with new filter: %s", newFilter)
+		case <-w.controlCh:
 			return
 		case pkt := <-packetSource.Packets():
 			if packet := NewPacketFromGopacket(pkt); packet != nil {

@@ -6,7 +6,6 @@ import { SnifferRequestDTO } from './sniffer-request.DTO';
 import { SnifferResponseDTO } from './sniffer-response.DTO';
 import { ErrorMessageService } from '../../services/error-message.service';
 import { SnifferSetting } from './sniffer-setting';
-import { catchError, Observable, of } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
@@ -24,7 +23,7 @@ export class SnifferService {
     readonly sniffers = this.sniffersSignal.asReadonly();
     readonly visibleAdd = this.visibleAddSnifferSignal.asReadonly();
     readonly visibleSetting = this.visibleSettingSignal.asReadonly();
-    snifferSetting = signal<SnifferSetting>;
+    snifferSetting = signal<SnifferSetting | null>(null);
 
 
     loadAll() {
@@ -59,18 +58,24 @@ export class SnifferService {
         });
     }
 
-    getSetting(id: string): Observable<SnifferSetting | null> {
-        return this.http.get<SnifferSetting>(`${this.apiUrl}/setting/${id}`).pipe(
-            catchError(() => of(null))
-        );
-    }
-
-    saveSetting(snifferSetting: SnifferSetting) {
-        this.http.post<any>(`${this.apiUrl}/setting`, snifferSetting).subscribe({
-            next: () => { },
-            error: () => { },
+    getSetting(id: string) {
+        this.http.get<SnifferSetting>(`${this.apiUrl}/setting/${id}`).subscribe({
+            next: (setting) => this.snifferSetting.set(setting),
+            error: () => this.snifferSetting.set(null)
         });
     }
+    saveSetting(snifferSetting: SnifferSetting) {
+        this.http.post<void>(`${this.apiUrl}/setting`, snifferSetting).subscribe({
+            next: () => {
+                this.loadAll();
+                this.errorMessageService.showSuccess("Настройки сохранены");
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка сохранения настроек");
+            },
+        });
+    }
+
 
     setVisibleAdd(value: boolean) {
         this.visibleAddSnifferSignal.set(value);

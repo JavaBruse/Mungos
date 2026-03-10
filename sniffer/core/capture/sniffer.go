@@ -10,14 +10,14 @@ type Sniffer struct {
 	snaplen   int
 	promisc   bool
 	timeout   time.Duration
-	BPFFilter []string
+	BPFFilter string
 	packetCh  chan *Packet
 	controlCh chan string
 	stopCh    chan struct{}
 	worker    *captureWorker
 }
 
-func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration, BPFFilter []string, bufferSize int) *Sniffer {
+func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration, BPFFilter string, bufferSize int) *Sniffer {
 	return &Sniffer{
 		device:    device,
 		snaplen:   snaplen,
@@ -25,14 +25,13 @@ func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration,
 		timeout:   timeout,
 		BPFFilter: BPFFilter,
 		packetCh:  make(chan *Packet, bufferSize),
-		controlCh: make(chan string),
+		controlCh: make(chan string, 10),
 		stopCh:    make(chan struct{}),
 	}
 }
 
 func (s *Sniffer) Start() error {
-	filterString := s.BuildBPFFilter(s.BPFFilter)
-	s.worker = newCaptureWorker(s.device, s.snaplen, s.promisc, s.timeout, filterString, s.packetCh, s.controlCh, s.stopCh)
+	s.worker = newCaptureWorker(s.device, s.snaplen, s.promisc, s.timeout, s.BPFFilter, s.packetCh, s.controlCh, s.stopCh)
 	go s.worker.run()
 	return nil
 }
@@ -46,6 +45,7 @@ func (s *Sniffer) Packets() <-chan *Packet {
 }
 
 func (s *Sniffer) UpdateFilter(newFilter string) {
+	logger.Info("Applying new filter: %s", newFilter)
 	select {
 	case s.controlCh <- newFilter:
 	default:

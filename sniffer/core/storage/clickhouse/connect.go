@@ -35,17 +35,17 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 		db:       db,
 	}
 
-	if err := storage.connect(); err != nil {
-		logger.Info("Initial ClickHouse connection failed: %v", err)
-		return storage, nil
+	for {
+		if err := storage.connect(); err == nil {
+			createPacketsTable(storage.conn)
+			createClientsTable(storage.conn)
+			createSettingTable(storage.conn)
+			logger.Info("ClickHouse connected")
+			return storage, nil
+		}
+		logger.Info("Waiting for ClickHouse...")
+		time.Sleep(2 * time.Second)
 	}
-
-	createPacketsTable(storage.conn)
-	createClientsTable(storage.conn)
-	createSettingTable(storage.conn)
-
-	logger.Info("ClickHouse connected")
-	return storage, nil
 }
 
 func (c *ClickHouseStorage) connect() error {

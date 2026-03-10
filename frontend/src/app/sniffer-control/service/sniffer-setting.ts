@@ -1,5 +1,5 @@
 export interface SnifferSetting {
     id: string;
-    filters: string[];
+    filters: string;
     date: number;
 }

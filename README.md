@@ -113,3 +113,54 @@ docker exec -it mungos-postgres-core psql -U mungos -d mungos_core
 SELECT * FROM sniffers;
 TRUNCATE TABLE sniffers;
 ```
+
+
+
+BPF фильтры в Sniffer
+Основные правила
+1. IP адреса
+```text
+host 192.168.1.1              - трафик с/на 192.168.1.1
+src host 192.168.1.1          - только исходящий с 192.168.1.1
+dst host 192.168.1.1          - только входящий на 192.168.1.1
+```
+2. Порты
+```text
+port 80                        - трафик через порт 80
+src port 443                   - исходящий с порта 443
+dst port 53                    - входящий на порт 53
+port range 1000-2000           - диапазон портов
+```
+3. Комбинации
+```text
+host 192.168.1.1 and port 80   - IP 192.168.1.1 И порт 80
+host 10.0.0.1 or port 443      - IP 10.0.0.1 ИЛИ порт 443
+(host 192.168.1.1 and port 80) or (host 10.0.0.1 and port 443)
+```
+4. Исключения (NOT)
+```text
+not port 80                    - всё кроме порта 80
+not host 192.168.1.1           - всё кроме IP 192.168.1.1
+not (host 192.168.1.1 and port 80) - исключить комбинацию
+```
+5. Протоколы
+```text
+tcp                            - только TCP трафик
+udp                            - только UDP трафик
+icmp                           - только ICMP
+tcp port 80                    - TCP порт 80
+udp port 53                    - UDP порт 53
+```
+Примеры
+Исключить свой трафик:
+```text
+not (host 172.20.0.10 or host 172.20.0.5)
+```
+Мониторить только внешние подключения:
+```text
+not (src net 192.168.0.0/16 or dst net 192.168.0.0/16)
+```
+Сложное исключение:
+```text
+not (host 172.20.0.10 and port 3331) and not port 3123 and not host 172.20.0.2
+```
