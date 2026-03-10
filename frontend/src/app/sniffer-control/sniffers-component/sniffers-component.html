@@ -12,6 +12,13 @@
             </mat-card>
             }
             @for (sniffer of sniffers(); track sniffer.id) {
+            @if (snifferSettingID === sniffer.id) {
+            <mat-card tabindex="0" class="card-style">
+                <app-sniffer-setting-component [snifferId]="sniffer.id" (saved)="finishSetting()"
+                    (cancelled)="finishSetting()"></app-sniffer-setting-component>
+            </mat-card>
+
+            } @else {
             <mat-card tabindex="0" class="card-style" [class.clickable]="!isSettingsPage"
                 (click)="!isSettingsPage && navigateToSniffer(sniffer.id)">
                 <div class="card-layout">
@@ -47,7 +54,7 @@
                     <div class="card-side">
                         @if (isSettingsPage) {
                         <div class="button-size">
-                            <mat-icon matTooltip="Редактировать">edit</mat-icon>
+                            <mat-icon (click)="startSetting(sniffer.id)" matTooltip="Редактировать">settings</mat-icon>
                         </div>
                         <div class="button-size">
                             <mat-icon (click)="openDialog('0ms', '0ms', sniffer.id)"
@@ -57,6 +64,7 @@
                     </div>
                 </div>
             </mat-card>
+            }
             }
         </div>
     </div>

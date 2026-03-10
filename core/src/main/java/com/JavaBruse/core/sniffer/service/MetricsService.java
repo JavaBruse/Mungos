@@ -40,7 +40,7 @@ public class MetricsService {
 
     public String getMetricsInPrometheusFormat(UUID uuid) {
         SnifferResponseDTO sniffer = snifferService.getAll().stream()
-                .filter(x -> x.getId().equals(uuid))
+                .filter(x -> x.getId().equals(uuid.toString()))
                 .findFirst()
                 .orElseThrow(() -> new ConnectionException("Sniffer not found with id: " + uuid));
 

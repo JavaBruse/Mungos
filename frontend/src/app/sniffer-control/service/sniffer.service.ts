@@ -4,8 +4,9 @@ import { environment } from '../../../environments/environment';
 import { HttpService } from '../../services/http.service';
 import { SnifferRequestDTO } from './sniffer-request.DTO';
 import { SnifferResponseDTO } from './sniffer-response.DTO';
-import { SnifferWebSocketService } from './sniffer-websocket.service';
 import { ErrorMessageService } from '../../services/error-message.service';
+import { SnifferSetting } from './sniffer-setting';
+import { catchError, Observable, of } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
@@ -18,10 +19,13 @@ export class SnifferService {
     dialogDisk: string | null = null;
     private readonly sniffersSignal = signal<SnifferResponseDTO[]>([]);
     private readonly visibleAddSnifferSignal = signal(false);
-    private wsService = inject(SnifferWebSocketService);
+    private readonly visibleSettingSignal = signal(false)
     private errorMessageService = inject(ErrorMessageService)
     readonly sniffers = this.sniffersSignal.asReadonly();
     readonly visibleAdd = this.visibleAddSnifferSignal.asReadonly();
+    readonly visibleSetting = this.visibleSettingSignal.asReadonly();
+    snifferSetting = signal<SnifferSetting>;
+
 
     loadAll() {
         this.http.get<SnifferResponseDTO[]>(`${this.apiUrl}/all`).subscribe({
@@ -55,6 +59,19 @@ export class SnifferService {
         });
     }
 
+    getSetting(id: string): Observable<SnifferSetting | null> {
+        return this.http.get<SnifferSetting>(`${this.apiUrl}/setting/${id}`).pipe(
+            catchError(() => of(null))
+        );
+    }
+
+    saveSetting(snifferSetting: SnifferSetting) {
+        this.http.post<any>(`${this.apiUrl}/setting`, snifferSetting).subscribe({
+            next: () => { },
+            error: () => { },
+        });
+    }
+
     setVisibleAdd(value: boolean) {
         this.visibleAddSnifferSignal.set(value);
     }
@@ -62,5 +79,6 @@ export class SnifferService {
     clear() {
         this.sniffersSignal.set([]);
         this.visibleAddSnifferSignal.set(false);
+        this.visibleSettingSignal.set(false);
     }
 }

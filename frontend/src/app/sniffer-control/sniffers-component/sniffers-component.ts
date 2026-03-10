@@ -20,6 +20,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { SnifferService } from '../service/sniffer.service';
 import { SnifferAddComponent } from "../sniffer-add-component/sniffer-add-component";
 import { CommonModule } from '@angular/common';
+import { SnifferSettingComponent } from '../sniffer-setting-component/sniffer-setting-component';
 
 @Component({
   selector: 'app-sniffers-component',
@@ -38,7 +39,8 @@ import { CommonModule } from '@angular/common';
     MatSelectModule,
     MatButtonModule,
     MatCheckboxModule,
-    SnifferAddComponent
+    SnifferAddComponent,
+    SnifferSettingComponent
   ],
   templateUrl: './sniffers-component.html',
   styleUrl: './sniffers-component.scss',
@@ -53,6 +55,7 @@ export class SniffersComponent implements OnInit, OnDestroy {
   private urlSubscription!: Subscription;
   route = inject(ActivatedRoute);
   private router = inject(Router);
+  snifferSettingID: string | null = null;
 
   constructor() {
     this.snifferService.loadAll();
@@ -101,5 +104,13 @@ export class SniffersComponent implements OnInit, OnDestroy {
 
   onCardClick(id: string) {
 
+  }
+
+  startSetting(snifferId: string) {
+    this.snifferSettingID = snifferId;
+  }
+
+  finishSetting() {
+    this.snifferSettingID = null;
   }
 }

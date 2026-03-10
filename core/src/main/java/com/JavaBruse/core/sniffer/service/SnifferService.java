@@ -3,8 +3,10 @@ package com.JavaBruse.core.sniffer.service;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
+import com.JavaBruse.core.sniffer.domain.DTO.SettingDTO;
 import com.JavaBruse.core.sniffer.grpc.command.MetricsCommand;
 import com.JavaBruse.core.sniffer.grpc.command.PingCommand;
+import com.JavaBruse.core.sniffer.grpc.command.SettingCommand;
 import com.JavaBruse.core.sniffer.grpc.command.TrafficCommand;
 import com.JavaBruse.core.sniffer.converters.SnifferConverter;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
@@ -15,9 +17,7 @@ import com.JavaBruse.core.sniffer.grpc.client.ConnectionResult;
 import com.JavaBruse.core.sniffer.grpc.session.SessionManager;
 import com.JavaBruse.core.sniffer.grpc.retry.RetryPolicy;
 import com.JavaBruse.core.sniffer.grpc.retry.RetryStrategy;
-import com.JavaBruse.proto.FilterExpression;
-import com.JavaBruse.proto.MetricsResponse;
-import com.JavaBruse.proto.TrafficPacket;
+import com.JavaBruse.proto.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +39,7 @@ public class SnifferService {
     private final PingCommand pingCommand;
     private final MetricsCommand metricsCommand;
     private final TrafficCommand trafficCommand;
+    private final SettingCommand settingCommand;
     private final RetryPolicy retryPolicy;
     private final ConnectionValidator connectionValidator;
 
@@ -51,6 +52,34 @@ public class SnifferService {
                 () -> pingCommand.execute(sniffer, null),
                 this::isRetryableError,
                 "ping-" + id
+        );
+    }
+
+    public SettingDTO getSettings(String id) {
+        SnifferEntity sniffer = snifferRepository.findById(id)
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
+
+        SettingResponse settingResponse = retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> settingCommand.getSettings(sniffer),
+                this::isRetryableError,
+                "get-settings-" + id
+        );
+        return SettingDTO.builder()
+                .date(settingResponse.getTimestamp())
+                .filters(settingResponse.getFiltersList())
+                .build();
+    }
+
+    public void setSettings(SettingDTO settingRequestDTO) {
+        SnifferEntity sniffer = snifferRepository.findById(settingRequestDTO.getId().toString())
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + settingRequestDTO.getId()));
+
+        retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> settingCommand.setSettings(sniffer, settingRequestDTO.getFilters()),
+                this::isRetryableError,
+                "set-settings-" + sniffer.getId()
         );
     }
 
