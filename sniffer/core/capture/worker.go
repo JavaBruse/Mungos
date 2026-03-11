@@ -65,6 +65,7 @@ func (w *captureWorker) runCapture() {
 
 	logger.Info("Sniffer started on %s with filter: %s", w.device, w.BPFFilter)
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	logger.Info("PACKET SOURCE CREATED, starting capture loop")
 
 	for {
 		select {
