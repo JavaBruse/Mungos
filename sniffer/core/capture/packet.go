@@ -21,7 +21,6 @@ type Packet struct {
 	Payload   []byte
 }
 
-// NewPacketFromGopacket создаёт Packet из gopacket.Packet
 func NewPacketFromGopacket(pkt gopacket.Packet) *Packet {
 	ipLayer := pkt.Layer(layers.LayerTypeIPv4)
 	if ipLayer == nil {

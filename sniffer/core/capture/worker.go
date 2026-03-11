@@ -75,12 +75,20 @@ func (w *captureWorker) runCapture() {
 			logger.Info("Filter update signal received, restarting capture...")
 			return
 		case pkt := <-packetSource.Packets():
+			logger.Info("1. RAW PACKET RECEIVED!")
+
 			if packet := NewPacketFromGopacket(pkt); packet != nil {
+				logger.Info("PACKET PARSED: %s:%d -> %s:%d",
+					packet.SrcIP, packet.SrcPort, packet.DstIP, packet.DstPort) // 2
+
 				select {
 				case w.packetCh <- packet:
+					logger.Info("2. PACKET SENT TO CHANNEL")
 				default:
-					logger.Warn("Packet channel full, dropping packet")
+					logger.Warn("3. Packet channel full, dropping packet")
 				}
+			} else {
+				logger.Info("4. PACKET PARSE FAILED")
 			}
 		}
 	}
