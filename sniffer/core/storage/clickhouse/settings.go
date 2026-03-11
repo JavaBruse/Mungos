@@ -15,10 +15,11 @@ type SettingsData struct {
 func createSettingTable(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS sniffer_settings (
+			sniffer_id UInt8,
 			filters String,
 			create_at DateTime
 		) ENGINE = ReplacingMergeTree(create_at)
-		ORDER BY create_at
+		ORDER BY sniffer_id
 	`
 
 	_, err := conn.Exec(query)
@@ -32,8 +33,8 @@ func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData
 
 	query := `
 		INSERT INTO sniffer_settings (
-			filters, create_at
-		) VALUES (?, ?)
+			sniffer_id, filters, create_at
+		) VALUES (1, ?, ?)
 	`
 	_, err := c.conn.ExecContext(ctx, query,
 		data.BPFFilter,
@@ -53,6 +54,7 @@ func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*SettingsData, erro
 	query := `
 		SELECT filters, create_at 
 		FROM sniffer_settings 
+		WHERE sniffer_id = 1
 		ORDER BY create_at DESC 
 		LIMIT 1
 	`
@@ -73,14 +75,15 @@ func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*SettingsData, erro
 	return &data, nil
 }
 
-func (c *ClickHouseStorage) SettingsExists(ctx context.Context, clientID string) (bool, error) {
+func (c *ClickHouseStorage) SettingsExists(ctx context.Context) (bool, error) {
 	if !c.ensureConnection() {
 		return false, fmt.Errorf("ClickHouse not available")
 	}
 
-	query := `SELECT COUNT() FROM sniffer_settings`
+	query := `SELECT COUNT() FROM sniffer_settings WHERE sniffer_id = 1`
 	var count uint64
-	err := c.conn.QueryRowContext(ctx, query, clientID).Scan(&count)
+	err := c.conn.QueryRowContext(ctx, query).Scan(&count)
+
 	if err != nil {
 		c.reconnect()
 		return false, err

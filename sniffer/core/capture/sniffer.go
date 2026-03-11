@@ -46,6 +46,7 @@ func (s *Sniffer) Packets() <-chan *Packet {
 
 func (s *Sniffer) UpdateFilter(newFilter string) {
 	logger.Info("Applying new filter: %s", newFilter)
+	s.BPFFilter = newFilter
 	select {
 	case s.controlCh <- newFilter:
 	default:

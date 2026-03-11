@@ -88,7 +88,8 @@ func New(cfg *config.Config) (*App, error) {
 		} else {
 			logger.Info("Settings loaded for %s", cfg.SnifferID)
 			if len(settings.BPFFilter) > 0 {
-				sniffer.UpdateFilter(cfg.BPFFilter)
+				sniffer.UpdateFilter(settings.BPFFilter)
+				logger.Info("Applying filter from DB: %s", settings.BPFFilter)
 			}
 		}
 	} else {

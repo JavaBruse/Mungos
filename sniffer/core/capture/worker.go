@@ -72,6 +72,7 @@ func (w *captureWorker) runCapture() {
 			logger.Info("Sniffer stopped")
 			return
 		case <-w.controlCh:
+			logger.Info("Filter update signal received, restarting capture...")
 			return
 		case pkt := <-packetSource.Packets():
 			if packet := NewPacketFromGopacket(pkt); packet != nil {
