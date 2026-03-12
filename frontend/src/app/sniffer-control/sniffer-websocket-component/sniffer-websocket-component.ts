@@ -43,6 +43,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private scrollDispatcher = inject(ScrollDispatcher);
   private fb = inject(FormBuilder);
+  toggleLevel2 = false;
 
   trafficData = signal<TrafficPacket[]>([]);
   expandedPacket = signal<number | null>(null);

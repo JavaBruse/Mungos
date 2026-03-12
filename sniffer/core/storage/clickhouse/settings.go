@@ -30,7 +30,11 @@ func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData
 	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
-
+	_, err1 := c.conn.ExecContext(ctx, `DELETE FROM sniffer_settings WHERE sniffer_id = 1`)
+	if err1 != nil {
+		c.reconnect()
+		return err1
+	}
 	query := `
 		INSERT INTO sniffer_settings (
 			sniffer_id, filters, create_at

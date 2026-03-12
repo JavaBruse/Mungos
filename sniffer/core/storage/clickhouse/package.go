@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func createPacketsTable(conn *sql.DB) error {
@@ -14,7 +17,6 @@ func createPacketsTable(conn *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS packets (
 			packet_id String,
 			timestamp DateTime64(9) CODEC(Delta, ZSTD),
-			sniffer_id String,
 			src_ip String,
 			dst_ip String,
 			src_port UInt16,
@@ -38,7 +40,7 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
-	query, args := buildFilterQuery(filter, limit, offset, snifferID)
+	query, args := buildFilterQuery(filter, limit, offset)
 
 	rows, err := c.conn.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -87,7 +89,7 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 		return fmt.Errorf("ClickHouse not available")
 	}
 
-	query, args := buildFilterQuery(filter, 10000, 0, snifferID)
+	query, args := buildFilterQuery(filter, 10000, 0)
 
 	rows, err := c.conn.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -152,12 +154,9 @@ func (c *ClickHouseStorage) GetPacketPayload(ctx context.Context, packetID strin
 	return []byte(payload), nil
 }
 
-func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferID string) (string, []interface{}) {
+func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string, []interface{}) {
 	var conditions []string
 	var args []interface{}
-
-	conditions = append(conditions, "sniffer_id = ?")
-	args = append(args, snifferID)
 
 	if filter != nil {
 		if len(filter.Protocols) > 0 {
@@ -170,8 +169,12 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferI
 		}
 
 		if len(filter.Ports) > 0 {
-			conditions = append(conditions, "(src_port IN (?) OR dst_port IN (?))")
-			args = append(args, filter.Ports, filter.Ports)
+			placeholders := strings.Repeat("?,", len(filter.Ports))
+			placeholders = placeholders[:len(placeholders)-1]
+			conditions = append(conditions, fmt.Sprintf("(src_port IN (%s) OR dst_port IN (%s))", placeholders, placeholders))
+			for _, p := range filter.Ports {
+				args = append(args, p, p)
+			}
 		}
 
 		if len(filter.Ips) > 0 {
@@ -199,6 +202,11 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferI
 		}
 	}
 
+	whereClause := "1=1" // ← добавляем условие по умолчанию
+	if len(conditions) > 0 {
+		whereClause = strings.Join(conditions, " AND ")
+	}
+
 	query := fmt.Sprintf(`
         SELECT packet_id, timestamp, src_ip, dst_ip, src_port, dst_port, 
                protocol, length, ttl, tcp_flags, payload
@@ -206,9 +214,65 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32, snifferI
         WHERE %s
         ORDER BY timestamp DESC
         LIMIT ? OFFSET ?
-    `, strings.Join(conditions, " AND "))
+    `, whereClause)
 
 	args = append(args, limit, offset)
 
 	return query, args
+}
+
+func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet) error {
+	if !c.ensureConnection() || len(packets) == 0 {
+		return nil
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	tx, err := c.conn.BeginTx(ctx, nil)
+	if err != nil {
+		c.reconnect()
+		return err
+	}
+	defer tx.Rollback()
+
+	query := `
+		INSERT INTO packets (
+			packet_id, timestamp, src_ip, dst_ip, src_port, dst_port,
+			protocol, length, ttl, tcp_flags, payload
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, pkt := range packets {
+		packetID := uuid.New().String()
+		payload := string(pkt.Payload)
+		if len(payload) > 10000 {
+			payload = payload[:10000]
+		}
+
+		_, err = stmt.ExecContext(ctx,
+			packetID,
+			pkt.Timestamp,
+			pkt.SrcIP,
+			pkt.DstIP,
+			pkt.SrcPort,
+			pkt.DstPort,
+			pkt.Protocol,
+			pkt.Length,
+			pkt.TTL,
+			pkt.TCPFlags,
+			payload,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

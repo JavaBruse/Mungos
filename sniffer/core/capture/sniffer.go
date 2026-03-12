@@ -1,7 +1,6 @@
 package capture
 
 import (
-	"sniffer/core/logger"
 	"time"
 )
 
@@ -42,14 +41,4 @@ func (s *Sniffer) Stop() {
 
 func (s *Sniffer) Packets() <-chan *Packet {
 	return s.packetCh
-}
-
-func (s *Sniffer) UpdateFilter(newFilter string) {
-	logger.Info("Applying new filter: %s", newFilter)
-	s.BPFFilter = newFilter
-	select {
-	case s.controlCh <- newFilter:
-	default:
-		logger.Warn("Control channel full, filter update dropped")
-	}
 }

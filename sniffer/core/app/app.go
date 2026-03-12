@@ -11,7 +11,6 @@ import (
 	"sniffer/core/config"
 	"sniffer/core/grpc/server"
 	"sniffer/core/logger"
-
 	"sniffer/core/storage/clickhouse"
 )
 
@@ -25,21 +24,23 @@ type App struct {
 }
 
 func New(cfg *config.Config) (*App, error) {
-	sniffer := capture.NewSniffer(
-		cfg.Device,
-		cfg.Snaplen,
-		cfg.Promisc,
-		30*time.Second,
-		cfg.BPFFilter,
-		10000,
-	)
-
 	chStorage, _ := clickhouse.NewClickHouseStorage(
 		cfg.DBHost,
 		cfg.DBPort,
 		cfg.DBUser,
 		cfg.DBPass,
 		cfg.DBName,
+	)
+
+	filter := loadFilterFromStorage(chStorage)
+
+	sniffer := capture.NewSniffer(
+		cfg.Device,
+		cfg.Snaplen,
+		cfg.Promisc,
+		30*time.Second,
+		filter,
+		10000,
 	)
 
 	app := &App{
@@ -52,7 +53,6 @@ func New(cfg *config.Config) (*App, error) {
 
 	grpcServer := server.NewServer(&server.Config{
 		MasterKey:  cfg.MasterKey,
-		SnifferID:  cfg.SnifferID,
 		GRPCPort:   cfg.GRPCPort,
 		DBHost:     cfg.DBHost,
 		DBPort:     cfg.DBPort,
@@ -61,44 +61,42 @@ func New(cfg *config.Config) (*App, error) {
 		DBName:     cfg.DBName,
 		DBProtocol: cfg.DBProtocol,
 		Storage:    chStorage,
-	}, app)
+	})
 
 	app.grpc = grpcServer
 
-	if chStorage != nil && chStorage.Enabled() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
+	return app, nil
+}
 
-		settings, err := chStorage.GetSetting(ctx)
-		if err != nil {
-			logger.Error("Failed to get settings: %v", err)
-		} else if settings == nil {
-			settingsData := &clickhouse.SettingsData{
-				BPFFilter: cfg.BPFFilter,
-				CreatedAt: time.Now(),
-			}
-			if err := chStorage.SaveSettings(ctx, settingsData); err != nil {
-				logger.Error("Failed to save initial settings: %v", err)
-			} else {
-				logger.Info("Initial settings saved for %s: %v", cfg.SnifferID, cfg.BPFFilter)
-				if len(cfg.BPFFilter) > 0 {
-					sniffer.UpdateFilter(cfg.BPFFilter)
-				}
-			}
-		} else {
-			logger.Info("Settings loaded for %s", cfg.SnifferID)
-			if len(settings.BPFFilter) > 0 {
-				sniffer.UpdateFilter(settings.BPFFilter)
-				logger.Info("Applying filter from DB: %s", settings.BPFFilter)
-			}
-		}
-	} else {
-		if len(cfg.BPFFilter) > 0 {
-			sniffer.UpdateFilter(cfg.BPFFilter)
-		}
+func loadFilterFromStorage(chStorage *clickhouse.ClickHouseStorage) string {
+	if chStorage == nil || !chStorage.Enabled() {
+		logger.Info("Storage not available, using empty filter")
+		return ""
 	}
 
-	return app, nil
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	settings, err := chStorage.GetSetting(ctx)
+	if err != nil {
+		logger.Error("Failed to get settings: %v", err)
+		return ""
+	}
+
+	if settings == nil {
+		logger.Info("No settings in DB, saving empty filter")
+		settingsData := &clickhouse.SettingsData{
+			BPFFilter: config.Load().BPFFilter,
+			CreatedAt: time.Now(),
+		}
+		if err := chStorage.SaveSettings(ctx, settingsData); err != nil {
+			logger.Error("Failed to save initial settings: %v", err)
+		}
+		return config.Load().BPFFilter
+	}
+
+	logger.Info("Settings loaded from DB: %s", settings.BPFFilter)
+	return settings.BPFFilter
 }
 
 func (a *App) Run() error {
@@ -106,18 +104,8 @@ func (a *App) Run() error {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go a.batchWorker()
-
-	go func() {
-		if err := a.grpc.Start(); err != nil {
-			logger.Error("gRPC error: %v", err)
-		}
-	}()
-
-	go func() {
-		if err := a.sniffer.Start(); err != nil {
-			logger.Error("Sniffer error: %v", err)
-		}
-	}()
+	go func() { _ = a.grpc.Start() }()
+	go func() { _ = a.sniffer.Start() }()
 
 	go func() {
 		for pkt := range a.sniffer.Packets() {
@@ -135,18 +123,17 @@ func (a *App) Run() error {
 
 	close(a.stopChan)
 	time.Sleep(2 * time.Second)
-
 	a.sniffer.Stop()
 	if a.chStorage != nil {
 		a.chStorage.Close()
 	}
-
 	return nil
 }
 
 func (a *App) batchWorker() {
 	batch := make([]*capture.Packet, 0, 5000)
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
 
 	for {
 		select {
@@ -161,6 +148,8 @@ func (a *App) batchWorker() {
 				a.saveBatch(batch)
 				batch = make([]*capture.Packet, 0, 5000)
 			}
+		case <-a.stopChan:
+			return
 		}
 	}
 }
@@ -170,16 +159,9 @@ func (a *App) saveBatch(packets []*capture.Packet) {
 		return
 	}
 
-	if err := a.chStorage.SavePackets(packets, a.config.SnifferID); err != nil {
+	if err := a.chStorage.SavePackets(packets); err != nil {
 		logger.Error("Failed to save batch of %d packets: %v", len(packets), err)
 	} else {
 		logger.Info("Saved batch of %d packets", len(packets))
-	}
-}
-
-func (a *App) UpdateSnifferFilter(filters string) {
-	if a.sniffer != nil {
-		a.sniffer.UpdateFilter(filters)
-		logger.Info("Sniffer filter updated with: %v", filters)
 	}
 }

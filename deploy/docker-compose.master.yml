@@ -16,11 +16,6 @@ services:
       - "5432"
     networks:
       - mungos-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   core-app:
     build:
@@ -28,8 +23,7 @@ services:
       dockerfile: Dockerfile
     container_name: mungos-core
     depends_on:
-      postgres-core:
-        condition: service_healthy
+      - postgres-core
     restart: unless-stopped
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}

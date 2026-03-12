@@ -36,7 +36,7 @@ public class TrafficPacketDTO {
                 .srcIp(proto.getSrcIp())
                 .dstIp(proto.getDstIp())
                 .length(proto.getLength())
-                .hasPayload(proto.getPayload() != null && proto.getPayload().size() > 0)
+                .hasPayload(!proto.getPayload().isEmpty())
                 .headers(proto.getHeadersMap())
                 .method(proto.getMethod())
                 .uri(proto.getUri())

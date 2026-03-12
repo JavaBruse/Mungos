@@ -27,10 +27,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-type SnifferController interface {
-	UpdateSnifferFilter(filters string)
-}
-
 type Config struct {
 	MasterKey  string
 	SnifferID  string
@@ -57,7 +53,6 @@ type Server struct {
 	certPEM    []byte
 	keyPEM     []byte
 	storage    *clickhouse.ClickHouseStorage
-	app        SnifferController
 }
 
 type StatsCollector struct {
@@ -69,7 +64,7 @@ type StatsCollector struct {
 
 var startTime = time.Now()
 
-func NewServer(cfg *Config, app SnifferController) *Server {
+func NewServer(cfg *Config) *Server {
 	if cfg.Storage != nil && cfg.Storage.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -90,7 +85,6 @@ func NewServer(cfg *Config, app SnifferController) *Server {
 					keyPEM:     []byte(client.ServerPrivateKey),
 					storage:    cfg.Storage,
 					clientKey:  client.SessionKey,
-					app:        app,
 				}
 			}
 		}
@@ -107,7 +101,6 @@ func NewServer(cfg *Config, app SnifferController) *Server {
 		storage:    cfg.Storage,
 		clientKey:  "",
 		clientID:   "",
-		app:        app,
 	}
 }
 

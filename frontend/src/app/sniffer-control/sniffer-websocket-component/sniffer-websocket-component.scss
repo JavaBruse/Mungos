@@ -309,3 +309,20 @@
         margin: 0;
     }
 }
+
+
+.packet-details-grid {
+    flex-direction: column;
+    width: 100%;
+}
+
+.full-width-row {
+    width: 100%;
+    display: flex;
+}
+
+.three-col-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}

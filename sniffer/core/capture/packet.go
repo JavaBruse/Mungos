@@ -7,7 +7,6 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
-// Packet — доменная модель пакета (чистая, без зависимостей)
 type Packet struct {
 	Timestamp time.Time
 	SrcIP     string

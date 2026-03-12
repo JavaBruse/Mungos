@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"os"
 	"time"
 
 	pb "sniffer/core/grpc/proto"
@@ -58,16 +59,15 @@ func (s *Server) SetSettings(ctx context.Context, req *pb.SettingRequest) (*pb.S
 		logger.Error("Failed to save settings: %v", err)
 		return nil, status.Error(codes.Internal, "failed to save settings")
 	}
-	logger.Info("%v", s.app != nil)
-	if s.app != nil {
-		s.app.UpdateSnifferFilter(req.GetFilters())
-		logger.Info("UpdateSnifferFilter called with filters: %v", req.GetFilters())
-	}
 
-	logger.Info("Settings saved %v", req.GetFilters())
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		os.Exit(0)
+	}()
 
 	return &pb.SettingResponse{
 		Filters:   req.GetFilters(),
 		Timestamp: settingsData.CreatedAt.Unix(),
 	}, nil
+
 }

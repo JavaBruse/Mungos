@@ -4,12 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sniffer/core/capture"
 	"sniffer/core/logger"
 	"time"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/google/uuid"
 )
 
 type ClickHouseStorage struct {
@@ -105,63 +103,6 @@ func (c *ClickHouseStorage) ensureConnection() bool {
 		c.reconnect()
 	}
 	return c.enabled && c.conn != nil
-}
-
-func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet, snifferID string) error {
-	if !c.ensureConnection() || len(packets) == 0 {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	tx, err := c.conn.BeginTx(ctx, nil)
-	if err != nil {
-		c.reconnect()
-		return err
-	}
-	defer tx.Rollback()
-
-	query := `
-		INSERT INTO packets (
-			packet_id, timestamp, sniffer_id, src_ip, dst_ip, src_port, dst_port,
-			protocol, length, ttl, tcp_flags, payload
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`
-
-	stmt, err := tx.PrepareContext(ctx, query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	for _, pkt := range packets {
-		packetID := uuid.New().String()
-		payload := string(pkt.Payload)
-		if len(payload) > 10000 {
-			payload = payload[:10000]
-		}
-
-		_, err = stmt.ExecContext(ctx,
-			packetID,
-			pkt.Timestamp,
-			snifferID,
-			pkt.SrcIP,
-			pkt.DstIP,
-			pkt.SrcPort,
-			pkt.DstPort,
-			pkt.Protocol,
-			pkt.Length,
-			pkt.TTL,
-			pkt.TCPFlags,
-			payload,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
 }
 
 func (c *ClickHouseStorage) Close() error {
