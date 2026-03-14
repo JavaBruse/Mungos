@@ -67,12 +67,54 @@
                     [class]="'protocol-' + (packet.protocol ? packet.protocol.toLowerCase() : 'unknown')">
                 </span>
                 <span class="packet-summary">{{ getPacketSummary(packet) }}</span>
+
+                @if ( packet.ja4Application ) {
+                <span class="packet-length">{{packet.ja4Application}}</span>
+                }
+                @if ( packet.sni ) {
+                <span class="packet-length">{{packet.sni}}</span>
+                }
+                <!-- Определяем иконку по флагам и протоколу -->
+                @if (packet.protocol === 'TCP') {
+                @if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) {
+                <mat-icon class="packet-icon syn-icon" matTooltip="SYN - начало соединения">link</mat-icon>
+                }
+                @else if (packet.tcpFlags?.includes('S') && packet.tcpFlags?.includes('A')) {
+                <mat-icon class="packet-icon synack-icon"
+                    matTooltip="SYN-ACK - подтверждение синхронизации">handshake</mat-icon>
+                }
+                @else if (packet.tcpFlags?.includes('F')) {
+                <mat-icon class="packet-icon fin-icon" matTooltip="FIN - завершение соединения">link_off</mat-icon>
+                }
+                @else if (packet.tcpFlags?.includes('R')) {
+                <mat-icon class="packet-icon rst-icon" matTooltip="RST - сброс соединения">error</mat-icon>
+                }
+                @else if (packet.tcpFlags?.includes('P')) {
+                <mat-icon class="packet-icon psh-icon" matTooltip="PSH - передача данных">move_down</mat-icon>
+                }
+                @else if (packet.tcpFlags?.includes('A') && packet.tcpFlags?.length === 1) {
+                <mat-icon class="packet-icon ack-icon" matTooltip="ACK - подтверждение">done</mat-icon>
+                }
+                @else {
+                <mat-icon class="packet-icon default-icon" matTooltip="TCP пакет">swap_vert</mat-icon>
+                }
+                }
+                @else if (packet.protocol === 'TLS') {
+                @if (packet.ja4Raw) {
+                <mat-icon class="packet-icon tls-handshake-icon" matTooltip="TLS Handshake">security</mat-icon>
+                }
+                @else {
+                <mat-icon class="packet-icon tls-data-icon" matTooltip="TLS зашифрованные данные">lock</mat-icon>
+                }
+                }
+                @else {
+                <mat-icon class="packet-icon other-icon" matTooltip="Другой протокол">device_unknown</mat-icon>
+                }
                 <span class="packet-length">{{ packet.length || 0 }} B</span>
             </div>
 
             @if (expandedPacket() === i) {
             <div class="packet-details">
-                ```html
                 <table>
                     <tr>
                         <td class="field-name">Timestamp</td>

@@ -140,7 +140,7 @@ func (a *App) Run() error {
 				copy(sessionCopy, sessions[key])
 
 				// Классифицируем сессию
-				go classifier.ProcessSNI(nil, sessionCopy)
+				go classifier.ClassifySession(sessionCopy)
 
 				// Удаляем сессию из активных
 				delete(sessions, key)

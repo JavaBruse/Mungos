@@ -16,6 +16,13 @@ func NewSNIProcessor(db *clickhouse.ClickHouseStorage) *SNIProcessor {
 	return &SNIProcessor{db: db}
 }
 
+func (p *SNIProcessor) ClassifySession(sessionPackets []*models.Packet) {
+	if len(sessionPackets) == 0 {
+		return
+	}
+	go p.classifySessionAsync(sessionPackets)
+}
+
 // ProcessSNI - единая точка входа для обработки SNI
 func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*models.Packet) *models.Packet {
 	if packet == nil {

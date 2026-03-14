@@ -85,11 +85,54 @@
 @include protocol-colors('ftp', rgba(0, 255, 128, 0.3));
 @include protocol-colors('ssh', rgba(255, 0, 128, 0.3));
 @include protocol-colors('smtp', rgba(255, 128, 64, 0.3));
+@include protocol-colors('igmp', rgb(243, 81, 0));
 @include protocol-colors('unknown',
     linear-gradient(90deg,
         #ff0000, #ff8000, #ffff00, #00ff00,
         #00ffff, #0000ff, #8000ff, #ff00ff, #ff0080));
 
+
+
+.syn-icon {
+    color: #4caf50;
+}
+
+/* зелёный */
+.synack-icon {
+    color: #8bc34a;
+}
+
+/* светло-зелёный */
+.fin-icon {
+    color: #9c27b0;
+}
+
+/* фиолетовый */
+.rst-icon {
+    color: #f44336;
+}
+
+/* красный */
+.psh-icon {
+    color: #ff9800;
+}
+
+/* оранжевый */
+.ack-icon {
+    color: #2196f3;
+}
+
+/* синий */
+.tls-handshake-icon {
+    color: #673ab7;
+}
+
+/* тёмно-фиолетовый */
+.tls-data-icon {
+    color: #607d8b;
+}
+
+/* серо-синий */
 .protocol-icon {
     margin-right: 8px;
     font-size: 18px;

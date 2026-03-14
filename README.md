@@ -41,7 +41,7 @@ cd deploy
 mkdir data
 wget https://ja4db.com/api/download/ -O ./data/ja4db.json
 //или с google
-wget "https://drive.google.com/uc?export=download&id=1U4Od-5OpLJxvTNp54-ZKBUMFIjhp-wDr&confirm=t" -O data/ja4db.json
+wget "https://drive.usercontent.google.com/download?id=1U4Od-5OpLJxvTNp54-ZKBUMFIjhp-wDr&export=download&confirm=t" -O ~/Mungos/deploy/data/ja4db.json
 ```
 
 
@@ -117,6 +117,7 @@ docker volume prune -f
 docker exec -it mungos-clickhouse-sniffer clickhouse-client
 USE snifferdb;
 SELECT * FROM sniffer_clients;
+SELECT * FROM sni_stats;
 TRUNCATE TABLE sniffer_clients;
 ```
 ### PostgreSQL
