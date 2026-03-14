@@ -21,6 +21,8 @@ services:
       context: ../sniffer
       dockerfile: Dockerfile
     container_name: mungos-sniffer
+    volumes:
+      - ./data:/data
     depends_on:
       clickhouse-sniffer:
         condition: service_started
