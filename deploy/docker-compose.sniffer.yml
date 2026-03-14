@@ -47,6 +47,7 @@ services:
         DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
         SNIFFER_FILTERS: ${SNIFFER_FILTERS}
         JA4_DB_PATH: ${JA4_DB_PATH}
+        JA4_DB_WEB_PATH: ${JA4_DB_WEB_PATH}
     ports:
       - "0.0.0.0:${SNIFFER_GRPC_PORT}:3331"
     networks:

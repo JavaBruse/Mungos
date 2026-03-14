@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"sniffer/core/logger"
@@ -51,30 +50,38 @@ func (c *ClickHouseStorage) InitJA4Database(ctx context.Context) error {
 		return nil
 	}
 
-	var entries []models.JA4DBEntry
-	if err := c.loadFromFile(ja4FilePath, &entries); err != nil {
-		logger.Info("Downloading JA4 DB from API")
-		if err := c.downloadFromAPI(ja4FilePath); err != nil {
-			return err
-		}
-		if err := c.loadFromFile(ja4FilePath, &entries); err != nil {
-			return err
-		}
-	}
-
-	return c.saveJA4ToDB(ctx, entries)
-}
-
-func (c *ClickHouseStorage) loadFromFile(path string, entries *[]models.JA4DBEntry) error {
-	file, err := os.Open(path)
+	entries, err := c.loadEntries(ja4FilePath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	return json.NewDecoder(file).Decode(entries)
+	return c.saveJA4ToDB(ctx, entries)
 }
 
-func (c *ClickHouseStorage) downloadFromAPI(path string) error {
+func (c *ClickHouseStorage) loadEntries(path string) ([]models.JA4DBEntry, error) {
+	// Пробуем из файла
+	if path != "" {
+		entries, err := c.loadFromFile(path)
+		if err == nil {
+			logger.Info("Loaded %d entries from file", len(entries))
+			return entries, nil
+		}
+		logger.Info("No file found at %s", path)
+	}
+	return c.downloadFromAPI()
+}
+
+func (c *ClickHouseStorage) loadFromFile(path string) ([]models.JA4DBEntry, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	var entries []models.JA4DBEntry
+	err = json.NewDecoder(file).Decode(&entries)
+	return entries, err
+}
+
+func (c *ClickHouseStorage) downloadFromAPI() ([]models.JA4DBEntry, error) {
 	for {
 		logger.Info("Downloading JA4 database from %s", ja4APIURL)
 
@@ -91,65 +98,23 @@ func (c *ClickHouseStorage) downloadFromAPI(path string) error {
 			time.Sleep(10 * time.Second)
 			continue
 		}
+		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			resp.Body.Close()
 			logger.Error("API returned %s, retrying in 10 seconds...", resp.Status)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
-		file, err := os.Create(path)
-		if err != nil {
-			resp.Body.Close()
-			logger.Error("Failed to create file: %v, retrying in 10 seconds...", err)
+		var entries []models.JA4DBEntry
+		if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
+			logger.Error("Failed to decode JSON: %v, retrying...", err)
 			time.Sleep(10 * time.Second)
 			continue
 		}
 
-		total := resp.ContentLength
-		downloaded := int64(0)
-		buf := make([]byte, 32*1024)
-		lastPercent := 0
-
-		for {
-			n, readErr := resp.Body.Read(buf)
-			if n > 0 {
-				if _, writeErr := file.Write(buf[:n]); writeErr != nil {
-					file.Close()
-					resp.Body.Close()
-					logger.Error("Write failed: %v, retrying...", writeErr)
-					time.Sleep(10 * time.Second)
-					break
-				}
-				downloaded += int64(n)
-
-				if total > 0 {
-					percent := int(float64(downloaded) / float64(total) * 100)
-					if percent >= lastPercent+10 {
-						logger.Info("Downloading JA4 DB: %d%% (%.1f MB / %.1f MB)",
-							percent,
-							float64(downloaded)/1024/1024,
-							float64(total)/1024/1024)
-						lastPercent = percent
-					}
-				}
-			}
-
-			if readErr == io.EOF {
-				file.Close()
-				resp.Body.Close()
-				logger.Info("Download complete: %.1f MB", float64(total)/1024/1024)
-				return nil
-			}
-			if readErr != nil {
-				file.Close()
-				resp.Body.Close()
-				logger.Error("Read failed: %v, retrying in 10 seconds...", readErr)
-				time.Sleep(10 * time.Second)
-				break
-			}
-		}
+		logger.Info("Downloaded %d entries", len(entries))
+		return entries, nil
 	}
 }
 
@@ -223,16 +188,8 @@ func (c *ClickHouseStorage) UpdateJA4Database(ctx context.Context) error {
 		return fmt.Errorf("ClickHouse not available")
 	}
 
-	logger.Info("Updating JA4 database from API...")
-
-	resp, err := http.Get(ja4APIURL)
+	entries, err := c.downloadFromAPI()
 	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	var entries []models.JA4DBEntry
-	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
 		return err
 	}
 
