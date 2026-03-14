@@ -11,27 +11,23 @@ services:
       CLICKHOUSE_PASSWORD: ${SNIFFER_DB_PASS}
     volumes:
       - clickhouse-sniffer-data:/var/lib/clickhouse
-    expose:
-      - "8123"
-      - "9000"
+    ports:
+      - "127.0.0.1:9000:9000"
     networks:
-      mungos-network:
-        ipv4_address: 172.20.0.5
+      - mungos-network
 
   sniffer-app:
     build:
       context: ../sniffer
       dockerfile: Dockerfile
     container_name: mungos-sniffer
-    volumes:
-      - ./data:/data
     depends_on:
       clickhouse-sniffer:
         condition: service_started
     restart: unless-stopped
     environment:
         DB_TYPE: ${DB_TYPE}
-        DB_HOST: ${SNIFFER_DB_HOST}
+        DB_HOST: 127.0.0.1
         DB_PORT: ${SNIFFER_DB_PORT}
         DB_USER: ${SNIFFER_DB_USER}
         DB_PASS: ${SNIFFER_DB_PASS}
@@ -46,12 +42,7 @@ services:
         SNIFFER_GRPC_PORT: ${SNIFFER_GRPC_PORT}
         DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
         SNIFFER_FILTERS: ${SNIFFER_FILTERS}
-        JA4_DB_PATH: ${JA4_DB_PATH}
-    ports:
-      - "0.0.0.0:${SNIFFER_GRPC_PORT}:3331"
-    networks:
-      mungos-network:
-        ipv4_address: 172.20.0.10
+    network_mode: host
     develop:
       watch:
         - action: rebuild
