@@ -40,6 +40,8 @@ password: admin
 cd deploy
 mkdir data
 wget https://ja4db.com/api/download/ -O ./data/ja4db.json
+//или с google
+wget "https://drive.google.com/uc?export=download&id=1U4Od-5OpLJxvTNp54-ZKBUMFIjhp-wDr&confirm=t" -O data/ja4db.json
 ```
 
 
