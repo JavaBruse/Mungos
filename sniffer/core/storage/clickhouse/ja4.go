@@ -12,8 +12,6 @@ import (
 	"time"
 )
 
-const ja4APIURL = "https://ja4db.com/api/download/"
-
 func createJA4Table(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS ja4_database (
@@ -58,7 +56,6 @@ func (c *ClickHouseStorage) InitJA4Database(ctx context.Context) error {
 }
 
 func (c *ClickHouseStorage) loadEntries(path string) ([]models.JA4DBEntry, error) {
-	// Пробуем из файла
 	if path != "" {
 		entries, err := c.loadFromFile(path)
 		if err == nil {
@@ -82,6 +79,8 @@ func (c *ClickHouseStorage) loadFromFile(path string) ([]models.JA4DBEntry, erro
 }
 
 func (c *ClickHouseStorage) downloadFromAPI() ([]models.JA4DBEntry, error) {
+	ja4APIURL := os.Getenv("JA4_DB_WEB_PATH")
+
 	for {
 		logger.Info("Downloading JA4 database from %s", ja4APIURL)
 
