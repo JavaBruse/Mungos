@@ -24,6 +24,22 @@ export interface TrafficPacket {
     dnsAnswer?: string;
     loadingPayload?: boolean;
     payload?: string;
+
+    // TCP fields
+    ttl?: number;
+    tcpFlags?: string;
+
+    // JA4 fields
+    ja4Raw?: string;
+    ja4Application?: string;
+    ja4Device?: string;
+    ja4Os?: string;
+    ja4Verified?: boolean;
+    ja4Confidence?: number;
+
+    // SNI fields
+    sni?: string;
+    sniService?: string;
 }
 
 export interface TrafficRequest {

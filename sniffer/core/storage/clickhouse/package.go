@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
+	"sniffer/core/models"
 	"strings"
 	"time"
 
@@ -25,7 +25,15 @@ func createPacketsTable(conn *sql.DB) error {
 			length UInt32,
 			ttl UInt8,
 			tcp_flags String,
-			payload String
+			payload String,
+			ja4_raw String,
+			ja4_application String,
+			ja4_device String,
+			ja4_os String,
+			ja4_verified Bool,
+			ja4_confidence UInt32,
+			sni String,
+			sni_service String
 		) ENGINE = MergeTree()
 		ORDER BY (timestamp, src_ip, dst_ip)
 	`
@@ -55,6 +63,8 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		var timestamp time.Time
 		var ttl uint8
 		var packetID string
+		var ja4Verified bool
+		var ja4Confidence uint32
 
 		err := rows.Scan(
 			&packetID,
@@ -68,6 +78,14 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&ttl,
 			&pkt.TcpFlags,
 			&pkt.Payload,
+			&pkt.Ja4Raw,
+			&pkt.Ja4Application,
+			&pkt.Ja4Device,
+			&pkt.Ja4Os,
+			&ja4Verified,
+			&ja4Confidence,
+			&pkt.Sni,
+			&pkt.SniService,
 		)
 		if err != nil {
 			continue
@@ -76,6 +94,9 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		pkt.Timestamp = timestamp.UnixNano()
 		pkt.PacketId = packetID
 		pkt.Ttl = int32(ttl)
+		pkt.Ja4Verified = ja4Verified
+		pkt.Ja4Confidence = int32(ja4Confidence)
+
 		packets = append(packets, &pkt)
 	}
 
@@ -103,6 +124,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 		var timestamp time.Time
 		var ttl uint8
 		var packetID string
+		var ja4Verified bool
+		var ja4Confidence uint32
 
 		err := rows.Scan(
 			&packetID,
@@ -116,6 +139,14 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&ttl,
 			&pkt.TcpFlags,
 			&pkt.Payload,
+			&pkt.Ja4Raw,
+			&pkt.Ja4Application,
+			&pkt.Ja4Device,
+			&pkt.Ja4Os,
+			&ja4Verified,
+			&ja4Confidence,
+			&pkt.Sni,
+			&pkt.SniService,
 		)
 		if err != nil {
 			continue
@@ -124,6 +155,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 		pkt.Timestamp = timestamp.UnixNano()
 		pkt.PacketId = packetID
 		pkt.Ttl = int32(ttl)
+		pkt.Ja4Verified = ja4Verified
+		pkt.Ja4Confidence = int32(ja4Confidence)
 
 		if err := sendFunc(&pkt); err != nil {
 			return err
@@ -202,14 +235,16 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 		}
 	}
 
-	whereClause := "1=1" // ← добавляем условие по умолчанию
+	whereClause := "1=1"
 	if len(conditions) > 0 {
 		whereClause = strings.Join(conditions, " AND ")
 	}
 
 	query := fmt.Sprintf(`
         SELECT packet_id, timestamp, src_ip, dst_ip, src_port, dst_port, 
-               protocol, length, ttl, tcp_flags, payload
+               protocol, length, ttl, tcp_flags, payload,
+               ja4_raw, ja4_application, ja4_device, ja4_os, 
+               ja4_verified, ja4_confidence, sni, sni_service
         FROM packets
         WHERE %s
         ORDER BY timestamp DESC
@@ -221,7 +256,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 	return query, args
 }
 
-func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet) error {
+func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 	if !c.ensureConnection() || len(packets) == 0 {
 		return nil
 	}
@@ -239,8 +274,10 @@ func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet) error {
 	query := `
 		INSERT INTO packets (
 			packet_id, timestamp, src_ip, dst_ip, src_port, dst_port,
-			protocol, length, ttl, tcp_flags, payload
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			protocol, length, ttl, tcp_flags, payload,
+			ja4_raw, ja4_application, ja4_device, ja4_os,
+			ja4_verified, ja4_confidence, sni, sni_service
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
@@ -268,6 +305,14 @@ func (c *ClickHouseStorage) SavePackets(packets []*capture.Packet) error {
 			pkt.TTL,
 			pkt.TCPFlags,
 			payload,
+			pkt.JA4Raw,
+			pkt.JA4Application,
+			pkt.JA4Device,
+			pkt.JA4OS,
+			pkt.JA4Verified,
+			pkt.JA4Confidence,
+			pkt.SNI,
+			pkt.SNIService,
 		)
 		if err != nil {
 			return err

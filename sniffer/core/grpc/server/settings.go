@@ -7,7 +7,7 @@ import (
 
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
-	"sniffer/core/storage/clickhouse"
+	"sniffer/core/models"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -50,7 +50,7 @@ func (s *Server) SetSettings(ctx context.Context, req *pb.SettingRequest) (*pb.S
 		return nil, status.Error(codes.Internal, "storage not available")
 	}
 
-	settingsData := &clickhouse.SettingsData{
+	settingsData := &models.SettingsData{
 		BPFFilter: req.GetFilters(),
 		CreatedAt: time.Now(),
 	}

@@ -38,6 +38,8 @@ func NewClickHouseStorage(host string, port int, user, password, db string) (*Cl
 			createPacketsTable(storage.conn)
 			createClientsTable(storage.conn)
 			createSettingTable(storage.conn)
+			createJA4Table(storage.conn)
+			createSNIStatsTable(storage.conn)
 			logger.Info("ClickHouse connected")
 			return storage, nil
 		}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -11,6 +13,8 @@ import (
 	"sniffer/core/config"
 	"sniffer/core/grpc/server"
 	"sniffer/core/logger"
+	"sniffer/core/method"
+	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 )
 
@@ -19,7 +23,7 @@ type App struct {
 	sniffer    *capture.Sniffer
 	chStorage  *clickhouse.ClickHouseStorage
 	grpc       *server.Server
-	packetChan chan *capture.Packet
+	packetChan chan *models.Packet
 	stopChan   chan struct{}
 }
 
@@ -41,13 +45,14 @@ func New(cfg *config.Config) (*App, error) {
 		30*time.Second,
 		filter,
 		10000,
+		chStorage,
 	)
 
 	app := &App{
 		config:     cfg,
 		sniffer:    sniffer,
 		chStorage:  chStorage,
-		packetChan: make(chan *capture.Packet, 500000),
+		packetChan: make(chan *models.Packet, 500000),
 		stopChan:   make(chan struct{}),
 	}
 
@@ -85,7 +90,7 @@ func loadFilterFromStorage(chStorage *clickhouse.ClickHouseStorage) string {
 
 	if settings == nil {
 		logger.Info("No settings in DB, saving empty filter")
-		settingsData := &clickhouse.SettingsData{
+		settingsData := &models.SettingsData{
 			BPFFilter: config.Load().BPFFilter,
 			CreatedAt: time.Now(),
 		}
@@ -104,11 +109,44 @@ func (a *App) Run() error {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	go a.batchWorker()
+
+	if a.chStorage != nil && a.chStorage.Enabled() {
+		ctx := context.Background()
+		if err := a.chStorage.InitJA4Database(ctx); err != nil {
+			logger.Error("Failed to init JA4 DB: %v", err)
+		}
+	}
+
 	go func() { _ = a.grpc.Start() }()
 	go func() { _ = a.sniffer.Start() }()
 
+	// === Группировка по сессиям и классификация ===
 	go func() {
+		sessions := make(map[string][]*models.Packet)
+		classifier := method.NewSNIProcessor(a.chStorage)
+
 		for pkt := range a.sniffer.Packets() {
+			// Ключ сессии: srcIP:dstIP:srcPort:dstPort
+			key := pkt.SrcIP + ":" + pkt.DstIP + ":" +
+				strconv.Itoa(int(pkt.SrcPort)) + ":" + strconv.Itoa(int(pkt.DstPort))
+
+			// Добавляем пакет в сессию
+			sessions[key] = append(sessions[key], pkt)
+
+			// Проверяем завершение сессии (FIN или RST)
+			if strings.Contains(pkt.TCPFlags, "F") || strings.Contains(pkt.TCPFlags, "R") {
+				// Копируем сессию для асинхронной обработки
+				sessionCopy := make([]*models.Packet, len(sessions[key]))
+				copy(sessionCopy, sessions[key])
+
+				// Классифицируем сессию
+				go classifier.ProcessSNI(nil, sessionCopy)
+
+				// Удаляем сессию из активных
+				delete(sessions, key)
+			}
+
+			// Отправляем в канал для сохранения
 			select {
 			case a.packetChan <- pkt:
 			default:
@@ -117,6 +155,7 @@ func (a *App) Run() error {
 			a.grpc.UpdateStats(pkt)
 		}
 	}()
+	// ======================================================
 
 	logger.Info("App started")
 	<-sigChan
@@ -131,7 +170,7 @@ func (a *App) Run() error {
 }
 
 func (a *App) batchWorker() {
-	batch := make([]*capture.Packet, 0, 5000)
+	batch := make([]*models.Packet, 0, 5000)
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
@@ -141,12 +180,12 @@ func (a *App) batchWorker() {
 			batch = append(batch, pkt)
 			if len(batch) >= 5000 {
 				a.saveBatch(batch)
-				batch = make([]*capture.Packet, 0, 5000)
+				batch = make([]*models.Packet, 0, 5000)
 			}
 		case <-ticker.C:
 			if len(batch) > 0 {
 				a.saveBatch(batch)
-				batch = make([]*capture.Packet, 0, 5000)
+				batch = make([]*models.Packet, 0, 5000)
 			}
 		case <-a.stopChan:
 			return
@@ -154,7 +193,7 @@ func (a *App) batchWorker() {
 	}
 }
 
-func (a *App) saveBatch(packets []*capture.Packet) {
+func (a *App) saveBatch(packets []*models.Packet) {
 	if a.chStorage == nil || !a.chStorage.Enabled() {
 		return
 	}

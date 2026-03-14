@@ -4,7 +4,7 @@ import (
 	"context"
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
-	"sniffer/core/storage/clickhouse"
+	"sniffer/core/models"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -72,7 +72,7 @@ func (s *Server) Register(ctx context.Context, req *pb.RegisterRequest) (*pb.Reg
 	s.mu.Unlock()
 
 	if s.storage != nil && s.storage.Enabled() {
-		clientData := &clickhouse.ClientData{
+		clientData := &models.ClientData{
 			SessionKey:        sessionKey,
 			ServerCertificate: string(s.certPEM),
 			ServerPrivateKey:  string(s.keyPEM),

@@ -1,33 +1,20 @@
 package capture
 
 import (
-	"time"
+	"sniffer/core/models"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
 
-type Packet struct {
-	Timestamp time.Time
-	SrcIP     string
-	DstIP     string
-	SrcPort   uint16
-	DstPort   uint16
-	Protocol  string
-	Length    int
-	TCPFlags  string
-	TTL       uint8
-	Payload   []byte
-}
-
-func NewPacketFromGopacket(pkt gopacket.Packet) *Packet {
+func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 	ipLayer := pkt.Layer(layers.LayerTypeIPv4)
 	if ipLayer == nil {
 		return nil
 	}
 	ip, _ := ipLayer.(*layers.IPv4)
 
-	p := &Packet{
+	p := &models.Packet{
 		Timestamp: pkt.Metadata().Timestamp,
 		SrcIP:     ip.SrcIP.String(),
 		DstIP:     ip.DstIP.String(),

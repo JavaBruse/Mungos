@@ -4,13 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
+	"sniffer/core/models"
 )
-
-type SettingsData struct {
-	BPFFilter string
-	CreatedAt time.Time
-}
 
 func createSettingTable(conn *sql.DB) error {
 	query := `
@@ -26,7 +21,7 @@ func createSettingTable(conn *sql.DB) error {
 	return err
 }
 
-func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData) error {
+func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *models.SettingsData) error {
 	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
@@ -50,7 +45,7 @@ func (c *ClickHouseStorage) SaveSettings(ctx context.Context, data *SettingsData
 	return err
 }
 
-func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*SettingsData, error) {
+func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*models.SettingsData, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
@@ -63,7 +58,7 @@ func (c *ClickHouseStorage) GetSetting(ctx context.Context) (*SettingsData, erro
 		LIMIT 1
 	`
 
-	var data SettingsData
+	var data models.SettingsData
 	err := c.conn.QueryRowContext(ctx, query).Scan(
 		&data.BPFFilter,
 		&data.CreatedAt,

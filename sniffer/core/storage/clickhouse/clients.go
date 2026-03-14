@@ -4,15 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
+	"sniffer/core/models"
 )
-
-type ClientData struct {
-	SessionKey        string
-	ServerCertificate string
-	ServerPrivateKey  string
-	CreatedAt         time.Time
-}
 
 func createClientsTable(conn *sql.DB) error {
 	query := `
@@ -28,7 +21,7 @@ func createClientsTable(conn *sql.DB) error {
 	return err
 }
 
-func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *ClientData) error {
+func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *models.ClientData) error {
 	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
@@ -50,7 +43,7 @@ func (c *ClickHouseStorage) SaveClient(ctx context.Context, data *ClientData) er
 	return err
 }
 
-func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey string) (*ClientData, error) {
+func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey string) (*models.ClientData, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
@@ -64,7 +57,7 @@ func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey s
 		LIMIT 1
 	`
 
-	var data ClientData
+	var data models.ClientData
 	err := c.conn.QueryRowContext(ctx, query, sessionKey).Scan(
 		&data.SessionKey,
 		&data.ServerCertificate,
@@ -82,7 +75,7 @@ func (c *ClickHouseStorage) GetClientBySession(ctx context.Context, sessionKey s
 	return &data, nil
 }
 
-func (c *ClickHouseStorage) GetClient(ctx context.Context, clientID string) (*ClientData, error) {
+func (c *ClickHouseStorage) GetClient(ctx context.Context, clientID string) (*models.ClientData, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
@@ -95,7 +88,7 @@ func (c *ClickHouseStorage) GetClient(ctx context.Context, clientID string) (*Cl
 		LIMIT 1
 	`
 
-	var data ClientData
+	var data models.ClientData
 	err := c.conn.QueryRowContext(ctx, query, clientID).Scan(
 		&data.SessionKey,
 		&data.ServerCertificate,

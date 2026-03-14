@@ -2,9 +2,13 @@ package capture
 
 import (
 	"sniffer/core/logger"
+	"sniffer/core/method"
+	"sniffer/core/models"
+	"sniffer/core/storage/clickhouse"
 	"time"
 
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
@@ -14,13 +18,15 @@ type captureWorker struct {
 	promisc   bool
 	timeout   time.Duration
 	BPFFilter string
-	packetCh  chan<- *Packet
+	packetCh  chan<- *models.Packet
 	controlCh <-chan string
 	stopCh    <-chan struct{}
+	db        *clickhouse.ClickHouseStorage
 }
 
 func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Duration, filter string,
-	packetCh chan<- *Packet, controlCh <-chan string, stopCh <-chan struct{}) *captureWorker {
+	packetCh chan<- *models.Packet, controlCh <-chan string, stopCh <-chan struct{},
+	db *clickhouse.ClickHouseStorage) *captureWorker {
 	return &captureWorker{
 		device:    device,
 		snaplen:   snaplen,
@@ -30,7 +36,26 @@ func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Dur
 		packetCh:  packetCh,
 		controlCh: controlCh,
 		stopCh:    stopCh,
+		db:        db,
 	}
+}
+
+func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
+	packet := NewPacketFromGopacket(pkt)
+	if packet == nil {
+		return nil
+	}
+
+	// JA4 анализ
+	if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
+		tcp, _ := tcpLayer.(*layers.TCP)
+		packet = method.ProcessJA4(packet, tcp, w.db)
+	}
+
+	// SNI извлечение
+	packet.SNI = method.ExtractSNI(packet)
+
+	return packet
 }
 
 func (w *captureWorker) run() {
@@ -58,7 +83,7 @@ func (w *captureWorker) run() {
 			logger.Info("Sniffer stopped")
 			return
 		case pkt := <-packetSource.Packets():
-			if packet := NewPacketFromGopacket(pkt); packet != nil {
+			if packet := w.processPacket(pkt); packet != nil {
 				select {
 				case w.packetCh <- packet:
 				default:

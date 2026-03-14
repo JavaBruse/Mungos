@@ -72,6 +72,7 @@
 
             @if (expandedPacket() === i) {
             <div class="packet-details">
+                ```html
                 <table>
                     <tr>
                         <td class="field-name">Timestamp</td>
@@ -107,6 +108,52 @@
                             }
                         </td>
                     </tr>
+                    <tr>
+                        <td class="field-name">TTL</td>
+                        <td class="field-value">{{ packet.ttl || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">TCP Flags</td>
+                        <td class="field-value">{{ packet.tcpFlags || 'не определен' }}</td>
+                    </tr>
+
+                    <!-- JA4 секция -->
+                    <tr>
+                        <td class="field-name">JA4 Raw</td>
+                        <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">JA4 Application</td>
+                        <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">JA4 Device</td>
+                        <td class="field-value">{{ packet.ja4Device || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">JA4 OS</td>
+                        <td class="field-value">{{ packet.ja4Os || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">JA4 Verified</td>
+                        <td class="field-value">{{ packet.ja4Verified !== undefined ? (packet.ja4Verified ? 'да' :
+                            'нет') : 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">JA4 Confidence</td>
+                        <td class="field-value">{{ packet.ja4Confidence || 'не определен' }}</td>
+                    </tr>
+
+                    <!-- SNI секция -->
+                    <tr>
+                        <td class="field-name">SNI</td>
+                        <td class="field-value">{{ packet.sni || 'не определен' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="field-name">SNI Service</td>
+                        <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
+                    </tr>
+
                     @if (packet.headers && getKeys(packet.headers).length) {
                     <tr>
                         <td class="field-name">Headers</td>
@@ -118,6 +165,7 @@
                     </tr>
                     }
                 </table>
+                ```
                 @if (packet.payload) {
                 <div class="payload-section">
                     <h4>Payload ({{ packet.payload.length }} bytes):</h4>

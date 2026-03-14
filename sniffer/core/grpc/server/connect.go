@@ -16,9 +16,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
+	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 
 	_ "github.com/ClickHouse/clickhouse-go/v2"
@@ -169,7 +169,7 @@ func generateSecureKey() string {
 	return hex.EncodeToString(bytes)
 }
 
-func (s *Server) UpdateStats(p *capture.Packet) {
+func (s *Server) UpdateStats(p *models.Packet) {
 	s.stats.packetsTotal.Add(1)
 	s.stats.bytesTotal.Add(int64(p.Length))
 }

@@ -1,0 +1,221 @@
+package clickhouse
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"sniffer/core/logger"
+	"sniffer/core/models"
+)
+
+const ja4APIURL = "https://ja4db.com/api/download"
+
+func createJA4Table(conn *sql.DB) error {
+	query := `
+		CREATE TABLE IF NOT EXISTS ja4_database (
+			fingerprint String,
+			application String,
+			library Nullable(String),
+			device Nullable(String),
+			os String,
+			observation_count UInt32,
+			verified Bool,
+			fingerprint_type String
+		) ENGINE = MergeTree()
+		ORDER BY fingerprint
+	`
+	_, err := conn.Exec(query)
+	return err
+}
+
+func (c *ClickHouseStorage) InitJA4Database(ctx context.Context) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+	createJA4Table(c.conn)
+
+	ja4FilePath := os.Getenv("JA4_DB_PATH")
+	var count uint64
+	err := c.conn.QueryRowContext(ctx, "SELECT COUNT() FROM ja4_database").Scan(&count)
+	if err != nil {
+		logger.Error("Failed to check JA4 DB count: %v", err)
+	}
+
+	if count > 0 {
+		logger.Info("JA4 DB already loaded: %d entries", count)
+		return nil
+	}
+
+	var entries []models.JA4DBEntry
+	if err := c.loadFromFile(ja4FilePath, &entries); err != nil {
+		logger.Info("Downloading JA4 DB from API")
+		if err := c.downloadFromAPI(ja4FilePath); err != nil {
+			return err
+		}
+		if err := c.loadFromFile(ja4FilePath, &entries); err != nil {
+			return err
+		}
+	}
+
+	return c.saveJA4ToDB(ctx, entries)
+}
+
+func (c *ClickHouseStorage) loadFromFile(path string, entries *[]models.JA4DBEntry) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return json.NewDecoder(file).Decode(entries)
+}
+
+func (c *ClickHouseStorage) downloadFromAPI(path string) error {
+	logger.Info("Downloading JA4 database from %s", ja4APIURL)
+
+	resp, err := http.Get(ja4APIURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API returned %s", resp.Status)
+	}
+
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	total := resp.ContentLength
+	downloaded := int64(0)
+	buf := make([]byte, 32*1024)
+	lastPercent := 0
+
+	for {
+		n, err := resp.Body.Read(buf)
+		if n > 0 {
+			file.Write(buf[:n])
+			downloaded += int64(n)
+
+			if total > 0 {
+				percent := int(float64(downloaded) / float64(total) * 100)
+				if percent >= lastPercent+10 {
+					logger.Info("Downloading JA4 DB: %d%% (%.1f MB / %.1f MB)",
+						percent,
+						float64(downloaded)/1024/1024,
+						float64(total)/1024/1024)
+					lastPercent = percent
+				}
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Info("Download complete: %.1f MB", float64(total)/1024/1024)
+	return nil
+}
+
+func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA4DBEntry) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+
+	tx, err := c.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO ja4_database (fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, e := range entries {
+		if e.JA4Fingerprint != "" {
+			stmt.ExecContext(ctx, e.JA4Fingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4")
+		}
+		if e.JA4HFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4HFingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4h")
+		}
+		if e.JA4SFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4SFingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4s")
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (c *ClickHouseStorage) LookupJA4(ctx context.Context, fp string) (*models.JA4DBEntry, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("ClickHouse not available")
+	}
+
+	var e models.JA4DBEntry
+	var lib, dev sql.NullString
+
+	err := c.conn.QueryRowContext(ctx, `
+		SELECT application, library, device, os, observation_count, verified
+		FROM ja4_database WHERE fingerprint = ? LIMIT 1
+	`, fp).Scan(&e.Application, &lib, &dev, &e.OS, &e.ObservationCount, &e.Verified)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		c.reconnect()
+		return nil, err
+	}
+
+	if lib.Valid {
+		e.Library = &lib.String
+	}
+	if dev.Valid {
+		e.Device = &dev.String
+	}
+	return &e, nil
+}
+
+func (c *ClickHouseStorage) UpdateJA4Database(ctx context.Context) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+
+	logger.Info("Updating JA4 database from API...")
+
+	resp, err := http.Get(ja4APIURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	var entries []models.JA4DBEntry
+	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
+		return err
+	}
+
+	if _, err := c.conn.ExecContext(ctx, "DROP TABLE IF EXISTS ja4_database"); err != nil {
+		return err
+	}
+
+	if err := createJA4Table(c.conn); err != nil {
+		return err
+	}
+
+	return c.saveJA4ToDB(ctx, entries)
+}

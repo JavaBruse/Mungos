@@ -13,5 +13,6 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y libpcap0.8 ca-certificates
 WORKDIR /app
 COPY --from=builder /app/main .
+VOLUME ["/data"]
 EXPOSE 3331
 CMD ["./main"]

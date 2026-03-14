@@ -59,6 +59,18 @@ message TrafficPacket {
   string dns_answer = 15;
   int32 ttl = 16;
   string tcp_flags = 17;
+
+  // JA4 fields
+  string ja4_raw = 18;
+  string ja4_application = 19;
+  string ja4_device = 20;
+  string ja4_os = 21;
+  bool ja4_verified = 22;
+  int32 ja4_confidence = 23;
+
+  // SNI fields
+  string sni = 24;
+  string sni_service = 25;
 }
 
 message RegisterRequest {
