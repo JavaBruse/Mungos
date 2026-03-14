@@ -10,9 +10,10 @@ import (
 	"os"
 	"sniffer/core/logger"
 	"sniffer/core/models"
+	"time"
 )
 
-const ja4APIURL = "https://ja4db.com/api/download"
+const ja4APIURL = "https://ja4db.com/api/download/"
 
 func createJA4Table(conn *sql.DB) error {
 	query := `
@@ -74,56 +75,82 @@ func (c *ClickHouseStorage) loadFromFile(path string, entries *[]models.JA4DBEnt
 }
 
 func (c *ClickHouseStorage) downloadFromAPI(path string) error {
-	logger.Info("Downloading JA4 database from %s", ja4APIURL)
-
-	resp, err := http.Get(ja4APIURL)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("API returned %s", resp.Status)
-	}
-
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	total := resp.ContentLength
-	downloaded := int64(0)
-	buf := make([]byte, 32*1024)
-	lastPercent := 0
-
 	for {
-		n, err := resp.Body.Read(buf)
-		if n > 0 {
-			file.Write(buf[:n])
-			downloaded += int64(n)
+		logger.Info("Downloading JA4 database from %s", ja4APIURL)
 
-			if total > 0 {
-				percent := int(float64(downloaded) / float64(total) * 100)
-				if percent >= lastPercent+10 {
-					logger.Info("Downloading JA4 DB: %d%% (%.1f MB / %.1f MB)",
-						percent,
-						float64(downloaded)/1024/1024,
-						float64(total)/1024/1024)
-					lastPercent = percent
+		client := &http.Client{
+			Timeout: 0,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return nil
+			},
+		}
+
+		resp, err := client.Get(ja4APIURL)
+		if err != nil {
+			logger.Error("Download failed: %v, retrying in 10 seconds...", err)
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			logger.Error("API returned %s, retrying in 10 seconds...", resp.Status)
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
+		file, err := os.Create(path)
+		if err != nil {
+			resp.Body.Close()
+			logger.Error("Failed to create file: %v, retrying in 10 seconds...", err)
+			time.Sleep(10 * time.Second)
+			continue
+		}
+
+		total := resp.ContentLength
+		downloaded := int64(0)
+		buf := make([]byte, 32*1024)
+		lastPercent := 0
+
+		for {
+			n, readErr := resp.Body.Read(buf)
+			if n > 0 {
+				if _, writeErr := file.Write(buf[:n]); writeErr != nil {
+					file.Close()
+					resp.Body.Close()
+					logger.Error("Write failed: %v, retrying...", writeErr)
+					time.Sleep(10 * time.Second)
+					break
+				}
+				downloaded += int64(n)
+
+				if total > 0 {
+					percent := int(float64(downloaded) / float64(total) * 100)
+					if percent >= lastPercent+10 {
+						logger.Info("Downloading JA4 DB: %d%% (%.1f MB / %.1f MB)",
+							percent,
+							float64(downloaded)/1024/1024,
+							float64(total)/1024/1024)
+						lastPercent = percent
+					}
 				}
 			}
-		}
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
+
+			if readErr == io.EOF {
+				file.Close()
+				resp.Body.Close()
+				logger.Info("Download complete: %.1f MB", float64(total)/1024/1024)
+				return nil
+			}
+			if readErr != nil {
+				file.Close()
+				resp.Body.Close()
+				logger.Error("Read failed: %v, retrying in 10 seconds...", readErr)
+				time.Sleep(10 * time.Second)
+				break
+			}
 		}
 	}
-
-	logger.Info("Download complete: %.1f MB", float64(total)/1024/1024)
-	return nil
 }
 
 func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA4DBEntry) error {
