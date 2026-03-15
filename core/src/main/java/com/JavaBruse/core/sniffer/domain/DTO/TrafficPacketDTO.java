@@ -4,13 +4,14 @@ import com.JavaBruse.proto.TrafficPacket;
 import lombok.Builder;
 import lombok.Value;
 
+import java.util.List;
 import java.util.Map;
 
 @Value
 @Builder
 public class TrafficPacketDTO {
     long timestamp;
-    String protocol;
+    List<String> protocols;
     int srcPort;
     int dstPort;
     String srcIp;
@@ -44,7 +45,7 @@ public class TrafficPacketDTO {
         return TrafficPacketDTO.builder()
                 .packetId(proto.getPacketId())
                 .timestamp(proto.getTimestamp())
-                .protocol(proto.getProtocol())
+                .protocols(proto.getProtocolStackList())
                 .srcPort(proto.getSrcPort())
                 .dstPort(proto.getDstPort())
                 .srcIp(proto.getSrcIp())

@@ -9,7 +9,7 @@ import { ErrorMessageService } from '../../services/error-message.service';
 export interface TrafficPacket {
     packetId: string;
     timestamp: number;
-    protocol: string;
+    protocols: string[];
     srcPort: number;
     dstPort: number;
     srcIp: string;

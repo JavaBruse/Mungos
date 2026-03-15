@@ -66,34 +66,63 @@
     margin-right: 10px;
 }
 
-@mixin protocol-colors($name, $bg) {
+.packet-protocol-strip {
+    display: inline-flex;
+    height: 16px;
+    width: 100px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 8px;
+}
 
-    .packet-protocol.protocol-#{$name},
-    .protocol-dot.protocol-#{$name} {
+.protocol-segment {
+    height: 100%;
+    flex: 1;
+}
+
+.packet-protocol-strip {
+    display: inline-flex;
+    height: 16px;
+    width: 100px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 8px;
+}
+
+.protocol-segment {
+    height: 100%;
+    flex: 1;
+}
+
+
+
+
+@mixin protocol-segment($name, $bg) {
+    .protocol-segment.segment-#{$name} {
         background: $bg;
-        border: 2px solid var(--color);
     }
 }
 
-@include protocol-colors('tcp', rgba(0, 255, 255, 0.3));
-@include protocol-colors('udp', rgba(255, 0, 255, 0.3));
-@include protocol-colors('http', rgba(255, 0, 0, 0.3));
-@include protocol-colors('https', rgba(255, 128, 0, 0.3));
-@include protocol-colors('dns', rgba(0, 0, 255, 0.3));
-@include protocol-colors('icmp', rgba(255, 255, 0, 0.3));
-@include protocol-colors('arm', rgba(128, 0, 255, 0.3));
-@include protocol-colors('ftp', rgba(0, 255, 128, 0.3));
-@include protocol-colors('ssh', rgba(255, 0, 128, 0.3));
-@include protocol-colors('smtp', rgba(255, 128, 64, 0.3));
-@include protocol-colors('igmp', rgb(243, 81, 0));
-@include protocol-colors('unknown',
-    linear-gradient(90deg,
-        #ff0000, #ff8000, #ffff00, #00ff00,
-        #00ffff, #0000ff, #8000ff, #ff00ff, #ff0080));
+@include protocol-segment('Ethernet', rgba(128, 128, 128, 0.8));
+@include protocol-segment('IPv4', rgba(0, 150, 255, 0.8));
+@include protocol-segment('IPv6', rgba(0, 100, 200, 0.8));
+@include protocol-segment('TCP', rgba(0, 255, 255, 0.8));
+@include protocol-segment('UDP', rgba(255, 0, 255, 0.8));
+@include protocol-segment('HTTP', rgba(255, 0, 0, 0.8));
+@include protocol-segment('TLSv1-0', rgba(156, 39, 176, 0.8));
+@include protocol-segment('TLSv1-1', rgba(123, 31, 162, 0.8));
+@include protocol-segment('TLSv1-2', rgba(103, 58, 183, 0.8));
+@include protocol-segment('TLSv1-3', rgba(81, 45, 168, 0.8));
+@include protocol-segment('Payload', rgba(255, 255, 255, 0.5));
+
 
 
 @mixin flag-color($flag, $color) {
     .packet-icon.#{$flag}-icon {
+        color: $color;
+    }
+
+    .flow-arrow.#{$flag}-icon {
         color: $color;
     }
 }
@@ -106,7 +135,6 @@
 @include flag-color('ack', #2196f3);
 @include flag-color('tls-handshake', #673ab7);
 @include flag-color('tls-data', #607d8b);
-
 
 
 /* серо-синий */
@@ -346,3 +374,182 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
 }
+
+.packet-summary-container {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.0;
+    flex: 1;
+    min-width: 0;
+}
+
+.vendor {
+    font-size: 0.9em;
+    color: #8a8a8a;
+}
+
+
+
+.request-schema {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 24px;
+    min-height: 120px;
+}
+
+.endpoint {
+    padding: 12px;
+    margin-top: 20px;
+}
+
+.endpoint-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 78px;
+    height: 78px;
+    background: linear-gradient(135deg, var(--gradient1) 0%, var(--gradient2) 100%);
+    border-radius: 5px;
+    color: var(--color);
+}
+
+.endpoint-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.endpoint-details .ip {
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.endpoint-details .mac {
+    font-family: monospace;
+    color: var(--color-secondary);
+    font-size: 0.9em;
+}
+
+.endpoint-details .vendor {
+    color: var(--color-secondary);
+    font-style: italic;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    margin-right: 4px;
+    background: var(--primary);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+
+
+
+
+
+
+
+// -------------------------------------
+
+.request-schema {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+    width: 100%;
+}
+
+.endpoint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+
+    .ip {
+        order: 1;
+        font-weight: 600;
+    }
+
+    .endpoint-icon {
+        order: 2;
+    }
+
+    .endpoint-details {
+        order: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+
+.request-flow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 300px;
+}
+
+/* Верхний текст */
+.flow-top {
+    font-size: 0.8em;
+    color: var(--color-secondary);
+    // white-space: nowrap;
+    line-height: 1.4;
+    margin-bottom: 2px;
+}
+
+/* Стрелка */
+.flow-arrow {
+    width: 100%;
+    height: 3px;
+    background: repeating-linear-gradient(90deg,
+            var(--color) 0px,
+            var(--color) 8px,
+            transparent 8px,
+            transparent 16px);
+    opacity: 0.7;
+    position: relative;
+}
+
+.flow-arrow {
+    width: 100%;
+    height: 3px;
+    background: repeating-linear-gradient(90deg,
+            var(--arrow-color) 0px,
+            var(--arrow-color) 8px,
+            transparent 8px,
+            transparent 16px);
+    opacity: 0.7;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        right: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 0;
+        height: 0;
+        border-left: 12px solid var(--arrow-color);
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+    }
+}
+
+/* Нижний текст */
+.flow-bottom {
+    // font-size: 0.8em;
+    color: var(--color);
+    // white-space: nowrap;
+    // line-height: 1.4;
+    // margin-top: 2px;
+}
+
+// -------------------------------------

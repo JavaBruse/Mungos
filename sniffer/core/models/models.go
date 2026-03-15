@@ -8,7 +8,7 @@ type Packet struct {
 	DstIP     string
 	SrcPort   uint16
 	DstPort   uint16
-	Protocol  string
+	Protocol  []string
 	Length    int
 	TCPFlags  string
 	TTL       uint8

@@ -167,6 +167,86 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
     return parts.join(' - ') || 'No details';
   }
 
+
+  getPacketVendor(packet: TrafficPacket): string {
+    const parts = [];
+    if (packet.srcVendor || packet.dstVendor) {
+      parts.push(`${packet.srcVendor} → ${packet.dstVendor}`);
+    }
+
+
+    return parts.join(' - ') || 'No details';
+  }
+
+  // Только цвет
+  getPacketColor(packet: TrafficPacket): string {
+    const protocols = packet.protocols || [];
+
+    if (protocols.includes('TCP')) {
+      if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) return '#4caf50';
+      if (packet.tcpFlags?.includes('S') && packet.tcpFlags?.includes('A')) return '#8bc34a';
+      if (packet.tcpFlags?.includes('F')) return '#9c27b0';
+      if (packet.tcpFlags?.includes('R')) return '#f44336';
+      if (packet.tcpFlags?.includes('P')) return '#ff9800';
+      if (packet.tcpFlags?.includes('A') && packet.tcpFlags?.length === 1) return '#2196f3';
+      return '#888';
+    }
+
+    if (protocols.some(p => p.includes('TLSv'))) {
+      return packet.ja4Raw ? '#673ab7' : '#607d8b';
+    }
+
+    return '#888';
+  }
+
+  getPacketIcon(packet: TrafficPacket): string {
+    const protocols = packet.protocols || [];
+
+    if (protocols.includes('TCP')) {
+      if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) return 'link';
+      if (packet.tcpFlags?.includes('S') && packet.tcpFlags?.includes('A')) return 'handshake';
+      if (packet.tcpFlags?.includes('F')) return 'link_off';
+      if (packet.tcpFlags?.includes('R')) return 'error';
+      if (packet.tcpFlags?.includes('P')) return 'move_down';
+      if (packet.tcpFlags?.includes('A') && packet.tcpFlags?.length === 1) return 'done';
+      return 'swap_vert';
+    }
+
+    if (protocols.some(p => p.includes('TLSv'))) {
+      return packet.ja4Raw ? 'security' : 'lock';
+    }
+
+    return 'device_unknown';
+  }
+
+  getTooltip(packet: TrafficPacket): string {
+    const protocols = packet.protocols || [];
+
+    if (protocols.includes('TCP')) {
+      if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) return 'SYN - начало соединения';
+      if (packet.tcpFlags?.includes('S') && packet.tcpFlags?.includes('A')) return 'SYN-ACK - подтверждение синхронизации';
+      if (packet.tcpFlags?.includes('F')) return 'FIN - завершение соединения';
+      if (packet.tcpFlags?.includes('R')) return 'RST - сброс соединения';
+      if (packet.tcpFlags?.includes('P')) return 'PSH - передача данных';
+      if (packet.tcpFlags?.includes('A') && packet.tcpFlags?.length === 1) return 'ACK - подтверждение';
+      return 'TCP пакет';
+    }
+
+    if (protocols.some(p => p.includes('TLSv'))) {
+      return packet.ja4Raw ? 'TLS Handshake' : 'TLS зашифрованные данные';
+    }
+
+    return 'Другой протокол: ' + protocols.join(', ');
+  }
+
+  getProtocolSegments(protocolStack: string[]): string[] {
+    return protocolStack.map(p => p.replace(/\./g, '-'));
+  }
+
+  getSegmentClass(proto: string): string {
+    return 'segment-' + proto;
+  }
+
   ngOnInit() {
     this.paramSubscription = this.route.paramMap.subscribe(params => {
       const newId = params.get('id')!;

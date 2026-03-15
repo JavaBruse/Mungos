@@ -44,6 +44,12 @@ wget https://ja4db.com/api/download/ -O ./data/ja4db.json
 wget "https://drive.usercontent.google.com/download?id=1U4Od-5OpLJxvTNp54-ZKBUMFIjhp-wDr&export=download&confirm=t" -O ~/Mungos/deploy/data/ja4db.json
 ```
 
+- База вендоров взята из источника
+```http
+https://standards-oui.ieee.org/oui/oui.txt
+```
+- Лежит по пути deploy/data/oui.txt
+
 
 Все переменные задаются в файле [`/deploy/.env`](/deploy/.env)
 

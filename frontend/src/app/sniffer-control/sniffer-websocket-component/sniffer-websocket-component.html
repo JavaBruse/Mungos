@@ -63,10 +63,17 @@
         <div class="packet-card" [class.expanded]="expandedPacket() === i">
             <div class="packet-header" (click)="togglePacket(i)">
                 <span class="packet-time">{{ formatTimestamp(packet.timestamp) }}</span>
-                <span class="packet-protocol"
-                    [class]="'protocol-' + (packet.protocol ? packet.protocol.toLowerCase() : 'unknown')">
+                <div class="packet-protocol-strip">
+                    @for (proto of getProtocolSegments(packet.protocols); track $index) {
+                    <div class="protocol-segment" [class]="getSegmentClass(proto)" [style.flex]="1"
+                        [matTooltip]="proto">
+                    </div>
+                    }
+                </div>
+                <span class="packet-summary-container">
+                    <div class="address">{{ getPacketSummary(packet) }}</div>
+                    <div class="vendor">{{ getPacketVendor(packet)}}</div>
                 </span>
-                <span class="packet-summary">{{ getPacketSummary(packet) }} {{packet.srcVendor}}</span>
 
                 @if ( packet.ja4Application ) {
                 <span class="packet-length">{{packet.ja4Application}}</span>
@@ -74,139 +81,119 @@
                 @if ( packet.sni ) {
                 <span class="packet-length">{{packet.sni}}</span>
                 }
-                @if (packet.protocol === 'TCP') {
-                @if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) {
-                <mat-icon class="packet-icon syn-icon" matTooltip="SYN - начало соединения">link</mat-icon>
-                }
-                @else if (packet.tcpFlags?.includes('S') && packet.tcpFlags?.includes('A')) {
-                <mat-icon class="packet-icon synack-icon"
-                    matTooltip="SYN-ACK - подтверждение синхронизации">handshake</mat-icon>
-                }
-                @else if (packet.tcpFlags?.includes('F')) {
-                <mat-icon class="packet-icon fin-icon" matTooltip="FIN - завершение соединения">link_off</mat-icon>
-                }
-                @else if (packet.tcpFlags?.includes('R')) {
-                <mat-icon class="packet-icon rst-icon" matTooltip="RST - сброс соединения">error</mat-icon>
-                }
-                @else if (packet.tcpFlags?.includes('P')) {
-                <mat-icon class="packet-icon psh-icon" matTooltip="PSH - передача данных">move_down</mat-icon>
-                }
-                @else if (packet.tcpFlags?.includes('A') && packet.tcpFlags?.length === 1) {
-                <mat-icon class="packet-icon ack-icon" matTooltip="ACK - подтверждение">done</mat-icon>
-                }
-                @else {
-                <mat-icon class="packet-icon default-icon" matTooltip="TCP пакет">swap_vert</mat-icon>
-                }
-                }
-                @else if (packet.protocol === 'TLS') {
-                @if (packet.ja4Raw) {
-                <mat-icon class="packet-icon tls-handshake-icon" matTooltip="TLS Handshake">security</mat-icon>
-                }
-                @else {
-                <mat-icon class="packet-icon tls-data-icon" matTooltip="TLS зашифрованные данные">lock</mat-icon>
-                }
-                }
-                @else {
-                <mat-icon class="packet-icon other-icon" matTooltip="Другой протокол">device_unknown</mat-icon>
-                }
+                <mat-icon class="packet-icon" [style.color]="getPacketColor(packet)" [matTooltip]="getTooltip(packet)">
+                    {{ getPacketIcon(packet) }}
+                </mat-icon>
                 <span class="packet-length">{{ packet.length || 0 }} B</span>
             </div>
 
             @if (expandedPacket() === i) {
             <div class="packet-details">
-                <table>
-                    <tr>
-                        <td class="field-name">Timestamp</td>
-                        <td class="field-value">{{ formatTimestamp(packet.timestamp) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">Protocol</td>
-                        <td class="field-value">{{ packet.protocol }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">Source</td>
-                        <td class="field-value">{{ packet.srcIp }}:{{ packet.srcPort }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">Destination</td>
-                        <td class="field-value">{{ packet.dstIp }}:{{ packet.dstPort }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">Length</td>
-                        <td class="field-value">
-                            @if (packet.hasPayload) {
-                            <button mat-button color="primary" (click)="togglePayload(packet)"
-                                class="payload-length-btn">
-                                {{ packet.length }} bytes
-                                @if (packet.payload) {
-                                <mat-icon>visibility_off</mat-icon>
+                <div class="packet-timestamp-bar">
+                    <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
+                    <span class="protocol-badge">
+                        {{packet.protocols}}
+                    </span>
+                </div>
+                <div class="request-schema">
+                    <div class="endpoint source">
+
+                        <div class="vendor">{{ packet.srcVendor }}</div>
+
+                        <div class="endpoint-icon">
+                            <mat-icon>computer</mat-icon>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="ip">{{ packet.srcIp }}:{{ packet.srcPort }}</div>
+                            <div class="mac">{{ packet.srcMac }}</div>
+                        </div>
+                    </div>
+                    <div class="request-flow">
+                        <div class="flow-top"> {{ packet.protocols.join(' → ') }}</div>
+                        <div class="flow-arrow" [style.--arrow-color]="getPacketColor(packet)"></div>
+                        <div class="flow-bottom">
+                            <td class="field-value">
+                                @if (packet.hasPayload) {
+                                <button mat-button color="primary" (click)="togglePayload(packet)"
+                                    class="payload-length-btn">
+                                    {{ packet.length }} bytes
+                                    @if (packet.payload) {
+                                    <mat-icon>visibility_off</mat-icon>
+                                    } @else {
+                                    <mat-icon>cloud_download</mat-icon>
+                                    }
+                                </button>
                                 } @else {
-                                <mat-icon>cloud_download</mat-icon>
+                                {{ packet.length }} bytes
                                 }
-                            </button>
-                            } @else {
-                            {{ packet.length }} bytes
-                            }
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">TTL</td>
-                        <td class="field-value">{{ packet.ttl || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">TCP Flags</td>
-                        <td class="field-value">{{ packet.tcpFlags || 'не определен' }}</td>
-                    </tr>
+                            </td>
+                        </div>
+                    </div>
 
+                    <div class="endpoint destination">
+                        <div class="vendor">{{ packet.dstVendor }}</div>
+                        <div class="endpoint-icon">
+                            <mat-icon>dns</mat-icon>
+                        </div>
+                        <div class="endpoint-details">
+                            <div class="mac">{{ packet.dstMac }}</div>
+                            <div class="ip">{{ packet.dstIp }}:{{ packet.dstPort }}</div>
+                        </div>
+                    </div>
+                </div>
+                <table>
+
+                    <td>
+                        <tr>
+                            <td class="field-name">TTL</td>
+                            <td class="field-value">{{ packet.ttl || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">TCP Flags</td>
+                            <td class="field-value">{{ packet.tcpFlags || 'не определен' }}</td>
+                        </tr>
+                        <!-- SNI секция -->
+                        <tr>
+                            <td class="field-name">SNI</td>
+                            <td class="field-value">{{ packet.sni || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">SNI Service</td>
+                            <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
+                        </tr>
+
+
+                    </td>
                     <!-- JA4 секция -->
-                    <tr>
-                        <td class="field-name">JA4 Raw</td>
-                        <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">JA4 Application</td>
-                        <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">JA4 Device</td>
-                        <td class="field-value">{{ packet.ja4Device || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">JA4 OS</td>
-                        <td class="field-value">{{ packet.ja4Os || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">JA4 Verified</td>
-                        <td class="field-value">{{ packet.ja4Verified !== undefined ? (packet.ja4Verified ? 'да' :
-                            'нет') : 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">JA4 Confidence</td>
-                        <td class="field-value">{{ packet.ja4Confidence || 'не определен' }}</td>
-                    </tr>
+                    <td>
+                        <tr>
+                            <td class="field-name">JA4 Raw</td>
+                            <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">JA4 Application</td>
+                            <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">JA4 Device</td>
+                            <td class="field-value">{{ packet.ja4Device || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">JA4 OS</td>
+                            <td class="field-value">{{ packet.ja4Os || 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">JA4 Verified</td>
+                            <td class="field-value">{{ packet.ja4Verified !== undefined ? (packet.ja4Verified ? 'да' :
+                                'нет') : 'не определен' }}</td>
+                        </tr>
+                        <tr>
+                            <td class="field-name">JA4 Confidence</td>
+                            <td class="field-value">{{ packet.ja4Confidence || 'не определен' }}</td>
+                        </tr>
+                    </td>
 
-                    <!-- SNI секция -->
-                    <tr>
-                        <td class="field-name">SNI</td>
-                        <td class="field-value">{{ packet.sni || 'не определен' }}</td>
-                    </tr>
-                    <tr>
-                        <td class="field-name">SNI Service</td>
-                        <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
-                    </tr>
-
-                    @if (packet.headers && getKeys(packet.headers).length) {
-                    <tr>
-                        <td class="field-name">Headers</td>
-                        <td class="field-value">
-                            @for (key of getKeys(packet.headers); track key) {
-                            <div>{{ key }}: {{ packet.headers[key] }}</div>
-                            }
-                        </td>
-                    </tr>
-                    }
                 </table>
-                ```
                 @if (packet.payload) {
                 <div class="payload-section">
                     <h4>Payload ({{ packet.payload.length }} bytes):</h4>
@@ -217,7 +204,6 @@
             }
         </div>
         }
-
         @if (!hasMore() && trafficData().length > 0) {
         <div class="end-message">— Пакетов больше нет —</div>
         }

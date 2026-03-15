@@ -278,24 +278,24 @@ func (x *FilterExpression) GetCustom() map[string]string {
 }
 
 type TrafficPacket struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	PacketId  string                 `protobuf:"bytes,1,opt,name=packet_id,json=packetId,proto3" json:"packet_id,omitempty"`
-	Timestamp int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Protocol  string                 `protobuf:"bytes,3,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	SrcPort   int32                  `protobuf:"varint,4,opt,name=src_port,json=srcPort,proto3" json:"src_port,omitempty"`
-	DstPort   int32                  `protobuf:"varint,5,opt,name=dst_port,json=dstPort,proto3" json:"dst_port,omitempty"`
-	SrcIp     string                 `protobuf:"bytes,6,opt,name=src_ip,json=srcIp,proto3" json:"src_ip,omitempty"`
-	DstIp     string                 `protobuf:"bytes,7,opt,name=dst_ip,json=dstIp,proto3" json:"dst_ip,omitempty"`
-	Length    int32                  `protobuf:"varint,8,opt,name=length,proto3" json:"length,omitempty"`
-	Payload   []byte                 `protobuf:"bytes,9,opt,name=payload,proto3" json:"payload,omitempty"`
-	Headers   map[string]string      `protobuf:"bytes,10,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Method    string                 `protobuf:"bytes,11,opt,name=method,proto3" json:"method,omitempty"`
-	Uri       string                 `protobuf:"bytes,12,opt,name=uri,proto3" json:"uri,omitempty"`
-	Status    int32                  `protobuf:"varint,13,opt,name=status,proto3" json:"status,omitempty"`
-	DnsQuery  string                 `protobuf:"bytes,14,opt,name=dns_query,json=dnsQuery,proto3" json:"dns_query,omitempty"`
-	DnsAnswer string                 `protobuf:"bytes,15,opt,name=dns_answer,json=dnsAnswer,proto3" json:"dns_answer,omitempty"`
-	Ttl       int32                  `protobuf:"varint,16,opt,name=ttl,proto3" json:"ttl,omitempty"`
-	TcpFlags  string                 `protobuf:"bytes,17,opt,name=tcp_flags,json=tcpFlags,proto3" json:"tcp_flags,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PacketId      string                 `protobuf:"bytes,1,opt,name=packet_id,json=packetId,proto3" json:"packet_id,omitempty"`
+	Timestamp     int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	ProtocolStack []string               `protobuf:"bytes,3,rep,name=protocol_stack,json=protocolStack,proto3" json:"protocol_stack,omitempty"`
+	SrcPort       int32                  `protobuf:"varint,4,opt,name=src_port,json=srcPort,proto3" json:"src_port,omitempty"`
+	DstPort       int32                  `protobuf:"varint,5,opt,name=dst_port,json=dstPort,proto3" json:"dst_port,omitempty"`
+	SrcIp         string                 `protobuf:"bytes,6,opt,name=src_ip,json=srcIp,proto3" json:"src_ip,omitempty"`
+	DstIp         string                 `protobuf:"bytes,7,opt,name=dst_ip,json=dstIp,proto3" json:"dst_ip,omitempty"`
+	Length        int32                  `protobuf:"varint,8,opt,name=length,proto3" json:"length,omitempty"`
+	Payload       []byte                 `protobuf:"bytes,9,opt,name=payload,proto3" json:"payload,omitempty"`
+	Headers       map[string]string      `protobuf:"bytes,10,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Method        string                 `protobuf:"bytes,11,opt,name=method,proto3" json:"method,omitempty"`
+	Uri           string                 `protobuf:"bytes,12,opt,name=uri,proto3" json:"uri,omitempty"`
+	Status        int32                  `protobuf:"varint,13,opt,name=status,proto3" json:"status,omitempty"`
+	DnsQuery      string                 `protobuf:"bytes,14,opt,name=dns_query,json=dnsQuery,proto3" json:"dns_query,omitempty"`
+	DnsAnswer     string                 `protobuf:"bytes,15,opt,name=dns_answer,json=dnsAnswer,proto3" json:"dns_answer,omitempty"`
+	Ttl           int32                  `protobuf:"varint,16,opt,name=ttl,proto3" json:"ttl,omitempty"`
+	TcpFlags      string                 `protobuf:"bytes,17,opt,name=tcp_flags,json=tcpFlags,proto3" json:"tcp_flags,omitempty"`
 	// MAC и Vendor (18-25)
 	SrcMac    string `protobuf:"bytes,18,opt,name=src_mac,json=srcMac,proto3" json:"src_mac,omitempty"`
 	DstMac    string `protobuf:"bytes,19,opt,name=dst_mac,json=dstMac,proto3" json:"dst_mac,omitempty"`
@@ -359,11 +359,11 @@ func (x *TrafficPacket) GetTimestamp() int64 {
 	return 0
 }
 
-func (x *TrafficPacket) GetProtocol() string {
+func (x *TrafficPacket) GetProtocolStack() []string {
 	if x != nil {
-		return x.Protocol
+		return x.ProtocolStack
 	}
-	return ""
+	return nil
 }
 
 func (x *TrafficPacket) GetSrcPort() int32 {
@@ -1298,11 +1298,11 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x06custom\x18\a \x03(\v2%.sniffer.FilterExpression.CustomEntryR\x06custom\x1a9\n" +
 	"\vCustomEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x89\a\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x94\a\n" +
 	"\rTrafficPacket\x12\x1b\n" +
 	"\tpacket_id\x18\x01 \x01(\tR\bpacketId\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12\x1a\n" +
-	"\bprotocol\x18\x03 \x01(\tR\bprotocol\x12\x19\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12%\n" +
+	"\x0eprotocol_stack\x18\x03 \x03(\tR\rprotocolStack\x12\x19\n" +
 	"\bsrc_port\x18\x04 \x01(\x05R\asrcPort\x12\x19\n" +
 	"\bdst_port\x18\x05 \x01(\x05R\adstPort\x12\x15\n" +
 	"\x06src_ip\x18\x06 \x01(\tR\x05srcIp\x12\x15\n" +

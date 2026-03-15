@@ -21,7 +21,7 @@ func createPacketsTable(conn *sql.DB) error {
 			dst_ip String,
 			src_port UInt16,
 			dst_port UInt16,
-			protocol String,
+			protocol_stack String,
 			length UInt32,
 			ttl UInt8,
 			tcp_flags String,
@@ -69,6 +69,7 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		var packetID string
 		var ja4Verified bool
 		var ja4Confidence uint32
+		var protocolStackStr string
 
 		err := rows.Scan(
 			&packetID,
@@ -77,7 +78,7 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&pkt.DstIp,
 			&pkt.SrcPort,
 			&pkt.DstPort,
-			&pkt.Protocol,
+			&protocolStackStr,
 			&pkt.Length,
 			&ttl,
 			&pkt.TcpFlags,
@@ -97,6 +98,10 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 		)
 		if err != nil {
 			continue
+		}
+
+		if protocolStackStr != "" {
+			pkt.ProtocolStack = strings.Split(protocolStackStr, ",")
 		}
 
 		pkt.Timestamp = timestamp.UnixNano()
@@ -134,6 +139,7 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 		var packetID string
 		var ja4Verified bool
 		var ja4Confidence uint32
+		var protocolStackStr string
 
 		err := rows.Scan(
 			&packetID,
@@ -142,7 +148,7 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&pkt.DstIp,
 			&pkt.SrcPort,
 			&pkt.DstPort,
-			&pkt.Protocol,
+			&protocolStackStr,
 			&pkt.Length,
 			&ttl,
 			&pkt.TcpFlags,
@@ -162,6 +168,10 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 		)
 		if err != nil {
 			continue
+		}
+
+		if protocolStackStr != "" {
+			pkt.ProtocolStack = strings.Split(protocolStackStr, ",")
 		}
 
 		pkt.Timestamp = timestamp.UnixNano()
@@ -205,12 +215,12 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 
 	if filter != nil {
 		if len(filter.Protocols) > 0 {
-			placeholders := strings.Repeat("?,", len(filter.Protocols))
-			placeholders = placeholders[:len(placeholders)-1]
-			conditions = append(conditions, fmt.Sprintf("protocol IN (%s)", placeholders))
+			var protocolConditions []string
 			for _, p := range filter.Protocols {
-				args = append(args, p)
+				protocolConditions = append(protocolConditions, "protocol_stack LIKE ?")
+				args = append(args, "%"+p+"%")
 			}
+			conditions = append(conditions, "("+strings.Join(protocolConditions, " OR ")+")")
 		}
 
 		if len(filter.Ports) > 0 {
@@ -254,7 +264,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 
 	query := fmt.Sprintf(`
         SELECT packet_id, timestamp, src_ip, dst_ip, src_port, dst_port, 
-               protocol, length, ttl, tcp_flags, payload,
+               protocol_stack, length, ttl, tcp_flags, payload,
                src_mac, dst_mac, src_vendor, dst_vendor,
                ja4_raw, ja4_application, ja4_device, ja4_os, 
                ja4_verified, ja4_confidence, sni, sni_service
@@ -287,7 +297,7 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 	query := `
 		INSERT INTO packets (
 			packet_id, timestamp, src_ip, dst_ip, src_port, dst_port,
-			protocol, length, ttl, tcp_flags, payload,
+			protocol_stack, length, ttl, tcp_flags, payload,
 			src_mac, dst_mac, src_vendor, dst_vendor,
 			ja4_raw, ja4_application, ja4_device, ja4_os,
 			ja4_verified, ja4_confidence, sni, sni_service
@@ -307,6 +317,8 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			payload = payload[:10000]
 		}
 
+		protocolStack := strings.Join(pkt.Protocol, ",")
+
 		_, err = stmt.ExecContext(ctx,
 			packetID,
 			pkt.Timestamp,
@@ -314,7 +326,7 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.DstIP,
 			pkt.SrcPort,
 			pkt.DstPort,
-			pkt.Protocol,
+			protocolStack,
 			pkt.Length,
 			pkt.TTL,
 			pkt.TCPFlags,
