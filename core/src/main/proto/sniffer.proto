@@ -63,17 +63,23 @@ message TrafficPacket {
   int32 ttl = 16;
   string tcp_flags = 17;
 
-  // JA4 fields
-  string ja4_raw = 18;
-  string ja4_application = 19;
-  string ja4_device = 20;
-  string ja4_os = 21;
-  bool ja4_verified = 22;
-  int32 ja4_confidence = 23;
+  // MAC и Vendor (18-25)
+  string src_mac = 18;
+  string dst_mac = 19;
+  string src_vendor = 20;
+  string dst_vendor = 21;
 
-  // SNI fields
-  string sni = 24;
-  string sni_service = 25;
+  // JA4 fields (22-27)
+  string ja4_raw = 22;
+  string ja4_application = 23;
+  string ja4_device = 24;
+  string ja4_os = 25;
+  bool ja4_verified = 26;
+  int32 ja4_confidence = 27;
+
+  // SNI fields (28-29)
+  string sni = 28;
+  string sni_service = 29;
 }
 
 message RegisterRequest {

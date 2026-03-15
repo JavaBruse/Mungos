@@ -26,6 +26,10 @@ func createPacketsTable(conn *sql.DB) error {
 			ttl UInt8,
 			tcp_flags String,
 			payload String,
+			src_mac String,
+			dst_mac String,
+			src_vendor String,
+			dst_vendor String,
 			ja4_raw String,
 			ja4_application String,
 			ja4_device String,
@@ -78,6 +82,10 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&ttl,
 			&pkt.TcpFlags,
 			&pkt.Payload,
+			&pkt.SrcMac,
+			&pkt.DstMac,
+			&pkt.SrcVendor,
+			&pkt.DstVendor,
 			&pkt.Ja4Raw,
 			&pkt.Ja4Application,
 			&pkt.Ja4Device,
@@ -139,6 +147,10 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&ttl,
 			&pkt.TcpFlags,
 			&pkt.Payload,
+			&pkt.SrcMac,
+			&pkt.DstMac,
+			&pkt.SrcVendor,
+			&pkt.DstVendor,
 			&pkt.Ja4Raw,
 			&pkt.Ja4Application,
 			&pkt.Ja4Device,
@@ -243,6 +255,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 	query := fmt.Sprintf(`
         SELECT packet_id, timestamp, src_ip, dst_ip, src_port, dst_port, 
                protocol, length, ttl, tcp_flags, payload,
+               src_mac, dst_mac, src_vendor, dst_vendor,
                ja4_raw, ja4_application, ja4_device, ja4_os, 
                ja4_verified, ja4_confidence, sni, sni_service
         FROM packets
@@ -275,9 +288,10 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 		INSERT INTO packets (
 			packet_id, timestamp, src_ip, dst_ip, src_port, dst_port,
 			protocol, length, ttl, tcp_flags, payload,
+			src_mac, dst_mac, src_vendor, dst_vendor,
 			ja4_raw, ja4_application, ja4_device, ja4_os,
 			ja4_verified, ja4_confidence, sni, sni_service
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
@@ -305,6 +319,10 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.TTL,
 			pkt.TCPFlags,
 			payload,
+			pkt.SrcMAC,
+			pkt.DstMAC,
+			pkt.SrcVendor,
+			pkt.DstVendor,
 			pkt.JA4Raw,
 			pkt.JA4Application,
 			pkt.JA4Device,

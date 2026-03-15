@@ -2,6 +2,7 @@ package capture
 
 import (
 	"sniffer/core/models"
+	"sniffer/core/storage/memory"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -36,6 +37,19 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		p.SrcPort = uint16(udp.SrcPort)
 		p.DstPort = uint16(udp.DstPort)
 		p.Payload = udp.Payload
+	}
+
+	if ethLayer := pkt.Layer(layers.LayerTypeEthernet); ethLayer != nil {
+		eth, _ := ethLayer.(*layers.Ethernet)
+		p.SrcMAC = eth.SrcMAC.String()
+		p.DstMAC = eth.DstMAC.String()
+
+		if p.SrcMAC != "" {
+			p.SrcVendor = memory.GetVendor(p.SrcMAC)
+		}
+		if p.DstMAC != "" {
+			p.DstVendor = memory.GetVendor(p.DstMAC)
+		}
 	}
 
 	return p

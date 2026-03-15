@@ -25,6 +25,11 @@ export interface TrafficPacket {
     loadingPayload?: boolean;
     payload?: string;
 
+    srcMac?: string;
+    dstMac?: string;
+    srcVendor?: string;
+    dstVendor?: string;
+
     // TCP fields
     ttl?: number;
     tcpFlags?: string;

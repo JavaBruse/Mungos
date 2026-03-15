@@ -66,7 +66,7 @@
                 <span class="packet-protocol"
                     [class]="'protocol-' + (packet.protocol ? packet.protocol.toLowerCase() : 'unknown')">
                 </span>
-                <span class="packet-summary">{{ getPacketSummary(packet) }}</span>
+                <span class="packet-summary">{{ getPacketSummary(packet) }} {{packet.srcVendor}}</span>
 
                 @if ( packet.ja4Application ) {
                 <span class="packet-length">{{packet.ja4Application}}</span>
@@ -74,7 +74,6 @@
                 @if ( packet.sni ) {
                 <span class="packet-length">{{packet.sni}}</span>
                 }
-                <!-- Определяем иконку по флагам и протоколу -->
                 @if (packet.protocol === 'TCP') {
                 @if (packet.tcpFlags?.includes('S') && !packet.tcpFlags?.includes('A')) {
                 <mat-icon class="packet-icon syn-icon" matTooltip="SYN - начало соединения">link</mat-icon>

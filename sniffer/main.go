@@ -9,9 +9,13 @@ import (
 	"sniffer/core/app"
 	"sniffer/core/config"
 	"sniffer/core/logger"
+	"sniffer/core/storage/memory"
 )
 
 func main() {
+	if err := memory.InitOUIDatabase("/data/oui.txt"); err != nil {
+		logger.Error("Failed to load OUI database: %v", err)
+	}
 	if tz := os.Getenv("TZ"); tz != "" {
 		loc, err := time.LoadLocation(tz)
 		if err != nil {

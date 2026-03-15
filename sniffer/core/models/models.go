@@ -13,6 +13,10 @@ type Packet struct {
 	TCPFlags  string
 	TTL       uint8
 	Payload   []byte
+	SrcMAC    string
+	DstMAC    string
+	SrcVendor string
+	DstVendor string
 
 	// JA4 fields
 	JA4Raw         string

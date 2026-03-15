@@ -92,45 +92,22 @@
         #00ffff, #0000ff, #8000ff, #ff00ff, #ff0080));
 
 
-
-.syn-icon {
-    color: #4caf50;
+@mixin flag-color($flag, $color) {
+    .packet-icon.#{$flag}-icon {
+        color: $color;
+    }
 }
 
-/* зелёный */
-.synack-icon {
-    color: #8bc34a;
-}
+@include flag-color('syn', #4caf50);
+@include flag-color('synack', #8bc34a);
+@include flag-color('fin', #9c27b0);
+@include flag-color('rst', #f44336);
+@include flag-color('psh', #ff9800);
+@include flag-color('ack', #2196f3);
+@include flag-color('tls-handshake', #673ab7);
+@include flag-color('tls-data', #607d8b);
 
-/* светло-зелёный */
-.fin-icon {
-    color: #9c27b0;
-}
 
-/* фиолетовый */
-.rst-icon {
-    color: #f44336;
-}
-
-/* красный */
-.psh-icon {
-    color: #ff9800;
-}
-
-/* оранжевый */
-.ack-icon {
-    color: #2196f3;
-}
-
-/* синий */
-.tls-handshake-icon {
-    color: #673ab7;
-}
-
-/* тёмно-фиолетовый */
-.tls-data-icon {
-    color: #607d8b;
-}
 
 /* серо-синий */
 .protocol-icon {

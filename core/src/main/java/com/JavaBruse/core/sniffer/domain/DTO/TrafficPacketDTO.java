@@ -26,6 +26,10 @@ public class TrafficPacketDTO {
     String packetId;
     int ttl;
     String tcpFlags;
+    String srcMac;
+    String dstMac;
+    String srcVendor;
+    String dstVendor;
     String ja4Raw;
     String ja4Application;
     String ja4Device;
@@ -55,6 +59,10 @@ public class TrafficPacketDTO {
                 .status(proto.getStatus())
                 .dnsQuery(proto.getDnsQuery())
                 .dnsAnswer(proto.getDnsAnswer())
+                .srcMac(proto.getSrcMac())
+                .dstMac(proto.getDstMac())
+                .srcVendor(proto.getSrcVendor())
+                .dstVendor(proto.getDstVendor())
                 .ja4Raw(proto.getJa4Raw())
                 .ja4Application(proto.getJa4Application())
                 .ja4Device(proto.getJa4Device())
