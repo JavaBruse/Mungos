@@ -92,7 +92,11 @@
                 <div class="packet-timestamp-bar">
                     <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
                     <span class="protocol-badge">
-                        {{packet.protocols}}
+                        @if(packet.ja4Application){
+                        {{packet.ja4Application}}
+                        }@else if (packet.sniService){
+                        {{packet.sniService}}
+                        }
                     </span>
                 </div>
                 <div class="request-schema">

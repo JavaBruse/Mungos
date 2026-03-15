@@ -103,18 +103,21 @@
     }
 }
 
-@include protocol-segment('Ethernet', rgba(128, 128, 128, 0.8));
-@include protocol-segment('IPv4', rgba(0, 150, 255, 0.8));
-@include protocol-segment('IPv6', rgba(0, 100, 200, 0.8));
-@include protocol-segment('TCP', rgba(0, 255, 255, 0.8));
-@include protocol-segment('UDP', rgba(255, 0, 255, 0.8));
-@include protocol-segment('HTTP', rgba(255, 0, 0, 0.8));
-@include protocol-segment('TLSv1-0', rgba(156, 39, 176, 0.8));
-@include protocol-segment('TLSv1-1', rgba(123, 31, 162, 0.8));
-@include protocol-segment('TLSv1-2', rgba(103, 58, 183, 0.8));
-@include protocol-segment('TLSv1-3', rgba(81, 45, 168, 0.8));
-@include protocol-segment('Payload', rgba(255, 255, 255, 0.5));
+@include protocol-segment('Ethernet', #9E9E9E);
+@include protocol-segment('IPv4', #4CAF50);
+@include protocol-segment('IPv6', #2E7D32);
+@include protocol-segment('TCP', #00BCD4);
+@include protocol-segment('UDP', #FF9800);
+@include protocol-segment('HTTP', #F44336);
+@include protocol-segment('TLSv1-0', #E1BEE7);
+@include protocol-segment('TLSv1-1', #CE93D8);
+@include protocol-segment('TLSv1-2', #BA68C8);
+@include protocol-segment('TLSv1-3', #AB47BC);
+@include protocol-segment('Payload', #FFEB3B);
 
+.protocol-segment.segment-unknown {
+    background: linear-gradient(135deg, #FF0000, #FF7F00, #FFFF00, #00FF00, #0000FF, #4B0082, #9400D3);
+}
 
 
 @mixin flag-color($flag, $color) {
@@ -545,11 +548,13 @@
 
 /* Нижний текст */
 .flow-bottom {
-    // font-size: 0.8em;
     color: var(--color);
-    // white-space: nowrap;
-    // line-height: 1.4;
-    // margin-top: 2px;
+
+}
+
+.packet-timestamp-bar {
+    display: flex;
+    justify-content: space-between;
 }
 
 // -------------------------------------

@@ -244,7 +244,13 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   }
 
   getSegmentClass(proto: string): string {
-    return 'segment-' + proto;
+    const knownProtocols = ['Ethernet', 'IPv4', 'TCP', 'UDP', 'HTTP', 'TLSv1-0', 'TLSv1-1', 'TLSv1-2', 'TLSv1-3', 'Payload'];
+    const baseClass = 'segment-' + proto;
+
+    if (knownProtocols.includes(proto)) {
+      return baseClass;
+    }
+    return 'segment-unknown';
   }
 
   ngOnInit() {

@@ -196,11 +196,11 @@ func getPortHint(portS uint16, portD uint16) []string {
 	var result []string
 
 	if hint, ok := hints[portS]; ok {
-		result = append(result, fmt.Sprintf("%d(%s)<-", portS, hint))
+		result = append(result, fmt.Sprintf("%d(<-%s)", portS, hint))
 	}
 
 	if hint, ok := hints[portD]; ok {
-		result = append(result, fmt.Sprintf("%d(%s)->", portD, hint))
+		result = append(result, fmt.Sprintf("%d(->%s)", portD, hint))
 	}
 
 	return result
