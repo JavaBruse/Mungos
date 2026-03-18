@@ -396,4 +396,23 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
       this.wsService.requestPayload(this.id(), packet.packetId);
     }
   }
+  extractAppName(ja4Application: string | null): string {
+    if (!ja4Application) return '';
+
+    if (ja4Application.includes('Mozilla/') || ja4Application.includes('Chrome/') ||
+      ja4Application.includes('Firefox/') || ja4Application.includes('Safari/') ||
+      ja4Application.includes('Edge/') || ja4Application.includes('MSIE')) {
+
+      if (ja4Application.includes('Firefox/')) return 'Firefox';
+      if (ja4Application.includes('Chrome/') && !ja4Application.includes('Edg/')) return 'Chrome';
+      if (ja4Application.includes('Edg/')) return 'Edge';
+      if (ja4Application.includes('Safari/') && !ja4Application.includes('Chrome/')) return 'Safari';
+      if (ja4Application.includes('MSIE') || ja4Application.includes('Trident/')) return 'Internet Explorer';
+
+      return ja4Application.substring(0, 30) + '...';
+    }
+
+    return ja4Application + "не определил";
+  }
 }
+

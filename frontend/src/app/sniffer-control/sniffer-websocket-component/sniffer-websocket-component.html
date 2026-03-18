@@ -75,12 +75,28 @@
                     <div class="vendor">{{ getPacketVendor(packet)}}</div>
                 </span>
 
-                @if ( packet.ja4Application ) {
-                <span class="packet-length">{{packet.ja4Application}}</span>
-                }
-                @if ( packet.sni ) {
-                <span class="packet-length">{{packet.sni}}</span>
-                }
+                <span class="packet-last-container">
+                    @if ( packet.ja4Application ) {
+                    <div class="app">{{ extractAppName(packet.ja4Application)}}</div>
+                    }
+
+                    <div class="service">
+
+                        @if ( packet.sniService ) {
+
+                        {{ packet.sniService}}
+                        }
+                        @if ( packet.sniService && packet.sni ) {
+                        :
+                        }
+                        @if ( packet.sni ) {
+                        {{packet.sni}}
+                        }
+                    </div>
+
+
+
+                </span>
                 <mat-icon class="packet-icon" [style.color]="getPacketColor(packet)" [matTooltip]="getTooltip(packet)">
                     {{ getPacketIcon(packet) }}
                 </mat-icon>
@@ -92,10 +108,8 @@
                 <div class="packet-timestamp-bar">
                     <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
                     <span class="protocol-badge">
-                        @if(packet.ja4Application){
-                        {{packet.ja4Application}}
-                        }@else if (packet.sniService){
-                        {{packet.sniService}}
+                        @if(packet.tcpFlags){
+                        {{ getTooltip(packet)}}
                         }
                     </span>
                 </div>
@@ -145,59 +159,36 @@
                         </div>
                     </div>
                 </div>
-                <table>
-
-                    <td>
-                        <tr>
-                            <td class="field-name">TTL</td>
-                            <td class="field-value">{{ packet.ttl || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">TCP Flags</td>
-                            <td class="field-value">{{ packet.tcpFlags || 'не определен' }}</td>
-                        </tr>
-                        <!-- SNI секция -->
-                        <tr>
-                            <td class="field-name">SNI</td>
-                            <td class="field-value">{{ packet.sni || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">SNI Service</td>
-                            <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
-                        </tr>
-
-
-                    </td>
-                    <!-- JA4 секция -->
-                    <td>
-                        <tr>
-                            <td class="field-name">JA4 Raw</td>
-                            <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">JA4 Application</td>
-                            <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">JA4 Device</td>
-                            <td class="field-value">{{ packet.ja4Device || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">JA4 OS</td>
-                            <td class="field-value">{{ packet.ja4Os || 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">JA4 Verified</td>
-                            <td class="field-value">{{ packet.ja4Verified !== undefined ? (packet.ja4Verified ? 'да' :
-                                'нет') : 'не определен' }}</td>
-                        </tr>
-                        <tr>
-                            <td class="field-name">JA4 Confidence</td>
-                            <td class="field-value">{{ packet.ja4Confidence || 'не определен' }}</td>
-                        </tr>
-                    </td>
-
-                </table>
+                <div class="packet-info-bar">
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <td class="field-name">SNI</td>
+                                <td class="field-value">{{ packet.sni || 'не определен' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="field-name">SNI Service</td>
+                                <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
+                            </tr>
+                            <!-- JA4 секция -->
+                            <tr>
+                                <td class="field-name">JA4 Raw</td>
+                                <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="field-name">JA4 Verified</td>
+                                <td class="field-value monospace">{{ packet.ja4Verified }}</td>
+                            </tr>
+                            <tr>
+                                <td class="field-name">JA4 Application</td>
+                                <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="ttl-container">
+                        TTL: {{ packet.ttl || 'не определен' }}
+                    </div>
+                </div>
                 @if (packet.payload) {
                 <div class="payload-section">
                     <h4>Payload ({{ packet.payload.length }} bytes):</h4>
