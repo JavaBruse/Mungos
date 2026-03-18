@@ -7,7 +7,6 @@ require github.com/google/gopacket v1.1.20-0.20250319234736-b7d9dbd15ae4
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.43.0
 	github.com/google/uuid v1.6.0
-	github.com/refraction-networking/utls v1.8.2
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -30,7 +29,6 @@ require (
 	go.opentelemetry.io/otel v1.39.0 // indirect
 	go.opentelemetry.io/otel/trace v1.39.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect

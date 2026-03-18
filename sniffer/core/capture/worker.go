@@ -1,6 +1,7 @@
 package capture
 
 import (
+	"fmt"
 	"sniffer/core/logger"
 	"sniffer/core/method"
 	"sniffer/core/models"
@@ -50,6 +51,15 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
 		tcp, _ := tcpLayer.(*layers.TCP)
 		packet = method.ProcessJA4(packet, tcp, w.db)
+		logger.Info(fmt.Sprintf("JA4Raw: %s, JA4SRaw: %s, JA4HRaw: %s, JA4XRaw: %s, JA4SSHRaw: %s, JA4LRaw: %s, JA4RRaw: %s",
+			packet.JA4Raw,
+			packet.JA4SRaw,
+			packet.JA4HRaw,
+			packet.JA4XRaw,
+			packet.JA4SSHRaw,
+			packet.JA4LRaw,
+			packet.JA4RRaw,
+		))
 	}
 
 	// SNI извлечение
