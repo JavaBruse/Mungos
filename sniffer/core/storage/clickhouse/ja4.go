@@ -138,14 +138,34 @@ func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA
 	defer stmt.Close()
 
 	for _, e := range entries {
+		application := e.Application
+		if (application == "" || application == "null") && e.UserAgentString != nil && *e.UserAgentString != "" {
+			application = *e.UserAgentString
+		}
 		if e.JA4Fingerprint != "" {
-			stmt.ExecContext(ctx, e.JA4Fingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4")
+			stmt.ExecContext(ctx, e.JA4Fingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4")
 		}
 		if e.JA4HFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4HFingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4h")
+			stmt.ExecContext(ctx, *e.JA4HFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4h")
 		}
 		if e.JA4SFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4SFingerprint, e.Application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4s")
+			stmt.ExecContext(ctx, *e.JA4SFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4s")
+		}
+
+		if e.JA4XFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4XFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4x")
+		}
+
+		if e.JA4TFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4TFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4t")
+		}
+
+		if e.JA4TSFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4TSFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4ts")
+		}
+
+		if e.JA4TScanFingerprint != nil {
+			stmt.ExecContext(ctx, *e.JA4TScanFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4r")
 		}
 	}
 

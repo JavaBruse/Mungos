@@ -63,4 +63,8 @@ type JA4DBEntry struct {
 	JA4Fingerprint       string  `json:"ja4_fingerprint"`
 	JA4SFingerprint      *string `json:"ja4s_fingerprint"`
 	JA4HFingerprint      *string `json:"ja4h_fingerprint"`
+	JA4XFingerprint      *string `json:"ja4x_fingerprint"`
+	JA4TFingerprint      *string `json:"ja4t_fingerprint"`
+	JA4TSFingerprint     *string `json:"ja4ts_fingerprint"`
+	JA4TScanFingerprint  *string `json:"ja4tscan_fingerprint"`
 }

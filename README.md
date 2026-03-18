@@ -125,6 +125,7 @@ USE snifferdb;
 SELECT * FROM sniffer_clients;
 SELECT * FROM sni_stats;
 TRUNCATE TABLE sniffer_clients;
+DROP TABLE IF EXISTS ja4_database;
 ```
 ### PostgreSQL
 ```sh
