@@ -136,7 +136,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
 
   resetAndLoad() {
     this.wsService.setOffset(this.id(), 0);
-    // this.trafficData.set([]);
+    this.trafficData.set([]);
     this.isLoading.set(true);
     this.hasMore.set(true);
     this.loadMore();

@@ -1,10 +1,12 @@
 <div class="page-container">
     <div class="horisontal-box">
+        <button mat-icon-button color="primary" (click)="resetAndLoad()" matTooltip="Обновить список">
+            <mat-icon>update</mat-icon>
+        </button>
         <h2>Поток трафика со сниффера: {{ id() }}</h2>
         <div class="stats-bar">
-            <span>Пакеты загружены: {{ trafficData().length }}</span>
+            <span>Загружено: {{ trafficData().length }}</span>
             @if (filterActive()) {
-            <span class="filter-badge">Фильтр активен</span>
             <button mat-icon-button color="primary" (click)="clearFilters()" matTooltip="Сбросить фильтры">
                 <mat-icon>filter_alt_off</mat-icon>
             </button>

@@ -61,21 +61,40 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 		}
 	}
 
-	if packet.JA4Raw != "" && db != nil && db.Enabled() {
+	if db != nil && db.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
-
-		if entry, err := db.LookupJA4(ctx, packet.JA4Raw); err == nil && entry != nil {
-			packet.JA4Application = entry.Application
-			packet.JA4OS = entry.OS
-			packet.JA4Verified = entry.Verified
-			packet.JA4Confidence = entry.ObservationCount
-			if entry.Device != nil {
-				packet.JA4Device = *entry.Device
+		if packet.JA4Raw != "" {
+			if entry, err := db.LookupJA4(ctx, packet.JA4Raw); err == nil && entry != nil {
+				fillPacketFromEntry(packet, entry)
+				return packet
+			}
+		}
+		if packet.JA4SRaw != "" {
+			if entry, err := db.LookupJA4(ctx, packet.JA4SRaw); err == nil && entry != nil {
+				fillPacketFromEntry(packet, entry)
+				return packet
+			}
+		}
+		if packet.JA4HRaw != "" {
+			if entry, err := db.LookupJA4(ctx, packet.JA4HRaw); err == nil && entry != nil {
+				fillPacketFromEntry(packet, entry)
+				return packet
 			}
 		}
 	}
 	return packet
+}
+
+func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
+	packet.JA4EntryID = entry.ID
+	packet.JA4Application = entry.Application
+	packet.JA4OS = entry.OS
+	packet.JA4Verified = entry.Verified
+	packet.JA4Confidence = entry.ObservationCount
+	if entry.Device != "" {
+		packet.JA4Device = entry.Device
+	}
 }
 
 // -----------------------------------------------------------------------------

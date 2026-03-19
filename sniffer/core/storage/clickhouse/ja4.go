@@ -10,11 +10,33 @@ import (
 	"sniffer/core/logger"
 	"sniffer/core/models"
 	"time"
+
+	"github.com/google/uuid"
 )
+
+type JA4JsonEntry struct {
+	Application          string  `json:"application"`
+	Library              *string `json:"library"`
+	Device               *string `json:"device"`
+	OS                   string  `json:"os"`
+	UserAgentString      *string `json:"user_agent_string"`
+	CertificateAuthority *string `json:"certificate_authority"`
+	ObservationCount     int     `json:"observation_count"`
+	Verified             bool    `json:"verified"`
+	Notes                *string `json:"notes"`
+	JA4Fingerprint       string  `json:"ja4_fingerprint"`
+	JA4SFingerprint      *string `json:"ja4s_fingerprint"`
+	JA4HFingerprint      *string `json:"ja4h_fingerprint"`
+	JA4XFingerprint      *string `json:"ja4x_fingerprint"`
+	JA4TFingerprint      *string `json:"ja4t_fingerprint"`
+	JA4TSFingerprint     *string `json:"ja4ts_fingerprint"`
+	JA4TScanFingerprint  *string `json:"ja4tscan_fingerprint"`
+}
 
 func createJA4Table(conn *sql.DB) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS ja4_database (
+			id String,
 			fingerprint String,
 			application String,
 			library Nullable(String),
@@ -55,7 +77,7 @@ func (c *ClickHouseStorage) InitJA4Database(ctx context.Context) error {
 	return c.saveJA4ToDB(ctx, entries)
 }
 
-func (c *ClickHouseStorage) loadEntries(path string) ([]models.JA4DBEntry, error) {
+func (c *ClickHouseStorage) loadEntries(path string) ([]JA4JsonEntry, error) {
 	if path != "" {
 		entries, err := c.loadFromFile(path)
 		if err == nil {
@@ -67,18 +89,18 @@ func (c *ClickHouseStorage) loadEntries(path string) ([]models.JA4DBEntry, error
 	return c.downloadFromAPI()
 }
 
-func (c *ClickHouseStorage) loadFromFile(path string) ([]models.JA4DBEntry, error) {
+func (c *ClickHouseStorage) loadFromFile(path string) ([]JA4JsonEntry, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
-	var entries []models.JA4DBEntry
+	var entries []JA4JsonEntry
 	err = json.NewDecoder(file).Decode(&entries)
 	return entries, err
 }
 
-func (c *ClickHouseStorage) downloadFromAPI() ([]models.JA4DBEntry, error) {
+func (c *ClickHouseStorage) downloadFromAPI() ([]JA4JsonEntry, error) {
 	ja4APIURL := os.Getenv("JA4_DB_WEB_PATH")
 
 	for {
@@ -105,7 +127,7 @@ func (c *ClickHouseStorage) downloadFromAPI() ([]models.JA4DBEntry, error) {
 			continue
 		}
 
-		var entries []models.JA4DBEntry
+		var entries []JA4JsonEntry
 		if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
 			logger.Error("Failed to decode JSON: %v, retrying...", err)
 			time.Sleep(10 * time.Second)
@@ -117,7 +139,7 @@ func (c *ClickHouseStorage) downloadFromAPI() ([]models.JA4DBEntry, error) {
 	}
 }
 
-func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA4DBEntry) error {
+func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []JA4JsonEntry) error {
 	if !c.ensureConnection() {
 		return fmt.Errorf("ClickHouse not available")
 	}
@@ -129,8 +151,8 @@ func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA
 	defer tx.Rollback()
 
 	stmt, err := tx.PrepareContext(ctx, `
-		INSERT INTO ja4_database (fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
@@ -138,46 +160,47 @@ func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []models.JA
 	defer stmt.Close()
 
 	for _, e := range entries {
+		id := uuid.New().String()
 		application := e.Application
 		if (application == "" || application == "null") && e.UserAgentString != nil && *e.UserAgentString != "" {
 			application = *e.UserAgentString
 		}
 		if e.JA4Fingerprint != "" {
-			stmt.ExecContext(ctx, e.JA4Fingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4")
+			stmt.ExecContext(ctx, id, e.JA4Fingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4")
 		}
 		if e.JA4HFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4HFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4h")
+			stmt.ExecContext(ctx, id, *e.JA4HFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4h")
 		}
 		if e.JA4SFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4SFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4s")
+			stmt.ExecContext(ctx, id, *e.JA4SFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4s")
 		}
 
 		if e.JA4XFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4XFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4x")
+			stmt.ExecContext(ctx, id, *e.JA4XFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4x")
 		}
 
 		if e.JA4TFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4TFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4t")
+			stmt.ExecContext(ctx, id, *e.JA4TFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4t")
 		}
 
 		if e.JA4TSFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4TSFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4ts")
+			stmt.ExecContext(ctx, id, *e.JA4TSFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4ts")
 		}
 
 		if e.JA4TScanFingerprint != nil {
-			stmt.ExecContext(ctx, *e.JA4TScanFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4r")
+			stmt.ExecContext(ctx, id, *e.JA4TScanFingerprint, application, e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, "ja4r")
 		}
 	}
 
 	return tx.Commit()
 }
 
-func (c *ClickHouseStorage) LookupJA4(ctx context.Context, fp string) (*models.JA4DBEntry, error) {
+func (c *ClickHouseStorage) LookupJA4(ctx context.Context, fp string) (*models.Ja4Entry, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("ClickHouse not available")
 	}
 
-	var e models.JA4DBEntry
+	var e models.Ja4Entry
 	var lib, dev sql.NullString
 
 	err := c.conn.QueryRowContext(ctx, `
@@ -194,10 +217,10 @@ func (c *ClickHouseStorage) LookupJA4(ctx context.Context, fp string) (*models.J
 	}
 
 	if lib.Valid {
-		e.Library = &lib.String
+		e.Library = lib.String
 	}
 	if dev.Valid {
-		e.Device = &dev.String
+		e.Device = dev.String
 	}
 	return &e, nil
 }
@@ -221,4 +244,128 @@ func (c *ClickHouseStorage) UpdateJA4Database(ctx context.Context) error {
 	}
 
 	return c.saveJA4ToDB(ctx, entries)
+}
+
+// GetAllJA4Entries возвращает все записи из базы
+func (c *ClickHouseStorage) GetAllJA4Entries(ctx context.Context) ([]models.Ja4Entry, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("ClickHouse not available")
+	}
+
+	rows, err := c.conn.QueryContext(ctx, `
+        SELECT id, fingerprint, application, library, device, os, 
+               observation_count, verified, fingerprint_type
+        FROM ja4_database
+    `)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []models.Ja4Entry
+	for rows.Next() {
+		var e models.Ja4Entry
+		var lib, dev sql.NullString
+
+		err := rows.Scan(&e.ID, &e.Fingerprint, &e.Application, &lib, &dev,
+			&e.OS, &e.ObservationCount, &e.Verified, &e.FingerprintType)
+		if err != nil {
+			return nil, err
+		}
+
+		if lib.Valid {
+			e.Library = lib.String
+		}
+		if dev.Valid {
+			e.Device = dev.String
+		}
+
+		entries = append(entries, e)
+	}
+	return entries, rows.Err()
+}
+
+// SaveDBEntry сохраняет или обновляет запись по ID
+func (c *ClickHouseStorage) SaveDBEntry(ctx context.Context, entry models.Ja4Entry) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+
+	// Если ID пустой - генерируем новый
+	if entry.ID == "" {
+		entry.ID = uuid.New().String()
+	}
+
+	// Проверяем существование по ID
+	var exists uint64
+	err := c.conn.QueryRowContext(ctx, "SELECT COUNT() FROM ja4_database WHERE id = ?", entry.ID).Scan(&exists)
+	if err != nil {
+		return err
+	}
+
+	if exists > 0 {
+		// Обновляем существующую запись
+		_, err = c.conn.ExecContext(ctx, `
+			ALTER TABLE ja4_database UPDATE 
+				fingerprint = ?, application = ?, library = ?, device = ?, 
+				os = ?, observation_count = ?, verified = ?, fingerprint_type = ?
+			WHERE id = ?
+		`, entry.Fingerprint, entry.Application, entry.Library, entry.Device,
+			entry.OS, entry.ObservationCount, entry.Verified, entry.FingerprintType, entry.ID)
+	} else {
+		// Вставляем новую запись
+		_, err = c.conn.ExecContext(ctx, `
+			INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, entry.ID, entry.Fingerprint, entry.Application, entry.Library,
+			entry.Device, entry.OS, entry.ObservationCount, entry.Verified, entry.FingerprintType)
+	}
+
+	return err
+}
+
+// ReplaceDBEntries полная замена базы данными из DBEntry
+func (c *ClickHouseStorage) ReplaceDBEntries(ctx context.Context, entries []models.Ja4Entry) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+
+	if _, err := c.conn.ExecContext(ctx, "TRUNCATE TABLE ja4_database"); err != nil {
+		return err
+	}
+
+	tx, err := c.conn.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `
+        INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	for _, e := range entries {
+		_, err := stmt.ExecContext(ctx, e.ID, e.Fingerprint, e.Application,
+			e.Library, e.Device, e.OS, e.ObservationCount, e.Verified, e.FingerprintType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// DeleteDBEntry удаляет запись по ID
+func (c *ClickHouseStorage) DeleteDBEntry(ctx context.Context, id string) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("ClickHouse not available")
+	}
+
+	_, err := c.conn.ExecContext(ctx, "ALTER TABLE ja4_database DELETE WHERE id = ?", id)
+	return err
 }

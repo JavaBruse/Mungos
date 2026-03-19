@@ -37,7 +37,9 @@ func createPacketsTable(conn *sql.DB) error {
 			ja4_verified Bool,
 			ja4_confidence UInt32,
 			sni String,
-			sni_service String
+			sni_service String,
+			ja4_entry_id String,
+			sni_entry_id String
 		) ENGINE = MergeTree()
 		ORDER BY (timestamp, src_ip, dst_ip)
 	`
@@ -95,6 +97,8 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&ja4Confidence,
 			&pkt.Sni,
 			&pkt.SniService,
+			&pkt.Ja4Id,
+			&pkt.SniId,
 		)
 		if err != nil {
 			continue
@@ -165,6 +169,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&ja4Confidence,
 			&pkt.Sni,
 			&pkt.SniService,
+			&pkt.Ja4Id,
+			&pkt.SniId,
 		)
 		if err != nil {
 			continue
@@ -252,8 +258,30 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 		}
 
 		if filter.TextSearch != "" {
-			conditions = append(conditions, "payload LIKE ?")
-			args = append(args, "%"+filter.TextSearch+"%")
+			searchTerm := "%" + filter.TextSearch + "%"
+			textConditions := []string{
+				"payload LIKE ?",
+				"src_mac LIKE ?", "dst_mac LIKE ?",
+				"src_vendor LIKE ?", "dst_vendor LIKE ?",
+				"ja4_raw LIKE ?", "ja4_application LIKE ?", "ja4_device LIKE ?", "ja4_os LIKE ?",
+				"sni LIKE ?", "sni_service LIKE ?",
+			}
+
+			placeholders := strings.Repeat("?,", len(textConditions))
+			placeholders = placeholders[:len(placeholders)-1]
+
+			conditions = append(conditions, "("+strings.Join(textConditions, " OR ")+")")
+
+			for i := 0; i < len(textConditions); i++ {
+				args = append(args, searchTerm)
+			}
+		}
+
+		if filter.KnownOnly {
+			conditions = append(conditions, "ja4_entry_id != '' AND sni_entry_id != ''")
+		}
+		if filter.UnknownOnly {
+			conditions = append(conditions, "ja4_entry_id = '' OR sni_entry_id = ''")
 		}
 	}
 
@@ -267,7 +295,8 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
                protocol_stack, length, ttl, tcp_flags, payload,
                src_mac, dst_mac, src_vendor, dst_vendor,
                ja4_raw, ja4_application, ja4_device, ja4_os, 
-               ja4_verified, ja4_confidence, sni, sni_service
+               ja4_verified, ja4_confidence, sni, sni_service,
+			   ja4_entry_id, sni_entry_id
         FROM packets
         WHERE %s
         ORDER BY timestamp DESC
@@ -300,8 +329,9 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			protocol_stack, length, ttl, tcp_flags, payload,
 			src_mac, dst_mac, src_vendor, dst_vendor,
 			ja4_raw, ja4_application, ja4_device, ja4_os,
-			ja4_verified, ja4_confidence, sni, sni_service
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ja4_verified, ja4_confidence, sni, sni_service,
+			ja4_entry_id, sni_entry_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
@@ -343,6 +373,8 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.JA4Confidence,
 			pkt.SNI,
 			pkt.SNIService,
+			pkt.JA4EntryID,
+			pkt.SNIEntryID,
 		)
 		if err != nil {
 			return err

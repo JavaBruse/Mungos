@@ -138,20 +138,26 @@ func (p *SNIProcessor) classifySessionAsync(packets []*models.Packet) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	service, _, _ := p.classifySession(ctx, packets)
+	bestEntry, _, _ := p.classifySession(ctx, packets)
 
 	snis := make([]string, 0)
 	for _, pkt := range packets {
-		pkt.SNIService = service
+		if bestEntry != nil {
+			pkt.SNI = bestEntry.SNI
+			pkt.SNIService = bestEntry.Service
+			pkt.SNIEntryID = bestEntry.ID
+		}
 		if pkt.SNI != "" {
 			snis = append(snis, pkt.SNI)
 		}
 	}
 
-	p.updateStats(ctx, service, snis)
+	if bestEntry != nil {
+		p.updateStats(ctx, bestEntry.Service, snis)
+	}
 }
 
-func (p *SNIProcessor) classifySession(ctx context.Context, packets []*models.Packet) (string, float64, error) {
+func (p *SNIProcessor) classifySession(ctx context.Context, packets []*models.Packet) (*models.SNIEntry, float64, error) {
 	sniSet := make(map[string]bool)
 	for _, pkt := range packets {
 		if pkt.SNI != "" {
@@ -161,30 +167,38 @@ func (p *SNIProcessor) classifySession(ctx context.Context, packets []*models.Pa
 
 	services, err := p.db.GetAllServices(ctx)
 	if err != nil {
-		return "unknown", 0, err
+		return nil, 0, err
 	}
 
-	bestService := "unknown"
+	var bestEntry *models.SNIEntry
 	bestProb := 0.0
 
 	for _, service := range services {
 		prob := 1.0
+		var firstSNI string
 		for sni := range sniSet {
 			pProb, err := p.db.GetSNIProbability(ctx, service, sni)
 			if err != nil {
 				pProb = 0.01
 			}
 			prob *= pProb
+			if firstSNI == "" {
+				firstSNI = sni
+			}
 		}
 		prob *= 1.0 / float64(len(services))
 
 		if prob > bestProb {
 			bestProb = prob
-			bestService = service
+			for sni := range sniSet {
+				if entry, _ := p.db.GetSNIEntry(ctx, service, sni); entry != nil {
+					bestEntry = entry
+					break
+				}
+			}
 		}
 	}
-
-	return bestService, bestProb, nil
+	return bestEntry, bestProb, nil
 }
 
 func (p *SNIProcessor) updateStats(ctx context.Context, service string, snis []string) error {

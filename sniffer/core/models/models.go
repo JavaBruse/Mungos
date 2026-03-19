@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	pb "sniffer/core/grpc/proto"
+	"time"
+)
 
 type Packet struct {
 	Timestamp time.Time
@@ -36,6 +39,9 @@ type Packet struct {
 	// SNI vector
 	SNI        string
 	SNIService string
+
+	JA4EntryID string
+	SNIEntryID string
 }
 
 type ClientData struct {
@@ -50,21 +56,118 @@ type SettingsData struct {
 	CreatedAt time.Time
 }
 
-type JA4DBEntry struct {
-	Application          string  `json:"application"`
-	Library              *string `json:"library"`
-	Device               *string `json:"device"`
-	OS                   string  `json:"os"`
-	UserAgentString      *string `json:"user_agent_string"`
-	CertificateAuthority *string `json:"certificate_authority"`
-	ObservationCount     int     `json:"observation_count"`
-	Verified             bool    `json:"verified"`
-	Notes                *string `json:"notes"`
-	JA4Fingerprint       string  `json:"ja4_fingerprint"`
-	JA4SFingerprint      *string `json:"ja4s_fingerprint"`
-	JA4HFingerprint      *string `json:"ja4h_fingerprint"`
-	JA4XFingerprint      *string `json:"ja4x_fingerprint"`
-	JA4TFingerprint      *string `json:"ja4t_fingerprint"`
-	JA4TSFingerprint     *string `json:"ja4ts_fingerprint"`
-	JA4TScanFingerprint  *string `json:"ja4tscan_fingerprint"`
+type SNIEntry struct {
+	ID              string
+	Service         string
+	SNI             string
+	OccurrenceCount int
+	FirstSeen       time.Time
+	LastSeen        time.Time
+}
+
+type Ja4Entry struct {
+	ID               string
+	Fingerprint      string
+	Application      string
+	Library          string
+	Device           string
+	OS               string
+	ObservationCount int
+	Verified         bool
+	FingerprintType  string
+}
+
+// ToProto конвертирует внутреннюю структуру в protobuf
+func (e *Ja4Entry) ToProto() *pb.JA4Entry {
+	return &pb.JA4Entry{
+		Id:               e.ID,
+		Fingerprint:      e.Fingerprint,
+		Application:      e.Application,
+		Library:          e.Library,
+		Device:           e.Device,
+		Os:               e.OS,
+		ObservationCount: int32(e.ObservationCount),
+		Verified:         e.Verified,
+		FingerprintType:  e.FingerprintType,
+	}
+}
+
+// FromProto конвертирует protobuf во внутреннюю структуру
+func FromProto(p *pb.JA4Entry) *Ja4Entry {
+	return &Ja4Entry{
+		ID:               p.Id,
+		Fingerprint:      p.Fingerprint,
+		Application:      p.Application,
+		Library:          p.Library,
+		Device:           p.Device,
+		OS:               p.Os,
+		ObservationCount: int(p.ObservationCount),
+		Verified:         p.Verified,
+		FingerprintType:  p.FingerprintType,
+	}
+}
+
+// ToProtoList конвертирует список
+func ToProtoList(entries []Ja4Entry) *pb.JA4EntryList {
+	list := &pb.JA4EntryList{}
+	for _, e := range entries {
+		list.Entries = append(list.Entries, e.ToProto())
+	}
+	return list
+}
+
+// FromProtoList конвертирует список из protobuf
+func FromProtoList(list *pb.JA4EntryList) []Ja4Entry {
+	var entries []Ja4Entry
+	for _, p := range list.Entries {
+		entries = append(entries, *FromProto(p))
+	}
+	return entries
+}
+
+// SNIEntryToProto конвертирует внутреннюю SNIEntry в protobuf
+func SNIEntryToProto(e *SNIEntry) *pb.SNIEntry {
+	return &pb.SNIEntry{
+		Id:              e.ID,
+		Service:         e.Service,
+		Sni:             e.SNI,
+		OccurrenceCount: int32(e.OccurrenceCount),
+		FirstSeen:       e.FirstSeen.UnixNano(),
+		LastSeen:        e.LastSeen.UnixNano(),
+	}
+}
+
+// SNIEntryFromProto конвертирует protobuf во внутреннюю SNIEntry
+func SNIEntryFromProto(p *pb.SNIEntry) *SNIEntry {
+	return &SNIEntry{
+		ID:              p.Id,
+		Service:         p.Service,
+		SNI:             p.Sni,
+		OccurrenceCount: int(p.OccurrenceCount),
+		FirstSeen:       time.Unix(0, p.FirstSeen),
+		LastSeen:        time.Unix(0, p.LastSeen),
+	}
+}
+
+// SNIEntryListToProto конвертирует список внутренних структур в protobuf список
+func SNIEntryListToProto(entries []SNIEntry) *pb.SNIEntryList {
+	list := &pb.SNIEntryList{
+		Entries: make([]*pb.SNIEntry, len(entries)),
+	}
+	for i, e := range entries {
+		list.Entries[i] = SNIEntryToProto(&e)
+	}
+	return list
+}
+
+// SNIEntryListFromProto конвертирует protobuf список во внутренние структуры
+func SNIEntryListFromProto(list *pb.SNIEntryList) []SNIEntry {
+	if list == nil {
+		return nil
+	}
+	entries := make([]SNIEntry, len(list.Entries))
+	for i, p := range list.Entries {
+		entries[i] = *SNIEntryFromProto(p)
+	}
+	return entries
 }

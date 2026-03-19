@@ -19,13 +19,19 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SnifferService_Register_FullMethodName           = "/sniffer.SnifferService/Register"
-	SnifferService_GetMetrics_FullMethodName         = "/sniffer.SnifferService/GetMetrics"
-	SnifferService_Ping_FullMethodName               = "/sniffer.SnifferService/Ping"
-	SnifferService_GetFilteredPackage_FullMethodName = "/sniffer.SnifferService/GetFilteredPackage"
-	SnifferService_GetPacketPayload_FullMethodName   = "/sniffer.SnifferService/GetPacketPayload"
-	SnifferService_GetSettings_FullMethodName        = "/sniffer.SnifferService/GetSettings"
-	SnifferService_SetSettings_FullMethodName        = "/sniffer.SnifferService/SetSettings"
+	SnifferService_Register_FullMethodName             = "/sniffer.SnifferService/Register"
+	SnifferService_GetMetrics_FullMethodName           = "/sniffer.SnifferService/GetMetrics"
+	SnifferService_Ping_FullMethodName                 = "/sniffer.SnifferService/Ping"
+	SnifferService_GetFilteredPackage_FullMethodName   = "/sniffer.SnifferService/GetFilteredPackage"
+	SnifferService_GetPacketPayload_FullMethodName     = "/sniffer.SnifferService/GetPacketPayload"
+	SnifferService_GetSettings_FullMethodName          = "/sniffer.SnifferService/GetSettings"
+	SnifferService_SetSettings_FullMethodName          = "/sniffer.SnifferService/SetSettings"
+	SnifferService_DownloadJA4Database_FullMethodName  = "/sniffer.SnifferService/DownloadJA4Database"
+	SnifferService_UploadJA4Database_FullMethodName    = "/sniffer.SnifferService/UploadJA4Database"
+	SnifferService_UpdateOrSaveJa4Entry_FullMethodName = "/sniffer.SnifferService/UpdateOrSaveJa4Entry"
+	SnifferService_DownloadSNIDatabase_FullMethodName  = "/sniffer.SnifferService/DownloadSNIDatabase"
+	SnifferService_UploadSNIDatabase_FullMethodName    = "/sniffer.SnifferService/UploadSNIDatabase"
+	SnifferService_UpdateOrSaveSNIEntry_FullMethodName = "/sniffer.SnifferService/UpdateOrSaveSNIEntry"
 )
 
 // SnifferServiceClient is the client API for SnifferService service.
@@ -39,6 +45,12 @@ type SnifferServiceClient interface {
 	GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error)
 	GetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error)
 	SetSettings(ctx context.Context, in *SettingRequest, opts ...grpc.CallOption) (*SettingResponse, error)
+	DownloadJA4Database(ctx context.Context, in *Ja4DataChunkRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Ja4DataChunk], error)
+	UploadJA4Database(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[Ja4DataChunk, Ja4DataChunkResponse], error)
+	UpdateOrSaveJa4Entry(ctx context.Context, in *JA4Entry, opts ...grpc.CallOption) (*JA4Entry, error)
+	DownloadSNIDatabase(ctx context.Context, in *SNIDataChunkRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SNIDataChunk], error)
+	UploadSNIDatabase(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SNIDataChunk, SNIDataChunkResponse], error)
+	UpdateOrSaveSNIEntry(ctx context.Context, in *SNIEntry, opts ...grpc.CallOption) (*SNIEntry, error)
 }
 
 type snifferServiceClient struct {
@@ -128,6 +140,90 @@ func (c *snifferServiceClient) SetSettings(ctx context.Context, in *SettingReque
 	return out, nil
 }
 
+func (c *snifferServiceClient) DownloadJA4Database(ctx context.Context, in *Ja4DataChunkRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[Ja4DataChunk], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[1], SnifferService_DownloadJA4Database_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[Ja4DataChunkRequest, Ja4DataChunk]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_DownloadJA4DatabaseClient = grpc.ServerStreamingClient[Ja4DataChunk]
+
+func (c *snifferServiceClient) UploadJA4Database(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[Ja4DataChunk, Ja4DataChunkResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[2], SnifferService_UploadJA4Database_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[Ja4DataChunk, Ja4DataChunkResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_UploadJA4DatabaseClient = grpc.ClientStreamingClient[Ja4DataChunk, Ja4DataChunkResponse]
+
+func (c *snifferServiceClient) UpdateOrSaveJa4Entry(ctx context.Context, in *JA4Entry, opts ...grpc.CallOption) (*JA4Entry, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JA4Entry)
+	err := c.cc.Invoke(ctx, SnifferService_UpdateOrSaveJa4Entry_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *snifferServiceClient) DownloadSNIDatabase(ctx context.Context, in *SNIDataChunkRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SNIDataChunk], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[3], SnifferService_DownloadSNIDatabase_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SNIDataChunkRequest, SNIDataChunk]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_DownloadSNIDatabaseClient = grpc.ServerStreamingClient[SNIDataChunk]
+
+func (c *snifferServiceClient) UploadSNIDatabase(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SNIDataChunk, SNIDataChunkResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &SnifferService_ServiceDesc.Streams[4], SnifferService_UploadSNIDatabase_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SNIDataChunk, SNIDataChunkResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_UploadSNIDatabaseClient = grpc.ClientStreamingClient[SNIDataChunk, SNIDataChunkResponse]
+
+func (c *snifferServiceClient) UpdateOrSaveSNIEntry(ctx context.Context, in *SNIEntry, opts ...grpc.CallOption) (*SNIEntry, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SNIEntry)
+	err := c.cc.Invoke(ctx, SnifferService_UpdateOrSaveSNIEntry_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnifferServiceServer is the server API for SnifferService service.
 // All implementations must embed UnimplementedSnifferServiceServer
 // for forward compatibility.
@@ -139,6 +235,12 @@ type SnifferServiceServer interface {
 	GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error)
 	GetSettings(context.Context, *SettingRequest) (*SettingResponse, error)
 	SetSettings(context.Context, *SettingRequest) (*SettingResponse, error)
+	DownloadJA4Database(*Ja4DataChunkRequest, grpc.ServerStreamingServer[Ja4DataChunk]) error
+	UploadJA4Database(grpc.ClientStreamingServer[Ja4DataChunk, Ja4DataChunkResponse]) error
+	UpdateOrSaveJa4Entry(context.Context, *JA4Entry) (*JA4Entry, error)
+	DownloadSNIDatabase(*SNIDataChunkRequest, grpc.ServerStreamingServer[SNIDataChunk]) error
+	UploadSNIDatabase(grpc.ClientStreamingServer[SNIDataChunk, SNIDataChunkResponse]) error
+	UpdateOrSaveSNIEntry(context.Context, *SNIEntry) (*SNIEntry, error)
 	mustEmbedUnimplementedSnifferServiceServer()
 }
 
@@ -169,6 +271,24 @@ func (UnimplementedSnifferServiceServer) GetSettings(context.Context, *SettingRe
 }
 func (UnimplementedSnifferServiceServer) SetSettings(context.Context, *SettingRequest) (*SettingResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetSettings not implemented")
+}
+func (UnimplementedSnifferServiceServer) DownloadJA4Database(*Ja4DataChunkRequest, grpc.ServerStreamingServer[Ja4DataChunk]) error {
+	return status.Error(codes.Unimplemented, "method DownloadJA4Database not implemented")
+}
+func (UnimplementedSnifferServiceServer) UploadJA4Database(grpc.ClientStreamingServer[Ja4DataChunk, Ja4DataChunkResponse]) error {
+	return status.Error(codes.Unimplemented, "method UploadJA4Database not implemented")
+}
+func (UnimplementedSnifferServiceServer) UpdateOrSaveJa4Entry(context.Context, *JA4Entry) (*JA4Entry, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOrSaveJa4Entry not implemented")
+}
+func (UnimplementedSnifferServiceServer) DownloadSNIDatabase(*SNIDataChunkRequest, grpc.ServerStreamingServer[SNIDataChunk]) error {
+	return status.Error(codes.Unimplemented, "method DownloadSNIDatabase not implemented")
+}
+func (UnimplementedSnifferServiceServer) UploadSNIDatabase(grpc.ClientStreamingServer[SNIDataChunk, SNIDataChunkResponse]) error {
+	return status.Error(codes.Unimplemented, "method UploadSNIDatabase not implemented")
+}
+func (UnimplementedSnifferServiceServer) UpdateOrSaveSNIEntry(context.Context, *SNIEntry) (*SNIEntry, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateOrSaveSNIEntry not implemented")
 }
 func (UnimplementedSnifferServiceServer) mustEmbedUnimplementedSnifferServiceServer() {}
 func (UnimplementedSnifferServiceServer) testEmbeddedByValue()                        {}
@@ -310,6 +430,78 @@ func _SnifferService_SetSettings_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SnifferService_DownloadJA4Database_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Ja4DataChunkRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SnifferServiceServer).DownloadJA4Database(m, &grpc.GenericServerStream[Ja4DataChunkRequest, Ja4DataChunk]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_DownloadJA4DatabaseServer = grpc.ServerStreamingServer[Ja4DataChunk]
+
+func _SnifferService_UploadJA4Database_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SnifferServiceServer).UploadJA4Database(&grpc.GenericServerStream[Ja4DataChunk, Ja4DataChunkResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_UploadJA4DatabaseServer = grpc.ClientStreamingServer[Ja4DataChunk, Ja4DataChunkResponse]
+
+func _SnifferService_UpdateOrSaveJa4Entry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JA4Entry)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).UpdateOrSaveJa4Entry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_UpdateOrSaveJa4Entry_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).UpdateOrSaveJa4Entry(ctx, req.(*JA4Entry))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SnifferService_DownloadSNIDatabase_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SNIDataChunkRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SnifferServiceServer).DownloadSNIDatabase(m, &grpc.GenericServerStream[SNIDataChunkRequest, SNIDataChunk]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_DownloadSNIDatabaseServer = grpc.ServerStreamingServer[SNIDataChunk]
+
+func _SnifferService_UploadSNIDatabase_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(SnifferServiceServer).UploadSNIDatabase(&grpc.GenericServerStream[SNIDataChunk, SNIDataChunkResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type SnifferService_UploadSNIDatabaseServer = grpc.ClientStreamingServer[SNIDataChunk, SNIDataChunkResponse]
+
+func _SnifferService_UpdateOrSaveSNIEntry_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SNIEntry)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).UpdateOrSaveSNIEntry(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_UpdateOrSaveSNIEntry_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).UpdateOrSaveSNIEntry(ctx, req.(*SNIEntry))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SnifferService_ServiceDesc is the grpc.ServiceDesc for SnifferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -341,12 +533,40 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "SetSettings",
 			Handler:    _SnifferService_SetSettings_Handler,
 		},
+		{
+			MethodName: "UpdateOrSaveJa4Entry",
+			Handler:    _SnifferService_UpdateOrSaveJa4Entry_Handler,
+		},
+		{
+			MethodName: "UpdateOrSaveSNIEntry",
+			Handler:    _SnifferService_UpdateOrSaveSNIEntry_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetFilteredPackage",
 			Handler:       _SnifferService_GetFilteredPackage_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "DownloadJA4Database",
+			Handler:       _SnifferService_DownloadJA4Database_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "UploadJA4Database",
+			Handler:       _SnifferService_UploadJA4Database_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "DownloadSNIDatabase",
+			Handler:       _SnifferService_DownloadSNIDatabase_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "UploadSNIDatabase",
+			Handler:       _SnifferService_UploadSNIDatabase_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "proto/sniffer.proto",

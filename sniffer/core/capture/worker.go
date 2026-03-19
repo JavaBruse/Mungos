@@ -51,7 +51,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		tcp, _ := tcpLayer.(*layers.TCP)
 		packet = method.ProcessJA4(packet, tcp, w.db)
 		if packet.JA4Application != "" {
-			logger.Info(packet.JA4Application)
+			logger.Info("ja4: %v", packet.JA4Application)
 		}
 	}
 
