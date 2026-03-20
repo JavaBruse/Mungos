@@ -152,9 +152,11 @@ func (p *SNIProcessor) classifySessionAsync(packets []*models.Packet) {
 		}
 	}
 
+	service := "unknown"
 	if bestEntry != nil {
-		p.updateStats(ctx, bestEntry.Service, snis)
+		service = bestEntry.Service
 	}
+	p.updateStats(ctx, service, snis)
 }
 
 func (p *SNIProcessor) classifySession(ctx context.Context, packets []*models.Packet) (*models.SNIEntry, float64, error) {
