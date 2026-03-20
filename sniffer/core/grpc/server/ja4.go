@@ -106,7 +106,7 @@ func (s *Server) UploadJA4Database(stream pb.SnifferService_UploadJA4DatabaseSer
 
 	entries := models.FromProtoList(protoList)
 
-	if err := s.storage.ReplaceDBEntries(stream.Context(), entries); err != nil {
+	if err := s.storage.ReplaceJA4Database(stream.Context(), entries); err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
 

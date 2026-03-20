@@ -2,8 +2,6 @@ package com.JavaBruse.core.sniffer.service;
 
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
-import com.JavaBruse.core.sniffer.domain.model.SnifferEntity;
-import com.JavaBruse.core.sniffer.repository.SnifferRepository;
 import com.JavaBruse.proto.MetricsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

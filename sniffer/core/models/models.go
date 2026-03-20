@@ -75,6 +75,7 @@ type Ja4Entry struct {
 	ObservationCount int
 	Verified         bool
 	FingerprintType  string
+	UpdatedAt        int64
 }
 
 // ToProto конвертирует внутреннюю структуру в protobuf

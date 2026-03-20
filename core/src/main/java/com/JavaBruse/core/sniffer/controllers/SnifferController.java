@@ -7,7 +7,11 @@ import com.JavaBruse.core.exaption.ServiceException;
 import com.JavaBruse.core.sniffer.domain.DTO.SettingDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
+import com.JavaBruse.core.sniffer.service.DataBaseJa4SNIService;
 import com.JavaBruse.core.sniffer.service.SnifferService;
+import com.JavaBruse.proto.HashTable;
+import com.JavaBruse.proto.JA4Entry;
+import com.JavaBruse.proto.SNIEntry;
 import com.JavaBruse.proto.SettingResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,7 @@ import java.util.List;
 public class SnifferController {
 
     private final SnifferService snifferService;
+    private final DataBaseJa4SNIService databaseService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -79,5 +84,28 @@ public class SnifferController {
         } catch (ServiceException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @PostMapping("/ja4/sync")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> syncJA4Databases() {
+        log.info("POST sync all JA4 databases");
+        databaseService.syncJA4Databases();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/sni/sync")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> syncSNIDatabases() {
+        log.info("POST sync all SNI databases");
+        databaseService.syncSNIDatabases();
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/hashes/update-all")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> updateAllSnifferHashes() {
+        snifferService.updateHashSNIAndJa4AllSniffer();
+        return ResponseEntity.ok().build();
     }
 }

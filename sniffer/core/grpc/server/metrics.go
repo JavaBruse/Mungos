@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) GetMetrics(ctx context.Context, req *pb.MetricsRequest) (*pb.MetricsResponse, error) {
+func (s *Server) GetMetrics(ctx context.Context, req *pb.AuthRequest) (*pb.MetricsResponse, error) {
 	if !s.checkAuth(ctx, req.GetSessionKey()) {
 		return nil, status.Error(codes.Unauthenticated, "invalid session key")
 	}

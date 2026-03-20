@@ -9,14 +9,93 @@ option java_multiple_files = true;
 
 service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
+  rpc GetMetrics(AuthRequest) returns (MetricsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
   rpc GetFilteredPackage(PackageFilterRequest) returns (stream TrafficPacket);
   rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
   rpc GetSettings(SettingRequest) returns (SettingResponse);
   rpc SetSettings(SettingRequest) returns (SettingResponse);
+  rpc DownloadJA4Database(Ja4DataChunkRequest) returns (stream Ja4DataChunk);
+  rpc UploadJA4Database(stream Ja4DataChunk) returns (Ja4DataChunkResponse);
+  rpc UpdateOrSaveJa4Entry(JA4Entry) returns (JA4Entry);
+  rpc DownloadSNIDatabase(SNIDataChunkRequest) returns (stream SNIDataChunk);
+  rpc UploadSNIDatabase(stream SNIDataChunk) returns (SNIDataChunkResponse);
+  rpc UpdateOrSaveSNIEntry(SNIEntry) returns (SNIEntry);
+  rpc GetHashSNIandJa4HashTable(AuthRequest) returns (HashTable);
 }
 
+
+message HashTable {
+  uint64 sni_hash = 1;
+  uint64 ja4_hash = 2;
+}
+
+message SNIEntry {
+    string id = 1;
+    string service = 2;
+    string sni = 3;
+    int32 occurrence_count = 4;
+    int64 first_seen = 5;
+    int64 last_seen = 6;
+    string session_key = 7;
+}
+
+message SNIEntryList {
+    repeated SNIEntry entries = 1;
+}
+
+message SNIDataChunk {
+    string session_key = 1;
+    bytes data = 2;
+    bool is_last = 3;
+    int32 total_size = 4;
+}
+
+message SNIDataChunkRequest {
+    string session_key = 1;
+}
+
+message SNIDataChunkResponse {
+    bool success = 1;
+    string message = 2;
+    int32 total_chunks = 3;
+}
+
+message JA4Entry {
+    string id = 1;
+    string fingerprint = 2;
+    string application = 3;
+    string library = 4;
+    string device = 5;
+    string os = 6;
+    int32 observation_count = 7;
+    bool verified = 8;
+    string fingerprint_type = 9;
+    string session_key = 10;
+    int64 updated_at = 11;
+}
+
+message JA4EntryList {
+    repeated JA4Entry entries = 1;
+}
+
+
+message Ja4DataChunk {
+    string session_key = 1;
+    bytes data = 2;
+    bool is_last = 3;
+    int32 total_size = 4;
+}
+
+message Ja4DataChunkRequest {
+    string session_key = 1;
+}
+
+message Ja4DataChunkResponse {
+    bool success = 1;
+    string message = 2;
+    int32 total_chunks = 3;
+}
 
 message PayloadRequest {
   string session_key = 1;
@@ -42,6 +121,8 @@ message FilterExpression {
   int64 end_time = 5;                  // по какое время
   string text_search = 6;              // поиск по содержимому
   map<string, string> custom = 7;      // кастомные фильтры
+  bool unknown_only = 8;
+  bool known_only = 9;
 }
 
 message TrafficPacket {
@@ -80,6 +161,8 @@ message TrafficPacket {
   // SNI fields (28-29)
   string sni = 28;
   string sni_service = 29;
+  string ja4_id = 30;
+  string sni_id = 31;
 }
 
 message RegisterRequest {
@@ -105,7 +188,7 @@ message SettingResponse {
   int64 timestamp = 2;
 }
 
-message MetricsRequest {
+message AuthRequest {
   string session_key = 1;
 }
 

@@ -45,6 +45,12 @@ public class SnifferEntity {
     @Column(name = "deleted")
     private boolean deleted = false;
 
+    @Column(name = "sni_hash")
+    private long SNIHash;
+
+    @Column(name = "ja4_hash")
+    private long Ja4Hash;
+
     public void updateLastSeen() {
         this.lastSeen = Instant.now().getEpochSecond();
     }

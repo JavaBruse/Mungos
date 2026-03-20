@@ -21,6 +21,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type HashTable struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SniHash       uint64                 `protobuf:"varint,1,opt,name=sni_hash,json=sniHash,proto3" json:"sni_hash,omitempty"`
+	Ja4Hash       uint64                 `protobuf:"varint,2,opt,name=ja4_hash,json=ja4Hash,proto3" json:"ja4_hash,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HashTable) Reset() {
+	*x = HashTable{}
+	mi := &file_proto_sniffer_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HashTable) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HashTable) ProtoMessage() {}
+
+func (x *HashTable) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HashTable.ProtoReflect.Descriptor instead.
+func (*HashTable) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *HashTable) GetSniHash() uint64 {
+	if x != nil {
+		return x.SniHash
+	}
+	return 0
+}
+
+func (x *HashTable) GetJa4Hash() uint64 {
+	if x != nil {
+		return x.Ja4Hash
+	}
+	return 0
+}
+
 type SNIEntry struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -36,7 +88,7 @@ type SNIEntry struct {
 
 func (x *SNIEntry) Reset() {
 	*x = SNIEntry{}
-	mi := &file_proto_sniffer_proto_msgTypes[0]
+	mi := &file_proto_sniffer_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +100,7 @@ func (x *SNIEntry) String() string {
 func (*SNIEntry) ProtoMessage() {}
 
 func (x *SNIEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[0]
+	mi := &file_proto_sniffer_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +113,7 @@ func (x *SNIEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SNIEntry.ProtoReflect.Descriptor instead.
 func (*SNIEntry) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{0}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SNIEntry) GetId() string {
@@ -122,7 +174,7 @@ type SNIEntryList struct {
 
 func (x *SNIEntryList) Reset() {
 	*x = SNIEntryList{}
-	mi := &file_proto_sniffer_proto_msgTypes[1]
+	mi := &file_proto_sniffer_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -134,7 +186,7 @@ func (x *SNIEntryList) String() string {
 func (*SNIEntryList) ProtoMessage() {}
 
 func (x *SNIEntryList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[1]
+	mi := &file_proto_sniffer_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -147,7 +199,7 @@ func (x *SNIEntryList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SNIEntryList.ProtoReflect.Descriptor instead.
 func (*SNIEntryList) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{1}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SNIEntryList) GetEntries() []*SNIEntry {
@@ -169,7 +221,7 @@ type SNIDataChunk struct {
 
 func (x *SNIDataChunk) Reset() {
 	*x = SNIDataChunk{}
-	mi := &file_proto_sniffer_proto_msgTypes[2]
+	mi := &file_proto_sniffer_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -181,7 +233,7 @@ func (x *SNIDataChunk) String() string {
 func (*SNIDataChunk) ProtoMessage() {}
 
 func (x *SNIDataChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[2]
+	mi := &file_proto_sniffer_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -194,7 +246,7 @@ func (x *SNIDataChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SNIDataChunk.ProtoReflect.Descriptor instead.
 func (*SNIDataChunk) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{2}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SNIDataChunk) GetSessionKey() string {
@@ -234,7 +286,7 @@ type SNIDataChunkRequest struct {
 
 func (x *SNIDataChunkRequest) Reset() {
 	*x = SNIDataChunkRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[3]
+	mi := &file_proto_sniffer_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -246,7 +298,7 @@ func (x *SNIDataChunkRequest) String() string {
 func (*SNIDataChunkRequest) ProtoMessage() {}
 
 func (x *SNIDataChunkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[3]
+	mi := &file_proto_sniffer_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -259,7 +311,7 @@ func (x *SNIDataChunkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SNIDataChunkRequest.ProtoReflect.Descriptor instead.
 func (*SNIDataChunkRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{3}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SNIDataChunkRequest) GetSessionKey() string {
@@ -280,7 +332,7 @@ type SNIDataChunkResponse struct {
 
 func (x *SNIDataChunkResponse) Reset() {
 	*x = SNIDataChunkResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[4]
+	mi := &file_proto_sniffer_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -292,7 +344,7 @@ func (x *SNIDataChunkResponse) String() string {
 func (*SNIDataChunkResponse) ProtoMessage() {}
 
 func (x *SNIDataChunkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[4]
+	mi := &file_proto_sniffer_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -305,7 +357,7 @@ func (x *SNIDataChunkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SNIDataChunkResponse.ProtoReflect.Descriptor instead.
 func (*SNIDataChunkResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SNIDataChunkResponse) GetSuccess() bool {
@@ -341,13 +393,14 @@ type JA4Entry struct {
 	Verified         bool                   `protobuf:"varint,8,opt,name=verified,proto3" json:"verified,omitempty"`
 	FingerprintType  string                 `protobuf:"bytes,9,opt,name=fingerprint_type,json=fingerprintType,proto3" json:"fingerprint_type,omitempty"`
 	SessionKey       string                 `protobuf:"bytes,10,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
+	UpdatedAt        int64                  `protobuf:"varint,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
 
 func (x *JA4Entry) Reset() {
 	*x = JA4Entry{}
-	mi := &file_proto_sniffer_proto_msgTypes[5]
+	mi := &file_proto_sniffer_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -359,7 +412,7 @@ func (x *JA4Entry) String() string {
 func (*JA4Entry) ProtoMessage() {}
 
 func (x *JA4Entry) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[5]
+	mi := &file_proto_sniffer_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -372,7 +425,7 @@ func (x *JA4Entry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JA4Entry.ProtoReflect.Descriptor instead.
 func (*JA4Entry) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{5}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *JA4Entry) GetId() string {
@@ -445,6 +498,13 @@ func (x *JA4Entry) GetSessionKey() string {
 	return ""
 }
 
+func (x *JA4Entry) GetUpdatedAt() int64 {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return 0
+}
+
 type JA4EntryList struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Entries       []*JA4Entry            `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
@@ -454,7 +514,7 @@ type JA4EntryList struct {
 
 func (x *JA4EntryList) Reset() {
 	*x = JA4EntryList{}
-	mi := &file_proto_sniffer_proto_msgTypes[6]
+	mi := &file_proto_sniffer_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -466,7 +526,7 @@ func (x *JA4EntryList) String() string {
 func (*JA4EntryList) ProtoMessage() {}
 
 func (x *JA4EntryList) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[6]
+	mi := &file_proto_sniffer_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -479,7 +539,7 @@ func (x *JA4EntryList) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JA4EntryList.ProtoReflect.Descriptor instead.
 func (*JA4EntryList) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{6}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *JA4EntryList) GetEntries() []*JA4Entry {
@@ -501,7 +561,7 @@ type Ja4DataChunk struct {
 
 func (x *Ja4DataChunk) Reset() {
 	*x = Ja4DataChunk{}
-	mi := &file_proto_sniffer_proto_msgTypes[7]
+	mi := &file_proto_sniffer_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -513,7 +573,7 @@ func (x *Ja4DataChunk) String() string {
 func (*Ja4DataChunk) ProtoMessage() {}
 
 func (x *Ja4DataChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[7]
+	mi := &file_proto_sniffer_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -526,7 +586,7 @@ func (x *Ja4DataChunk) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ja4DataChunk.ProtoReflect.Descriptor instead.
 func (*Ja4DataChunk) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{7}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *Ja4DataChunk) GetSessionKey() string {
@@ -566,7 +626,7 @@ type Ja4DataChunkRequest struct {
 
 func (x *Ja4DataChunkRequest) Reset() {
 	*x = Ja4DataChunkRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[8]
+	mi := &file_proto_sniffer_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -578,7 +638,7 @@ func (x *Ja4DataChunkRequest) String() string {
 func (*Ja4DataChunkRequest) ProtoMessage() {}
 
 func (x *Ja4DataChunkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[8]
+	mi := &file_proto_sniffer_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -591,7 +651,7 @@ func (x *Ja4DataChunkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ja4DataChunkRequest.ProtoReflect.Descriptor instead.
 func (*Ja4DataChunkRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{8}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Ja4DataChunkRequest) GetSessionKey() string {
@@ -612,7 +672,7 @@ type Ja4DataChunkResponse struct {
 
 func (x *Ja4DataChunkResponse) Reset() {
 	*x = Ja4DataChunkResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[9]
+	mi := &file_proto_sniffer_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -624,7 +684,7 @@ func (x *Ja4DataChunkResponse) String() string {
 func (*Ja4DataChunkResponse) ProtoMessage() {}
 
 func (x *Ja4DataChunkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[9]
+	mi := &file_proto_sniffer_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -637,7 +697,7 @@ func (x *Ja4DataChunkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Ja4DataChunkResponse.ProtoReflect.Descriptor instead.
 func (*Ja4DataChunkResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{9}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Ja4DataChunkResponse) GetSuccess() bool {
@@ -671,7 +731,7 @@ type PayloadRequest struct {
 
 func (x *PayloadRequest) Reset() {
 	*x = PayloadRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[10]
+	mi := &file_proto_sniffer_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +743,7 @@ func (x *PayloadRequest) String() string {
 func (*PayloadRequest) ProtoMessage() {}
 
 func (x *PayloadRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[10]
+	mi := &file_proto_sniffer_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +756,7 @@ func (x *PayloadRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PayloadRequest.ProtoReflect.Descriptor instead.
 func (*PayloadRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{10}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *PayloadRequest) GetSessionKey() string {
@@ -722,7 +782,7 @@ type PayloadResponse struct {
 
 func (x *PayloadResponse) Reset() {
 	*x = PayloadResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[11]
+	mi := &file_proto_sniffer_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -734,7 +794,7 @@ func (x *PayloadResponse) String() string {
 func (*PayloadResponse) ProtoMessage() {}
 
 func (x *PayloadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[11]
+	mi := &file_proto_sniffer_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -747,7 +807,7 @@ func (x *PayloadResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PayloadResponse.ProtoReflect.Descriptor instead.
 func (*PayloadResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{11}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PayloadResponse) GetPayload() []byte {
@@ -769,7 +829,7 @@ type PackageFilterRequest struct {
 
 func (x *PackageFilterRequest) Reset() {
 	*x = PackageFilterRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[12]
+	mi := &file_proto_sniffer_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -781,7 +841,7 @@ func (x *PackageFilterRequest) String() string {
 func (*PackageFilterRequest) ProtoMessage() {}
 
 func (x *PackageFilterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[12]
+	mi := &file_proto_sniffer_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -794,7 +854,7 @@ func (x *PackageFilterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PackageFilterRequest.ProtoReflect.Descriptor instead.
 func (*PackageFilterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{12}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *PackageFilterRequest) GetSessionKey() string {
@@ -842,7 +902,7 @@ type FilterExpression struct {
 
 func (x *FilterExpression) Reset() {
 	*x = FilterExpression{}
-	mi := &file_proto_sniffer_proto_msgTypes[13]
+	mi := &file_proto_sniffer_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -854,7 +914,7 @@ func (x *FilterExpression) String() string {
 func (*FilterExpression) ProtoMessage() {}
 
 func (x *FilterExpression) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[13]
+	mi := &file_proto_sniffer_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -867,7 +927,7 @@ func (x *FilterExpression) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilterExpression.ProtoReflect.Descriptor instead.
 func (*FilterExpression) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{13}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *FilterExpression) GetProtocols() []string {
@@ -975,7 +1035,7 @@ type TrafficPacket struct {
 
 func (x *TrafficPacket) Reset() {
 	*x = TrafficPacket{}
-	mi := &file_proto_sniffer_proto_msgTypes[14]
+	mi := &file_proto_sniffer_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -987,7 +1047,7 @@ func (x *TrafficPacket) String() string {
 func (*TrafficPacket) ProtoMessage() {}
 
 func (x *TrafficPacket) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[14]
+	mi := &file_proto_sniffer_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1000,7 +1060,7 @@ func (x *TrafficPacket) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrafficPacket.ProtoReflect.Descriptor instead.
 func (*TrafficPacket) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{14}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *TrafficPacket) GetPacketId() string {
@@ -1230,7 +1290,7 @@ type RegisterRequest struct {
 
 func (x *RegisterRequest) Reset() {
 	*x = RegisterRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[15]
+	mi := &file_proto_sniffer_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1242,7 +1302,7 @@ func (x *RegisterRequest) String() string {
 func (*RegisterRequest) ProtoMessage() {}
 
 func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[15]
+	mi := &file_proto_sniffer_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1255,7 +1315,7 @@ func (x *RegisterRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterRequest.ProtoReflect.Descriptor instead.
 func (*RegisterRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{15}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *RegisterRequest) GetMasterKey() string {
@@ -1284,7 +1344,7 @@ type RegisterResponse struct {
 
 func (x *RegisterResponse) Reset() {
 	*x = RegisterResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[16]
+	mi := &file_proto_sniffer_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1296,7 +1356,7 @@ func (x *RegisterResponse) String() string {
 func (*RegisterResponse) ProtoMessage() {}
 
 func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[16]
+	mi := &file_proto_sniffer_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1309,7 +1369,7 @@ func (x *RegisterResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterResponse.ProtoReflect.Descriptor instead.
 func (*RegisterResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{16}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *RegisterResponse) GetSuccess() bool {
@@ -1350,7 +1410,7 @@ type SettingRequest struct {
 
 func (x *SettingRequest) Reset() {
 	*x = SettingRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[17]
+	mi := &file_proto_sniffer_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +1422,7 @@ func (x *SettingRequest) String() string {
 func (*SettingRequest) ProtoMessage() {}
 
 func (x *SettingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[17]
+	mi := &file_proto_sniffer_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +1435,7 @@ func (x *SettingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingRequest.ProtoReflect.Descriptor instead.
 func (*SettingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{17}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SettingRequest) GetSessionKey() string {
@@ -1402,7 +1462,7 @@ type SettingResponse struct {
 
 func (x *SettingResponse) Reset() {
 	*x = SettingResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[18]
+	mi := &file_proto_sniffer_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1414,7 +1474,7 @@ func (x *SettingResponse) String() string {
 func (*SettingResponse) ProtoMessage() {}
 
 func (x *SettingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[18]
+	mi := &file_proto_sniffer_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1427,7 +1487,7 @@ func (x *SettingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SettingResponse.ProtoReflect.Descriptor instead.
 func (*SettingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{18}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SettingResponse) GetFilters() string {
@@ -1444,28 +1504,28 @@ func (x *SettingResponse) GetTimestamp() int64 {
 	return 0
 }
 
-type MetricsRequest struct {
+type AuthRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MetricsRequest) Reset() {
-	*x = MetricsRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[19]
+func (x *AuthRequest) Reset() {
+	*x = AuthRequest{}
+	mi := &file_proto_sniffer_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MetricsRequest) String() string {
+func (x *AuthRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MetricsRequest) ProtoMessage() {}
+func (*AuthRequest) ProtoMessage() {}
 
-func (x *MetricsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[19]
+func (x *AuthRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1476,12 +1536,12 @@ func (x *MetricsRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MetricsRequest.ProtoReflect.Descriptor instead.
-func (*MetricsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{19}
+// Deprecated: Use AuthRequest.ProtoReflect.Descriptor instead.
+func (*AuthRequest) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *MetricsRequest) GetSessionKey() string {
+func (x *AuthRequest) GetSessionKey() string {
 	if x != nil {
 		return x.SessionKey
 	}
@@ -1543,7 +1603,7 @@ type MetricsResponse struct {
 
 func (x *MetricsResponse) Reset() {
 	*x = MetricsResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[20]
+	mi := &file_proto_sniffer_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1555,7 +1615,7 @@ func (x *MetricsResponse) String() string {
 func (*MetricsResponse) ProtoMessage() {}
 
 func (x *MetricsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[20]
+	mi := &file_proto_sniffer_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1568,7 +1628,7 @@ func (x *MetricsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MetricsResponse.ProtoReflect.Descriptor instead.
 func (*MetricsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{20}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *MetricsResponse) GetPacketsCount() int64 {
@@ -1847,7 +1907,7 @@ type PingRequest struct {
 
 func (x *PingRequest) Reset() {
 	*x = PingRequest{}
-	mi := &file_proto_sniffer_proto_msgTypes[21]
+	mi := &file_proto_sniffer_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1859,7 +1919,7 @@ func (x *PingRequest) String() string {
 func (*PingRequest) ProtoMessage() {}
 
 func (x *PingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[21]
+	mi := &file_proto_sniffer_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1872,7 +1932,7 @@ func (x *PingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingRequest.ProtoReflect.Descriptor instead.
 func (*PingRequest) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{21}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *PingRequest) GetSessionKey() string {
@@ -1899,7 +1959,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file_proto_sniffer_proto_msgTypes[22]
+	mi := &file_proto_sniffer_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1911,7 +1971,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[22]
+	mi := &file_proto_sniffer_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1924,7 +1984,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{22}
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -1945,7 +2005,10 @@ var File_proto_sniffer_proto protoreflect.FileDescriptor
 
 const file_proto_sniffer_proto_rawDesc = "" +
 	"\n" +
-	"\x13proto/sniffer.proto\x12\asniffer\"\xce\x01\n" +
+	"\x13proto/sniffer.proto\x12\asniffer\"A\n" +
+	"\tHashTable\x12\x19\n" +
+	"\bsni_hash\x18\x01 \x01(\x04R\asniHash\x12\x19\n" +
+	"\bja4_hash\x18\x02 \x01(\x04R\aja4Hash\"\xce\x01\n" +
 	"\bSNIEntry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aservice\x18\x02 \x01(\tR\aservice\x12\x10\n" +
@@ -1971,7 +2034,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x14SNIDataChunkResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12!\n" +
-	"\ftotal_chunks\x18\x03 \x01(\x05R\vtotalChunks\"\xb5\x02\n" +
+	"\ftotal_chunks\x18\x03 \x01(\x05R\vtotalChunks\"\xd4\x02\n" +
 	"\bJA4Entry\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
 	"\vfingerprint\x18\x02 \x01(\tR\vfingerprint\x12 \n" +
@@ -1984,7 +2047,9 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x10fingerprint_type\x18\t \x01(\tR\x0ffingerprintType\x12\x1f\n" +
 	"\vsession_key\x18\n" +
 	" \x01(\tR\n" +
-	"sessionKey\";\n" +
+	"sessionKey\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\v \x01(\x03R\tupdatedAt\";\n" +
 	"\fJA4EntryList\x12+\n" +
 	"\aentries\x18\x01 \x03(\v2\x11.sniffer.JA4EntryR\aentries\"{\n" +
 	"\fJa4DataChunk\x12\x1f\n" +
@@ -2087,8 +2152,8 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\afilters\x18\x02 \x01(\tR\afilters\"I\n" +
 	"\x0fSettingResponse\x12\x18\n" +
 	"\afilters\x18\x01 \x01(\tR\afilters\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\"1\n" +
-	"\x0eMetricsRequest\x12\x1f\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\".\n" +
+	"\vAuthRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\"\x8d\x12\n" +
 	"\x0fMetricsResponse\x12#\n" +
@@ -2163,11 +2228,11 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"F\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\x93\a\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp2\xd7\a\n" +
 	"\x0eSnifferService\x12?\n" +
-	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x12?\n" +
+	"\bRegister\x12\x18.sniffer.RegisterRequest\x1a\x19.sniffer.RegisterResponse\x12<\n" +
 	"\n" +
-	"GetMetrics\x12\x17.sniffer.MetricsRequest\x1a\x18.sniffer.MetricsResponse\x123\n" +
+	"GetMetrics\x12\x14.sniffer.AuthRequest\x1a\x18.sniffer.MetricsResponse\x123\n" +
 	"\x04Ping\x12\x14.sniffer.PingRequest\x1a\x15.sniffer.PingResponse\x12M\n" +
 	"\x12GetFilteredPackage\x12\x1d.sniffer.PackageFilterRequest\x1a\x16.sniffer.TrafficPacket0\x01\x12E\n" +
 	"\x10GetPacketPayload\x12\x17.sniffer.PayloadRequest\x1a\x18.sniffer.PayloadResponse\x12@\n" +
@@ -2178,7 +2243,8 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x14UpdateOrSaveJa4Entry\x12\x11.sniffer.JA4Entry\x1a\x11.sniffer.JA4Entry\x12L\n" +
 	"\x13DownloadSNIDatabase\x12\x1c.sniffer.SNIDataChunkRequest\x1a\x15.sniffer.SNIDataChunk0\x01\x12K\n" +
 	"\x11UploadSNIDatabase\x12\x15.sniffer.SNIDataChunk\x1a\x1d.sniffer.SNIDataChunkResponse(\x01\x12<\n" +
-	"\x14UpdateOrSaveSNIEntry\x12\x11.sniffer.SNIEntry\x1a\x11.sniffer.SNIEntryB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
+	"\x14UpdateOrSaveSNIEntry\x12\x11.sniffer.SNIEntry\x1a\x11.sniffer.SNIEntry\x12E\n" +
+	"\x19GetHashSNIandJa4HashTable\x12\x14.sniffer.AuthRequest\x1a\x12.sniffer.HashTableB\x1dZ\x1b./core/grpc/proto;snifferpbb\x06proto3"
 
 var (
 	file_proto_sniffer_proto_rawDescOnce sync.Once
@@ -2192,84 +2258,87 @@ func file_proto_sniffer_proto_rawDescGZIP() []byte {
 	return file_proto_sniffer_proto_rawDescData
 }
 
-var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
+var file_proto_sniffer_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
 var file_proto_sniffer_proto_goTypes = []any{
-	(*SNIEntry)(nil),             // 0: sniffer.SNIEntry
-	(*SNIEntryList)(nil),         // 1: sniffer.SNIEntryList
-	(*SNIDataChunk)(nil),         // 2: sniffer.SNIDataChunk
-	(*SNIDataChunkRequest)(nil),  // 3: sniffer.SNIDataChunkRequest
-	(*SNIDataChunkResponse)(nil), // 4: sniffer.SNIDataChunkResponse
-	(*JA4Entry)(nil),             // 5: sniffer.JA4Entry
-	(*JA4EntryList)(nil),         // 6: sniffer.JA4EntryList
-	(*Ja4DataChunk)(nil),         // 7: sniffer.Ja4DataChunk
-	(*Ja4DataChunkRequest)(nil),  // 8: sniffer.Ja4DataChunkRequest
-	(*Ja4DataChunkResponse)(nil), // 9: sniffer.Ja4DataChunkResponse
-	(*PayloadRequest)(nil),       // 10: sniffer.PayloadRequest
-	(*PayloadResponse)(nil),      // 11: sniffer.PayloadResponse
-	(*PackageFilterRequest)(nil), // 12: sniffer.PackageFilterRequest
-	(*FilterExpression)(nil),     // 13: sniffer.FilterExpression
-	(*TrafficPacket)(nil),        // 14: sniffer.TrafficPacket
-	(*RegisterRequest)(nil),      // 15: sniffer.RegisterRequest
-	(*RegisterResponse)(nil),     // 16: sniffer.RegisterResponse
-	(*SettingRequest)(nil),       // 17: sniffer.SettingRequest
-	(*SettingResponse)(nil),      // 18: sniffer.SettingResponse
-	(*MetricsRequest)(nil),       // 19: sniffer.MetricsRequest
-	(*MetricsResponse)(nil),      // 20: sniffer.MetricsResponse
-	(*PingRequest)(nil),          // 21: sniffer.PingRequest
-	(*PingResponse)(nil),         // 22: sniffer.PingResponse
-	nil,                          // 23: sniffer.FilterExpression.CustomEntry
-	nil,                          // 24: sniffer.TrafficPacket.HeadersEntry
-	nil,                          // 25: sniffer.MetricsResponse.ProtocolsEntry
-	nil,                          // 26: sniffer.MetricsResponse.ApplicationsEntry
-	nil,                          // 27: sniffer.MetricsResponse.PacketSizeDistributionEntry
-	nil,                          // 28: sniffer.MetricsResponse.TopSrcPortsEntry
-	nil,                          // 29: sniffer.MetricsResponse.TopDstPortsEntry
-	nil,                          // 30: sniffer.MetricsResponse.TopSrcIpsEntry
-	nil,                          // 31: sniffer.MetricsResponse.TopDstIpsEntry
-	nil,                          // 32: sniffer.MetricsResponse.GeoCountriesEntry
+	(*HashTable)(nil),            // 0: sniffer.HashTable
+	(*SNIEntry)(nil),             // 1: sniffer.SNIEntry
+	(*SNIEntryList)(nil),         // 2: sniffer.SNIEntryList
+	(*SNIDataChunk)(nil),         // 3: sniffer.SNIDataChunk
+	(*SNIDataChunkRequest)(nil),  // 4: sniffer.SNIDataChunkRequest
+	(*SNIDataChunkResponse)(nil), // 5: sniffer.SNIDataChunkResponse
+	(*JA4Entry)(nil),             // 6: sniffer.JA4Entry
+	(*JA4EntryList)(nil),         // 7: sniffer.JA4EntryList
+	(*Ja4DataChunk)(nil),         // 8: sniffer.Ja4DataChunk
+	(*Ja4DataChunkRequest)(nil),  // 9: sniffer.Ja4DataChunkRequest
+	(*Ja4DataChunkResponse)(nil), // 10: sniffer.Ja4DataChunkResponse
+	(*PayloadRequest)(nil),       // 11: sniffer.PayloadRequest
+	(*PayloadResponse)(nil),      // 12: sniffer.PayloadResponse
+	(*PackageFilterRequest)(nil), // 13: sniffer.PackageFilterRequest
+	(*FilterExpression)(nil),     // 14: sniffer.FilterExpression
+	(*TrafficPacket)(nil),        // 15: sniffer.TrafficPacket
+	(*RegisterRequest)(nil),      // 16: sniffer.RegisterRequest
+	(*RegisterResponse)(nil),     // 17: sniffer.RegisterResponse
+	(*SettingRequest)(nil),       // 18: sniffer.SettingRequest
+	(*SettingResponse)(nil),      // 19: sniffer.SettingResponse
+	(*AuthRequest)(nil),          // 20: sniffer.AuthRequest
+	(*MetricsResponse)(nil),      // 21: sniffer.MetricsResponse
+	(*PingRequest)(nil),          // 22: sniffer.PingRequest
+	(*PingResponse)(nil),         // 23: sniffer.PingResponse
+	nil,                          // 24: sniffer.FilterExpression.CustomEntry
+	nil,                          // 25: sniffer.TrafficPacket.HeadersEntry
+	nil,                          // 26: sniffer.MetricsResponse.ProtocolsEntry
+	nil,                          // 27: sniffer.MetricsResponse.ApplicationsEntry
+	nil,                          // 28: sniffer.MetricsResponse.PacketSizeDistributionEntry
+	nil,                          // 29: sniffer.MetricsResponse.TopSrcPortsEntry
+	nil,                          // 30: sniffer.MetricsResponse.TopDstPortsEntry
+	nil,                          // 31: sniffer.MetricsResponse.TopSrcIpsEntry
+	nil,                          // 32: sniffer.MetricsResponse.TopDstIpsEntry
+	nil,                          // 33: sniffer.MetricsResponse.GeoCountriesEntry
 }
 var file_proto_sniffer_proto_depIdxs = []int32{
-	0,  // 0: sniffer.SNIEntryList.entries:type_name -> sniffer.SNIEntry
-	5,  // 1: sniffer.JA4EntryList.entries:type_name -> sniffer.JA4Entry
-	13, // 2: sniffer.PackageFilterRequest.filter:type_name -> sniffer.FilterExpression
-	23, // 3: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
-	24, // 4: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
-	25, // 5: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
-	26, // 6: sniffer.MetricsResponse.applications:type_name -> sniffer.MetricsResponse.ApplicationsEntry
-	27, // 7: sniffer.MetricsResponse.packet_size_distribution:type_name -> sniffer.MetricsResponse.PacketSizeDistributionEntry
-	28, // 8: sniffer.MetricsResponse.top_src_ports:type_name -> sniffer.MetricsResponse.TopSrcPortsEntry
-	29, // 9: sniffer.MetricsResponse.top_dst_ports:type_name -> sniffer.MetricsResponse.TopDstPortsEntry
-	30, // 10: sniffer.MetricsResponse.top_src_ips:type_name -> sniffer.MetricsResponse.TopSrcIpsEntry
-	31, // 11: sniffer.MetricsResponse.top_dst_ips:type_name -> sniffer.MetricsResponse.TopDstIpsEntry
-	32, // 12: sniffer.MetricsResponse.geo_countries:type_name -> sniffer.MetricsResponse.GeoCountriesEntry
-	15, // 13: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
-	19, // 14: sniffer.SnifferService.GetMetrics:input_type -> sniffer.MetricsRequest
-	21, // 15: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
-	12, // 16: sniffer.SnifferService.GetFilteredPackage:input_type -> sniffer.PackageFilterRequest
-	10, // 17: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
-	17, // 18: sniffer.SnifferService.GetSettings:input_type -> sniffer.SettingRequest
-	17, // 19: sniffer.SnifferService.SetSettings:input_type -> sniffer.SettingRequest
-	8,  // 20: sniffer.SnifferService.DownloadJA4Database:input_type -> sniffer.Ja4DataChunkRequest
-	7,  // 21: sniffer.SnifferService.UploadJA4Database:input_type -> sniffer.Ja4DataChunk
-	5,  // 22: sniffer.SnifferService.UpdateOrSaveJa4Entry:input_type -> sniffer.JA4Entry
-	3,  // 23: sniffer.SnifferService.DownloadSNIDatabase:input_type -> sniffer.SNIDataChunkRequest
-	2,  // 24: sniffer.SnifferService.UploadSNIDatabase:input_type -> sniffer.SNIDataChunk
-	0,  // 25: sniffer.SnifferService.UpdateOrSaveSNIEntry:input_type -> sniffer.SNIEntry
-	16, // 26: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
-	20, // 27: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
-	22, // 28: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
-	14, // 29: sniffer.SnifferService.GetFilteredPackage:output_type -> sniffer.TrafficPacket
-	11, // 30: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
-	18, // 31: sniffer.SnifferService.GetSettings:output_type -> sniffer.SettingResponse
-	18, // 32: sniffer.SnifferService.SetSettings:output_type -> sniffer.SettingResponse
-	7,  // 33: sniffer.SnifferService.DownloadJA4Database:output_type -> sniffer.Ja4DataChunk
-	9,  // 34: sniffer.SnifferService.UploadJA4Database:output_type -> sniffer.Ja4DataChunkResponse
-	5,  // 35: sniffer.SnifferService.UpdateOrSaveJa4Entry:output_type -> sniffer.JA4Entry
-	2,  // 36: sniffer.SnifferService.DownloadSNIDatabase:output_type -> sniffer.SNIDataChunk
-	4,  // 37: sniffer.SnifferService.UploadSNIDatabase:output_type -> sniffer.SNIDataChunkResponse
-	0,  // 38: sniffer.SnifferService.UpdateOrSaveSNIEntry:output_type -> sniffer.SNIEntry
-	26, // [26:39] is the sub-list for method output_type
-	13, // [13:26] is the sub-list for method input_type
+	1,  // 0: sniffer.SNIEntryList.entries:type_name -> sniffer.SNIEntry
+	6,  // 1: sniffer.JA4EntryList.entries:type_name -> sniffer.JA4Entry
+	14, // 2: sniffer.PackageFilterRequest.filter:type_name -> sniffer.FilterExpression
+	24, // 3: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
+	25, // 4: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
+	26, // 5: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
+	27, // 6: sniffer.MetricsResponse.applications:type_name -> sniffer.MetricsResponse.ApplicationsEntry
+	28, // 7: sniffer.MetricsResponse.packet_size_distribution:type_name -> sniffer.MetricsResponse.PacketSizeDistributionEntry
+	29, // 8: sniffer.MetricsResponse.top_src_ports:type_name -> sniffer.MetricsResponse.TopSrcPortsEntry
+	30, // 9: sniffer.MetricsResponse.top_dst_ports:type_name -> sniffer.MetricsResponse.TopDstPortsEntry
+	31, // 10: sniffer.MetricsResponse.top_src_ips:type_name -> sniffer.MetricsResponse.TopSrcIpsEntry
+	32, // 11: sniffer.MetricsResponse.top_dst_ips:type_name -> sniffer.MetricsResponse.TopDstIpsEntry
+	33, // 12: sniffer.MetricsResponse.geo_countries:type_name -> sniffer.MetricsResponse.GeoCountriesEntry
+	16, // 13: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
+	20, // 14: sniffer.SnifferService.GetMetrics:input_type -> sniffer.AuthRequest
+	22, // 15: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
+	13, // 16: sniffer.SnifferService.GetFilteredPackage:input_type -> sniffer.PackageFilterRequest
+	11, // 17: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
+	18, // 18: sniffer.SnifferService.GetSettings:input_type -> sniffer.SettingRequest
+	18, // 19: sniffer.SnifferService.SetSettings:input_type -> sniffer.SettingRequest
+	9,  // 20: sniffer.SnifferService.DownloadJA4Database:input_type -> sniffer.Ja4DataChunkRequest
+	8,  // 21: sniffer.SnifferService.UploadJA4Database:input_type -> sniffer.Ja4DataChunk
+	6,  // 22: sniffer.SnifferService.UpdateOrSaveJa4Entry:input_type -> sniffer.JA4Entry
+	4,  // 23: sniffer.SnifferService.DownloadSNIDatabase:input_type -> sniffer.SNIDataChunkRequest
+	3,  // 24: sniffer.SnifferService.UploadSNIDatabase:input_type -> sniffer.SNIDataChunk
+	1,  // 25: sniffer.SnifferService.UpdateOrSaveSNIEntry:input_type -> sniffer.SNIEntry
+	20, // 26: sniffer.SnifferService.GetHashSNIandJa4HashTable:input_type -> sniffer.AuthRequest
+	17, // 27: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
+	21, // 28: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
+	23, // 29: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
+	15, // 30: sniffer.SnifferService.GetFilteredPackage:output_type -> sniffer.TrafficPacket
+	12, // 31: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
+	19, // 32: sniffer.SnifferService.GetSettings:output_type -> sniffer.SettingResponse
+	19, // 33: sniffer.SnifferService.SetSettings:output_type -> sniffer.SettingResponse
+	8,  // 34: sniffer.SnifferService.DownloadJA4Database:output_type -> sniffer.Ja4DataChunk
+	10, // 35: sniffer.SnifferService.UploadJA4Database:output_type -> sniffer.Ja4DataChunkResponse
+	6,  // 36: sniffer.SnifferService.UpdateOrSaveJa4Entry:output_type -> sniffer.JA4Entry
+	3,  // 37: sniffer.SnifferService.DownloadSNIDatabase:output_type -> sniffer.SNIDataChunk
+	5,  // 38: sniffer.SnifferService.UploadSNIDatabase:output_type -> sniffer.SNIDataChunkResponse
+	1,  // 39: sniffer.SnifferService.UpdateOrSaveSNIEntry:output_type -> sniffer.SNIEntry
+	0,  // 40: sniffer.SnifferService.GetHashSNIandJa4HashTable:output_type -> sniffer.HashTable
+	27, // [27:41] is the sub-list for method output_type
+	13, // [13:27] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
 	13, // [13:13] is the sub-list for extension extendee
 	0,  // [0:13] is the sub-list for field type_name
@@ -2286,7 +2355,7 @@ func file_proto_sniffer_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_sniffer_proto_rawDesc), len(file_proto_sniffer_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   33,
+			NumMessages:   34,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

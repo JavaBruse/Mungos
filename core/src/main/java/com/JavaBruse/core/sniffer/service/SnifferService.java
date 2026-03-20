@@ -42,6 +42,7 @@ public class SnifferService {
     private final SettingCommand settingCommand;
     private final RetryPolicy retryPolicy;
     private final ConnectionValidator connectionValidator;
+    private final DataBaseJa4SNIService dataBaseJa4SNIService;
 
     public String ping(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
@@ -214,5 +215,15 @@ public class SnifferService {
             return code == Status.Code.UNAVAILABLE || code == Status.Code.UNAUTHENTICATED;
         }
         return false;
+    }
+
+    public void updateHashSNIAndJa4AllSniffer(){
+        List<SnifferEntity> sniffers = snifferRepository.findByDeletedFalse();
+        for (SnifferEntity s: sniffers){
+            HashTable h =  dataBaseJa4SNIService.getDatabaseHashes(s.getId());
+            s.setJa4Hash(h.getJa4Hash());
+            s.setSNIHash(h.getSniHash());
+            snifferRepository.save(s);
+        }
     }
 }

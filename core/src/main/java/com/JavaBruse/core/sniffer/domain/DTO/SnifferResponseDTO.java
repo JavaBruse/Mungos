@@ -1,6 +1,7 @@
 package com.JavaBruse.core.sniffer.domain.DTO;
 
 
+import jakarta.persistence.Column;
 import lombok.*;
 
 @Builder
@@ -16,4 +17,6 @@ public class SnifferResponseDTO {
     private String location;
     private Long lastSeen;
     private boolean connected;
+    private long SNIHash;
+    private long Ja4Hash;
 }

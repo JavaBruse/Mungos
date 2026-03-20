@@ -19,19 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SnifferService_Register_FullMethodName             = "/sniffer.SnifferService/Register"
-	SnifferService_GetMetrics_FullMethodName           = "/sniffer.SnifferService/GetMetrics"
-	SnifferService_Ping_FullMethodName                 = "/sniffer.SnifferService/Ping"
-	SnifferService_GetFilteredPackage_FullMethodName   = "/sniffer.SnifferService/GetFilteredPackage"
-	SnifferService_GetPacketPayload_FullMethodName     = "/sniffer.SnifferService/GetPacketPayload"
-	SnifferService_GetSettings_FullMethodName          = "/sniffer.SnifferService/GetSettings"
-	SnifferService_SetSettings_FullMethodName          = "/sniffer.SnifferService/SetSettings"
-	SnifferService_DownloadJA4Database_FullMethodName  = "/sniffer.SnifferService/DownloadJA4Database"
-	SnifferService_UploadJA4Database_FullMethodName    = "/sniffer.SnifferService/UploadJA4Database"
-	SnifferService_UpdateOrSaveJa4Entry_FullMethodName = "/sniffer.SnifferService/UpdateOrSaveJa4Entry"
-	SnifferService_DownloadSNIDatabase_FullMethodName  = "/sniffer.SnifferService/DownloadSNIDatabase"
-	SnifferService_UploadSNIDatabase_FullMethodName    = "/sniffer.SnifferService/UploadSNIDatabase"
-	SnifferService_UpdateOrSaveSNIEntry_FullMethodName = "/sniffer.SnifferService/UpdateOrSaveSNIEntry"
+	SnifferService_Register_FullMethodName                  = "/sniffer.SnifferService/Register"
+	SnifferService_GetMetrics_FullMethodName                = "/sniffer.SnifferService/GetMetrics"
+	SnifferService_Ping_FullMethodName                      = "/sniffer.SnifferService/Ping"
+	SnifferService_GetFilteredPackage_FullMethodName        = "/sniffer.SnifferService/GetFilteredPackage"
+	SnifferService_GetPacketPayload_FullMethodName          = "/sniffer.SnifferService/GetPacketPayload"
+	SnifferService_GetSettings_FullMethodName               = "/sniffer.SnifferService/GetSettings"
+	SnifferService_SetSettings_FullMethodName               = "/sniffer.SnifferService/SetSettings"
+	SnifferService_DownloadJA4Database_FullMethodName       = "/sniffer.SnifferService/DownloadJA4Database"
+	SnifferService_UploadJA4Database_FullMethodName         = "/sniffer.SnifferService/UploadJA4Database"
+	SnifferService_UpdateOrSaveJa4Entry_FullMethodName      = "/sniffer.SnifferService/UpdateOrSaveJa4Entry"
+	SnifferService_DownloadSNIDatabase_FullMethodName       = "/sniffer.SnifferService/DownloadSNIDatabase"
+	SnifferService_UploadSNIDatabase_FullMethodName         = "/sniffer.SnifferService/UploadSNIDatabase"
+	SnifferService_UpdateOrSaveSNIEntry_FullMethodName      = "/sniffer.SnifferService/UpdateOrSaveSNIEntry"
+	SnifferService_GetHashSNIandJa4HashTable_FullMethodName = "/sniffer.SnifferService/GetHashSNIandJa4HashTable"
 )
 
 // SnifferServiceClient is the client API for SnifferService service.
@@ -39,7 +40,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SnifferServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error)
+	GetMetrics(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*MetricsResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 	GetFilteredPackage(ctx context.Context, in *PackageFilterRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[TrafficPacket], error)
 	GetPacketPayload(ctx context.Context, in *PayloadRequest, opts ...grpc.CallOption) (*PayloadResponse, error)
@@ -51,6 +52,7 @@ type SnifferServiceClient interface {
 	DownloadSNIDatabase(ctx context.Context, in *SNIDataChunkRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SNIDataChunk], error)
 	UploadSNIDatabase(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SNIDataChunk, SNIDataChunkResponse], error)
 	UpdateOrSaveSNIEntry(ctx context.Context, in *SNIEntry, opts ...grpc.CallOption) (*SNIEntry, error)
+	GetHashSNIandJa4HashTable(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*HashTable, error)
 }
 
 type snifferServiceClient struct {
@@ -71,7 +73,7 @@ func (c *snifferServiceClient) Register(ctx context.Context, in *RegisterRequest
 	return out, nil
 }
 
-func (c *snifferServiceClient) GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error) {
+func (c *snifferServiceClient) GetMetrics(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*MetricsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MetricsResponse)
 	err := c.cc.Invoke(ctx, SnifferService_GetMetrics_FullMethodName, in, out, cOpts...)
@@ -224,12 +226,22 @@ func (c *snifferServiceClient) UpdateOrSaveSNIEntry(ctx context.Context, in *SNI
 	return out, nil
 }
 
+func (c *snifferServiceClient) GetHashSNIandJa4HashTable(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*HashTable, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HashTable)
+	err := c.cc.Invoke(ctx, SnifferService_GetHashSNIandJa4HashTable_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnifferServiceServer is the server API for SnifferService service.
 // All implementations must embed UnimplementedSnifferServiceServer
 // for forward compatibility.
 type SnifferServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error)
+	GetMetrics(context.Context, *AuthRequest) (*MetricsResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 	GetFilteredPackage(*PackageFilterRequest, grpc.ServerStreamingServer[TrafficPacket]) error
 	GetPacketPayload(context.Context, *PayloadRequest) (*PayloadResponse, error)
@@ -241,6 +253,7 @@ type SnifferServiceServer interface {
 	DownloadSNIDatabase(*SNIDataChunkRequest, grpc.ServerStreamingServer[SNIDataChunk]) error
 	UploadSNIDatabase(grpc.ClientStreamingServer[SNIDataChunk, SNIDataChunkResponse]) error
 	UpdateOrSaveSNIEntry(context.Context, *SNIEntry) (*SNIEntry, error)
+	GetHashSNIandJa4HashTable(context.Context, *AuthRequest) (*HashTable, error)
 	mustEmbedUnimplementedSnifferServiceServer()
 }
 
@@ -254,7 +267,7 @@ type UnimplementedSnifferServiceServer struct{}
 func (UnimplementedSnifferServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedSnifferServiceServer) GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error) {
+func (UnimplementedSnifferServiceServer) GetMetrics(context.Context, *AuthRequest) (*MetricsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMetrics not implemented")
 }
 func (UnimplementedSnifferServiceServer) Ping(context.Context, *PingRequest) (*PingResponse, error) {
@@ -289,6 +302,9 @@ func (UnimplementedSnifferServiceServer) UploadSNIDatabase(grpc.ClientStreamingS
 }
 func (UnimplementedSnifferServiceServer) UpdateOrSaveSNIEntry(context.Context, *SNIEntry) (*SNIEntry, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateOrSaveSNIEntry not implemented")
+}
+func (UnimplementedSnifferServiceServer) GetHashSNIandJa4HashTable(context.Context, *AuthRequest) (*HashTable, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetHashSNIandJa4HashTable not implemented")
 }
 func (UnimplementedSnifferServiceServer) mustEmbedUnimplementedSnifferServiceServer() {}
 func (UnimplementedSnifferServiceServer) testEmbeddedByValue()                        {}
@@ -330,7 +346,7 @@ func _SnifferService_Register_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _SnifferService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MetricsRequest)
+	in := new(AuthRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -342,7 +358,7 @@ func _SnifferService_GetMetrics_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: SnifferService_GetMetrics_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SnifferServiceServer).GetMetrics(ctx, req.(*MetricsRequest))
+		return srv.(SnifferServiceServer).GetMetrics(ctx, req.(*AuthRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -502,6 +518,24 @@ func _SnifferService_UpdateOrSaveSNIEntry_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SnifferService_GetHashSNIandJa4HashTable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).GetHashSNIandJa4HashTable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_GetHashSNIandJa4HashTable_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).GetHashSNIandJa4HashTable(ctx, req.(*AuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SnifferService_ServiceDesc is the grpc.ServiceDesc for SnifferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -540,6 +574,10 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateOrSaveSNIEntry",
 			Handler:    _SnifferService_UpdateOrSaveSNIEntry_Handler,
+		},
+		{
+			MethodName: "GetHashSNIandJa4HashTable",
+			Handler:    _SnifferService_GetHashSNIandJa4HashTable_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

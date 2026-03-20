@@ -7,18 +7,16 @@ import com.JavaBruse.proto.SettingRequest;
 import com.JavaBruse.proto.SettingResponse;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SettingCommand {
 
     private final SessionManager sessionManager;
-
-    public SettingCommand(SessionManager sessionManager) {
-        this.sessionManager = sessionManager;
-    }
 
     public SettingResponse getSettings(SnifferEntity sniffer) {
         return sessionManager.executeWithSession(sniffer, session -> {

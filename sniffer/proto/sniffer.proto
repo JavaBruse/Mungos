@@ -6,7 +6,7 @@ option go_package = "./core/grpc/proto;snifferpb";
 
 service SnifferService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc GetMetrics(MetricsRequest) returns (MetricsResponse);
+  rpc GetMetrics(AuthRequest) returns (MetricsResponse);
   rpc Ping(PingRequest) returns (PingResponse);
   rpc GetFilteredPackage(PackageFilterRequest) returns (stream TrafficPacket);
   rpc GetPacketPayload(PayloadRequest) returns (PayloadResponse);
@@ -18,6 +18,13 @@ service SnifferService {
   rpc DownloadSNIDatabase(SNIDataChunkRequest) returns (stream SNIDataChunk);
   rpc UploadSNIDatabase(stream SNIDataChunk) returns (SNIDataChunkResponse);
   rpc UpdateOrSaveSNIEntry(SNIEntry) returns (SNIEntry);
+  rpc GetHashSNIandJa4HashTable(AuthRequest) returns (HashTable);
+}
+
+
+message HashTable {
+  uint64 sni_hash = 1;
+  uint64 ja4_hash = 2;
 }
 
 message SNIEntry {
@@ -62,6 +69,7 @@ message JA4Entry {
     bool verified = 8;
     string fingerprint_type = 9;
     string session_key = 10;
+    int64 updated_at = 11;
 }
 
 message JA4EntryList {
@@ -177,7 +185,7 @@ message SettingResponse {
   int64 timestamp = 2;
 }
 
-message MetricsRequest {
+message AuthRequest {
   string session_key = 1;
 }
 

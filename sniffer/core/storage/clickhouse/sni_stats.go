@@ -161,15 +161,17 @@ func (c *ClickHouseStorage) ReplaceSNIDatabase(ctx context.Context, entries []mo
 		return err
 	}
 	defer tx.Rollback()
+
 	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE sni_stats"); err != nil {
 		return err
 	}
 
 	for _, entry := range entries {
+		id := uuid.New().String()
 		_, err := tx.ExecContext(ctx, `
             INSERT INTO sni_stats (id, service, sni, occurrence_count, first_seen, last_seen)
             VALUES (?, ?, ?, ?, ?, ?)
-        `, entry.ID, entry.Service, entry.SNI, entry.OccurrenceCount, entry.FirstSeen, entry.LastSeen)
+        `, id, entry.Service, entry.SNI, entry.OccurrenceCount, entry.FirstSeen, entry.LastSeen)
 		if err != nil {
 			return err
 		}
@@ -185,7 +187,7 @@ func (c *ClickHouseStorage) GetAllSNIEntries(ctx context.Context) ([]models.SNIE
 	}
 
 	rows, err := c.conn.QueryContext(ctx, `
-        SELECT id, service, sni, occurrence_count, first_seen, last_seen
+        SELECT service, sni, occurrence_count, first_seen, last_seen
         FROM sni_stats
     `)
 	if err != nil {
@@ -197,7 +199,6 @@ func (c *ClickHouseStorage) GetAllSNIEntries(ctx context.Context) ([]models.SNIE
 	for rows.Next() {
 		var entry models.SNIEntry
 		err := rows.Scan(
-			&entry.ID,
 			&entry.Service,
 			&entry.SNI,
 			&entry.OccurrenceCount,
@@ -210,4 +211,20 @@ func (c *ClickHouseStorage) GetAllSNIEntries(ctx context.Context) ([]models.SNIE
 		entries = append(entries, entry)
 	}
 	return entries, nil
+}
+
+// GetSNITableHash возвращает хеш всей таблицы sni_stats
+func (c *ClickHouseStorage) GetSNITableHash(ctx context.Context) (uint64, error) {
+	if !c.ensureConnection() {
+		return 0, fmt.Errorf("clickhouse not available")
+	}
+
+	var hash uint64
+	query := `SELECT groupBitXor(cityHash64(service, sni, occurrence_count, first_seen, last_seen)) 
+FROM sni_stats`
+	err := c.conn.QueryRowContext(ctx, query).Scan(&hash)
+	if err != nil {
+		return 0, err
+	}
+	return hash, nil
 }
