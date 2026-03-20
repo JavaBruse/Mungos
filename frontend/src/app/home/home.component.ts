@@ -1,17 +1,11 @@
 import { Component, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { LoginService } from '../services/login.service';
-import { MetricChart } from "../metrics/metric-chart/metric-chart";
+
 
 @Component({
   selector: 'app-home',
-  imports: [MatFormFieldModule, MatSelectModule, MatInputModule, FormsModule, MetricChart],
+  imports: [],
   templateUrl: './home.component.html',
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
-  protected loginService = inject(LoginService);
 }

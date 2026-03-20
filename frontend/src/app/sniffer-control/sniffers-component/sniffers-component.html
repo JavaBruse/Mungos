@@ -1,8 +1,23 @@
 <div class="sniffers-container">
     @if (isSettingsPage) {
-    <button mat-raised-button color="primary" (click)="snifferService.setVisibleAdd(true)" class="button-add">
-        Добавить сниффер
-    </button>
+    <div class="horizontal-box">
+
+        <button [disabled]="sniffers().length <= 1" mat-raised-button color="primary"
+            (click)="snifferService.syncSNIDatabases()" class="button-add">
+            Синхронизировать базы SNI
+        </button>
+        <button [disabled]="sniffers().length <= 1" mat-raised-button color="primary"
+            (click)="snifferService.syncJA4Databases()" class="button-add">
+            Синхронизировать базы JA4+
+        </button>
+        <button mat-raised-button color="primary" (click)="snifferService.updateAllHashes()" class="button-add">
+            Обновить Hash баз данных
+        </button>
+
+        <button mat-raised-button color="primary" (click)="snifferService.setVisibleAdd(true)" class="button-add">
+            Добавить сниффер
+        </button>
+    </div>
     }
     <div class="header-container">
         <div class="cards-grid">
@@ -48,6 +63,14 @@
                             <div class="info-row">
                                 <span class="info-label">Последний контакт:</span>
                                 <span class="info-value">{{ sniffer.lastSeen * 1000 | date:'dd.MM.yyyy HH:mm' }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Hash JA4 DB:</span>
+                                <span class="info-value">{{ sniffer.Ja4Hash }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Hash SNI DB:</span>
+                                <span class="info-value">{{ sniffer.SNIHash }}</span>
                             </div>
                         </mat-card-content>
                     </div>

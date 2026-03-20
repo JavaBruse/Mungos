@@ -113,4 +113,5 @@ export class SniffersComponent implements OnInit, OnDestroy {
   finishSetting() {
     this.snifferSettingID = null;
   }
+
 }

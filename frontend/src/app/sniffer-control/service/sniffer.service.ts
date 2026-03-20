@@ -24,7 +24,8 @@ export class SnifferService {
     readonly visibleAdd = this.visibleAddSnifferSignal.asReadonly();
     readonly visibleSetting = this.visibleSettingSignal.asReadonly();
     snifferSetting = signal<SnifferSetting | null>(null);
-
+    private readonly syncInProgressSignal = signal(false);
+    readonly syncInProgress = this.syncInProgressSignal.asReadonly();
 
     loadAll() {
         this.http.get<SnifferResponseDTO[]>(`${this.apiUrl}/all`).subscribe({
@@ -85,5 +86,52 @@ export class SnifferService {
         this.sniffersSignal.set([]);
         this.visibleAddSnifferSignal.set(false);
         this.visibleSettingSignal.set(false);
+    }
+
+
+    // Синхронизация JA4 баз данных
+    syncJA4Databases() {
+        this.syncInProgressSignal.set(true);
+        this.http.post<void>(`${this.apiUrl}/ja4/sync`, {}).subscribe({
+            next: () => {
+                this.errorMessageService.showSuccess("Синхронизация JA4 баз завершена");
+                this.syncInProgressSignal.set(false);
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка синхронизации JA4 баз");
+                this.syncInProgressSignal.set(false);
+            },
+        });
+    }
+
+    // Синхронизация SNI баз данных
+    syncSNIDatabases() {
+        this.syncInProgressSignal.set(true);
+        this.http.post<void>(`${this.apiUrl}/sni/sync`, {}).subscribe({
+            next: () => {
+                this.errorMessageService.showSuccess("Синхронизация SNI баз завершена");
+                this.syncInProgressSignal.set(false);
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка синхронизации SNI баз");
+                this.syncInProgressSignal.set(false);
+            },
+        });
+    }
+
+    // Обновление хэшей всех снифферов
+    updateAllHashes() {
+        this.syncInProgressSignal.set(true);
+        this.http.post<void>(`${this.apiUrl}/hashes/update-all`, {}).subscribe({
+            next: () => {
+                this.errorMessageService.showSuccess("Хэши всех снифферов обновлены");
+                this.loadAll();
+                this.syncInProgressSignal.set(false);
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка обновления хэшей");
+                this.syncInProgressSignal.set(false);
+            },
+        });
     }
 }

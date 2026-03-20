@@ -6,4 +6,6 @@ export interface SnifferResponseDTO {
     port: number;
     lastSeen: number;
     connected: boolean;
+    SNIHash: string;
+    Ja4Hash: string;
 }

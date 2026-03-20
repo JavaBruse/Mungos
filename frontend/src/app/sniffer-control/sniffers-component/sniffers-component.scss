@@ -47,3 +47,14 @@
 
     }
 }
+
+.horizontal-box {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    width: 100%;
+
+    button {
+        flex: 1;
+    }
+}

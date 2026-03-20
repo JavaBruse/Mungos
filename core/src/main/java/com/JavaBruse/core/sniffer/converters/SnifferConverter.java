@@ -13,8 +13,8 @@ public class SnifferConverter {
                 .port(sniffer.getPort())
                 .lastSeen(sniffer.getLastSeen())
                 .connected(sniffer.isConnected())
-                .Ja4Hash(sniffer.getJa4Hash())
-                .SNIHash(sniffer.getSNIHash())
+                .Ja4Hash(Long.toUnsignedString(sniffer.getJa4Hash()))
+                .SNIHash(Long.toUnsignedString(sniffer.getSNIHash()))
                 .build();
     }
 }

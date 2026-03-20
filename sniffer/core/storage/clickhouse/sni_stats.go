@@ -219,12 +219,21 @@ func (c *ClickHouseStorage) GetSNITableHash(ctx context.Context) (uint64, error)
 		return 0, fmt.Errorf("clickhouse not available")
 	}
 
-	var hash uint64
-	query := `SELECT groupBitXor(cityHash64(service, sni, occurrence_count, first_seen, last_seen)) 
+	var hash *uint64
+	query := `SELECT groupBitXor(cityHash64(
+    ifNull(service, ''), 
+    ifNull(sni, ''), 
+    ifNull(occurrence_count, 0), 
+    ifNull(first_seen, toDateTime(0)), 
+    ifNull(last_seen, toDateTime(0))
+)) 
 FROM sni_stats`
 	err := c.conn.QueryRowContext(ctx, query).Scan(&hash)
 	if err != nil {
 		return 0, err
 	}
-	return hash, nil
+	if hash == nil {
+		return 0, nil
+	}
+	return *hash, nil
 }

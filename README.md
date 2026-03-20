@@ -99,13 +99,23 @@ PROMETHEUS_URL=http://prometheus:9090
 ```sh
 docker-compose -f deploy/docker-compose.master.yml up -d
 docker-compose -f deploy/docker-compose.master.yml up -d --build core-app
+docker-compose -f deploy/docker-compose.master.yml down
 docker-compose -f deploy/docker-compose.master.yml watch
 ```
 ### Sniffer со своей БД
 ```sh
 docker-compose -f deploy/docker-compose.sniffer.yml up -d
 docker-compose -f deploy/docker-compose.sniffer.yml up -d --build sniffer-app
+docker-compose -f deploy/docker-compose.sniffer.yml down
 docker-compose -f deploy/docker-compose.sniffer.yml watch
+```
+
+### Sniffer-host со своей БД
+```sh
+docker-compose -f deploy/docker-compose.sniffer-host.yml up -d
+docker-compose -f deploy/docker-compose.sniffer-host.yml up -d --build sniffer-app
+docker-compose -f deploy/docker-compose.sniffer-host.yml down
+docker-compose -f deploy/docker-compose.sniffer-host.yml watch
 ```
 ### Удалить тома
 ```sh

@@ -46,7 +46,7 @@ public class DataBaseJa4SNIService {
     }
 
     public JA4Entry updateOrSaveJA4Entry(String id, JA4Entry entry) {
-        SnifferEntity sniffer = snifferRepository.findById(id)
+        SnifferEntity sniffer = snifferRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
         log.info("Updating JA4 entry: {}", entry.getId());
@@ -60,7 +60,7 @@ public class DataBaseJa4SNIService {
     }
 
     public SNIEntry updateOrSaveSNIEntry(String id, SNIEntry entry) {
-        SnifferEntity sniffer = snifferRepository.findById(id)
+        SnifferEntity sniffer = snifferRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
 
         log.info("Updating SNI entry: {}", entry.getId());
@@ -74,7 +74,8 @@ public class DataBaseJa4SNIService {
     }
 
     public void syncJA4Databases() {
-        List<SnifferEntity> allSniffers = snifferRepository.findAll();
+        List<SnifferEntity> allSniffers = snifferRepository.findByDeletedFalse();
+        if (allSniffers.size() <= 1) return;
         log.info("Starting JA4 sync for {} sniffers", allSniffers.size());
         Map<String, JA4Entry> masterDatabase = new HashMap<>();
 
@@ -113,7 +114,8 @@ public class DataBaseJa4SNIService {
     }
 
     public void syncSNIDatabases() {
-        List<SnifferEntity> allSniffers = snifferRepository.findAll();
+        List<SnifferEntity> allSniffers = snifferRepository.findByDeletedFalse();
+        if (allSniffers.size() <= 1) return;
         log.info("Starting SNI sync for {} sniffers", allSniffers.size());
         Map<String, SNIEntry> masterDatabase = new HashMap<>();
         for (SnifferEntity sniffer : allSniffers) {

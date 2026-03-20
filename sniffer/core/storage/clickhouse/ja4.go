@@ -381,26 +381,29 @@ func (c *ClickHouseStorage) GetAllJA4Entries(ctx context.Context) ([]models.Ja4E
 }
 
 // DeleteDBEntry удаляет запись по ID
-func (c *ClickHouseStorage) DeleteDBEntry(ctx context.Context, id string) error {
-	if !c.ensureConnection() {
-		return fmt.Errorf("ClickHouse not available")
-	}
-
-	_, err := c.conn.ExecContext(ctx, "ALTER TABLE ja4_database DELETE WHERE id = ?", id)
-	return err
-}
-
 func (c *ClickHouseStorage) GetJA4TableHash(ctx context.Context) (uint64, error) {
 	if !c.ensureConnection() {
 		return 0, fmt.Errorf("clickhouse not available")
 	}
 
-	var hash uint64
-	query := `SELECT groupBitXor(cityHash64(fingerprint, application, library, device, os, observation_count, verified, fingerprint_type)) 
+	var hash *uint64
+	query := `SELECT groupBitXor(cityHash64(
+    ifNull(fingerprint, ''), 
+    ifNull(application, ''), 
+    ifNull(library, ''), 
+    ifNull(device, ''), 
+    ifNull(os, ''), 
+    ifNull(observation_count, 0), 
+    ifNull(verified, false), 
+    ifNull(fingerprint_type, '')
+)) 
 FROM ja4_database`
 	err := c.conn.QueryRowContext(ctx, query).Scan(&hash)
 	if err != nil {
 		return 0, err
 	}
-	return hash, nil
+	if hash == nil {
+		return 0, nil
+	}
+	return *hash, nil
 }

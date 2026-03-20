@@ -15,6 +15,8 @@ public interface SnifferRepository extends JpaRepository<SnifferEntity, String> 
 
     List<SnifferEntity> findByDeletedFalse();
 
+    Optional<SnifferEntity> findByIdAndDeletedFalse(String id);
+
     List<SnifferEntity> findByConnectedTrueAndDeletedFalse();
 
     Optional<SnifferEntity> findByHostAndPortAndDeletedFalse(String host, int port);
