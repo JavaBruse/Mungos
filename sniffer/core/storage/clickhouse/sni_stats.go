@@ -165,16 +165,21 @@ func (c *ClickHouseStorage) ReplaceSNIDatabase(ctx context.Context, entries []mo
 	if _, err := tx.ExecContext(ctx, "TRUNCATE TABLE sni_stats"); err != nil {
 		return err
 	}
+	query := `INSERT INTO sni_stats (id, service, sni, occurrence_count, first_seen, last_seen) VALUES `
+	var values []interface{}
 
-	for _, entry := range entries {
-		id := uuid.New().String()
-		_, err := tx.ExecContext(ctx, `
-            INSERT INTO sni_stats (id, service, sni, occurrence_count, first_seen, last_seen)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, id, entry.Service, entry.SNI, entry.OccurrenceCount, entry.FirstSeen, entry.LastSeen)
-		if err != nil {
-			return err
+	for i, entry := range entries {
+		if i > 0 {
+			query += ","
 		}
+		query += "(?, ?, ?, ?, ?, ?)"
+		values = append(values, uuid.New().String(), entry.Service, entry.SNI,
+			entry.OccurrenceCount, entry.FirstSeen, entry.LastSeen)
+	}
+
+	_, err = tx.ExecContext(ctx, query, values...)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit()

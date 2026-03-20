@@ -66,8 +66,10 @@ func (s *Server) DownloadSNIDatabase(req *pb.SNIDataChunkRequest, stream pb.Snif
 
 // UploadSNIDatabase - прием сжатой SNI БД от клиента
 func (s *Server) UploadSNIDatabase(stream pb.SnifferService_UploadSNIDatabaseServer) error {
+	logger.Info("UploadSNIDatabase CALLED")
 	firstChunk, err := stream.Recv()
 	if err != nil {
+		logger.Error("Failed to receive first chunk: %v", err)
 		return err
 	}
 
@@ -75,13 +77,13 @@ func (s *Server) UploadSNIDatabase(stream pb.SnifferService_UploadSNIDatabaseSer
 		return status.Error(codes.Unauthenticated, "invalid session")
 	}
 
-	logger.Info("UploadSNIDatabase started")
-
 	var (
 		compressed bytes.Buffer
-		sessionKey string
 		chunks     int
 	)
+
+	compressed.Write(firstChunk.Data)
+	chunks++
 
 	for {
 		chunk, err := stream.Recv()
@@ -89,23 +91,17 @@ func (s *Server) UploadSNIDatabase(stream pb.SnifferService_UploadSNIDatabaseSer
 			break
 		}
 		if err != nil {
+			logger.Error("Error receiving chunk: %v", err)
 			return err
 		}
 
 		chunks++
-		if sessionKey == "" {
-			sessionKey = chunk.SessionKey
-		}
-
 		compressed.Write(chunk.Data)
-
-		if chunk.IsLast {
-			logger.Info("Last chunk received, total size: %d", chunk.TotalSize)
-		}
 	}
 
 	protoList := &pb.SNIEntryList{}
 	if err := utils.DecompressProto(compressed.Bytes(), protoList); err != nil {
+		logger.Error("Failed to decompress data: %v", err)
 		return status.Error(codes.Internal, "failed to decompress data")
 	}
 
@@ -115,8 +111,10 @@ func (s *Server) UploadSNIDatabase(stream pb.SnifferService_UploadSNIDatabaseSer
 	}
 
 	if err := s.storage.ReplaceSNIDatabase(stream.Context(), entries); err != nil {
+		logger.Error("Failed to replace SNI database: %v", err)
 		return status.Error(codes.Internal, err.Error())
 	}
+	logger.Info("UploadSNIDatabase Complete")
 
 	return stream.SendAndClose(&pb.SNIDataChunkResponse{
 		Success:     true,

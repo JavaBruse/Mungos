@@ -70,13 +70,13 @@ func (s *Server) UploadJA4Database(stream pb.SnifferService_UploadJA4DatabaseSer
 		return status.Error(codes.Unauthenticated, "invalid session")
 	}
 
-	logger.Info("UploadJA4Database started")
-
 	var (
 		compressed bytes.Buffer
-		sessionKey string
 		chunks     int
 	)
+
+	compressed.Write(firstChunk.Data)
+	chunks++
 
 	for {
 		chunk, err := stream.Recv()
@@ -88,25 +88,19 @@ func (s *Server) UploadJA4Database(stream pb.SnifferService_UploadJA4DatabaseSer
 		}
 
 		chunks++
-		if sessionKey == "" {
-			sessionKey = chunk.SessionKey
-		}
-
 		compressed.Write(chunk.Data)
-
-		if chunk.IsLast {
-			logger.Info("Last chunk received, total size: %d", chunk.TotalSize)
-		}
 	}
 
 	protoList := &pb.JA4EntryList{}
 	if err := utils.DecompressProto(compressed.Bytes(), protoList); err != nil {
+		logger.Error("Failed to decompress data: %v", err)
 		return status.Error(codes.Internal, "failed to decompress data")
 	}
 
 	entries := models.FromProtoList(protoList)
 
 	if err := s.storage.ReplaceJA4Database(stream.Context(), entries); err != nil {
+		logger.Error("Failed to replace JA4 database: %v", err)
 		return status.Error(codes.Internal, err.Error())
 	}
 

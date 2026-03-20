@@ -131,4 +131,8 @@ public class SessionManager {
         activeSessions.clear();
         connectionManager.shutdown();
     }
+
+    public SnifferServiceGrpc.SnifferServiceStub getAsyncStub(SessionInfo session) {
+        return connectionManager.getAsyncStub(session.getHost(), session.getPort());
+    }
 }

@@ -238,4 +238,15 @@ public class GrpcConnectionManager {
         channels.values().forEach(this::closeChannel);
         channels.clear();
     }
+
+    public SnifferServiceGrpc.SnifferServiceStub getAsyncStub(String host, int port) {
+        String connectionId = buildConnectionId(host, port);
+        ManagedChannel channel = channels.get(connectionId);
+
+        if (channel == null) {
+            throw new ConnectionException("No active channel for " + connectionId);
+        }
+
+        return SnifferServiceGrpc.newStub(channel);
+    }
 }

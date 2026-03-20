@@ -303,19 +303,16 @@ func (c *ClickHouseStorage) ReplaceJA4Database(ctx context.Context, entries []mo
 		return err
 	}
 
-	stmt, err := tx.PrepareContext(ctx, `
-        INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
+	query := `INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type, updated_at) VALUES `
+	var values []interface{}
 
-	for _, e := range entries {
-		id := uuid.New().String()
-		_, err := stmt.ExecContext(ctx,
-			id,
+	for i, e := range entries {
+		if i > 0 {
+			query += ","
+		}
+		query += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		values = append(values,
+			uuid.New().String(),
 			e.Fingerprint,
 			e.Application,
 			e.Library,
@@ -324,10 +321,13 @@ func (c *ClickHouseStorage) ReplaceJA4Database(ctx context.Context, entries []mo
 			e.ObservationCount,
 			e.Verified,
 			e.FingerprintType,
-			e.UpdatedAt)
-		if err != nil {
-			return err
-		}
+			e.UpdatedAt,
+		)
+	}
+
+	_, err = tx.ExecContext(ctx, query, values...)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit()
