@@ -8,13 +8,16 @@ import { FirstLoginPassword } from './first-login-password/first-login-password'
 import { UsersComponent } from './user-control/users-component/users-component';
 import { SniffersComponent } from './sniffer-control/sniffers-component/sniffers-component';
 import { SnifferWebsocketComponent } from './sniffer-control/sniffer-websocket-component/sniffer-websocket-component';
-import { Analitic } from './analitic/analitic';
+import { GrafanaComponent } from './grafana-component/grafana-component';
+import { DashboardsComponent } from './dashboards-component/dashboards-component';
+
 
 export const routes: Routes = [
     { path: '', component: RootComponent, pathMatch: 'full' },
     { path: 'login', component: LoginComponent, canActivate: [LoginGuard] },
     { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
-    { path: 'analitics', component: Analitic, canActivate: [AuthGuard] },
+    { path: 'dashboards', component: DashboardsComponent, canActivate: [AuthGuard] },
+    { path: 'grafana', component: GrafanaComponent, canActivate: [AuthGuard] },
     { path: 'settings/users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'settings/sniffers', component: SniffersComponent, canActivate: [AuthGuard] },
     { path: 'sniffers', component: SniffersComponent, canActivate: [AuthGuard] },

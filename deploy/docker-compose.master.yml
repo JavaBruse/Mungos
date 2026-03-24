@@ -40,6 +40,7 @@ services:
       DEFAULT_MASTER_KEY: ${DEFAULT_MASTER_KEY}
       JWT_SECRET: ${JWT_SECRET}
       PROMETHEUS_URL: ${PROMETHEUS_URL}
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL}
     ports:
       - "${CORE_PORT}:7779"
     networks:
@@ -82,6 +83,26 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=30d' 
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mungos-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SECURITY_ALLOW_EMBEDDING: true
+      GF_SECURITY_X_FRAME_OPTIONS: ""
+      GF_AUTH_ANONYMOUS_ENABLED: false
+      GF_AUTH_BASIC_ENABLED: true
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL}
+      GF_AUTH_DISABLE_LOGIN_FORM: false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      mungos-network:
+        ipv4_address: 172.20.0.101
 
 networks:
   mungos-network:
@@ -96,3 +117,5 @@ volumes:
     name: mungos_postgres-core-data
   prometheus-data:
     name: mungos_prometheus-data
+  grafana-data:
+    driver: local

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Analitic } from './analitic';
+import { GrafanaComponent } from './grafana-component';
 
-describe('Analitic', () => {
-  let component: Analitic;
-  let fixture: ComponentFixture<Analitic>;
+describe('GrafanaComponent', () => {
+  let component: GrafanaComponent;
+  let fixture: ComponentFixture<GrafanaComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Analitic]
+      imports: [GrafanaComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Analitic);
+    fixture = TestBed.createComponent(GrafanaComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

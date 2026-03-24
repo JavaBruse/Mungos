@@ -118,6 +118,7 @@ public class DataBaseJa4SNIService {
         if (allSniffers.size() <= 1) return;
         log.info("Starting SNI sync for {} sniffers", allSniffers.size());
         Map<String, SNIEntry> masterDatabase = new HashMap<>();
+
         for (SnifferEntity sniffer : allSniffers) {
             try {
                 log.debug("Collecting from sniffer: {}", sniffer.getId());
@@ -127,14 +128,33 @@ public class DataBaseJa4SNIService {
                     String key = entry.getService() + ":" + entry.getSni();
                     SNIEntry existing = masterDatabase.get(key);
 
-                    if (existing == null || entry.getLastSeen() > existing.getLastSeen()) {
+                    if (existing == null) {
                         masterDatabase.put(key, entry);
+                    } else {
+                        String service = existing.getService();
+                        if (!entry.getService().equals("unknown")) {
+                            service = entry.getService();
+                        }
+
+                        int count = Math.max(existing.getOccurrenceCount(), entry.getOccurrenceCount());
+                        long firstSeen = Math.min(existing.getFirstSeen(), entry.getFirstSeen());
+                        long lastSeen = Math.max(existing.getLastSeen(), entry.getLastSeen());
+
+                        SNIEntry merged = entry.toBuilder()
+                                .setService(service)
+                                .setOccurrenceCount(count)
+                                .setFirstSeen(firstSeen)
+                                .setLastSeen(lastSeen)
+                                .build();
+
+                        masterDatabase.put(key, merged);
                     }
                 }
             } catch (Exception e) {
                 log.error("Failed to collect from sniffer: {}", sniffer.getId(), e);
             }
         }
+
         log.info("Master database built with {} unique entries", masterDatabase.size());
         List<SNIEntry> masterList = new ArrayList<>(masterDatabase.values());
         for (SnifferEntity sniffer : allSniffers) {

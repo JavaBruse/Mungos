@@ -16,9 +16,9 @@
       <mat-icon>home</mat-icon>
       <span class="label">Главная</span>
     </a>
-    <a class="item" routerLink="/analitics" routerLinkActive="active" (click)="closeMenu()">
-      <mat-icon>insights</mat-icon>
-      <span class="label">Аналитика</span>
+    <a class="item" routerLink="/dashboards" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>dashboard</mat-icon>
+      <span class="label">Дашборды</span>
     </a>
     <a class="item" routerLink="/sniffers" routerLinkActive="active" (click)="closeMenu()">
       <mat-icon>wifi_tethering</mat-icon>
@@ -34,6 +34,10 @@
       <span class="label">НАСТРОЙКИ</span>
       <span class="divider-line"></span>
     </div>
+    <a class="item" routerLink="/grafana" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>insights</mat-icon>
+      <span class="label">Grafana</span>
+    </a>
     <a class="item" routerLink="/settings/users" routerLinkActive="active" (click)="closeMenu()">
       <mat-icon>people</mat-icon>
       <span class="label">Пользователи</span>

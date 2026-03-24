@@ -6,6 +6,7 @@ import { Subscription, interval } from 'rxjs';
 import { MetricService, MetricData } from '../metric.service';
 import { StyleSwitcherService } from '../../services/style-switcher.service';
 import { MatCardModule } from '@angular/material/card';
+import { SnifferService } from '../../sniffer-control/service/sniffer.service';
 
 @Component({
   selector: 'app-metric-chart',
@@ -28,13 +29,14 @@ export class MetricChart implements OnInit, OnDestroy {
   private subscription?: Subscription;
   private metricsEffectRef: any;
   private themeEffectRef: any;
-
+  snifferService = inject(SnifferService)
   loading = false;
   error: string | null = null;
   hasData = false;
   chartOptions: EChartsOption = {};
   theme: string | null = this.styleSwitcher.themeSignal ? null : 'dark';
   private chartInstance: any = null;
+  sniffers = this.snifferService.sniffers;
 
   private lastData: MetricData[][] | null = null;
   private lastConfig: any = null;
@@ -51,7 +53,7 @@ export class MetricChart implements OnInit, OnDestroy {
 
   constructor() {
     this.initChartOptions();
-
+    this.snifferService.loadAll();
     this.themeEffectRef = effect(() => {
       const isLight = this.styleSwitcher.themeSignal;
       const newTheme = isLight ? null : 'dark';
@@ -162,6 +164,17 @@ export class MetricChart implements OnInit, OnDestroy {
         const match = key.match(/sniffer="([^"]+)"/);
         if (match) seriesName = match[1];
       }
+
+
+      // if (!this.snifferId) {
+      //   const key = Array.from(this.metricService.metrics().keys())[i] || '';
+      //   const match = key.match(/sniffer":"([^"]+)"/);
+      //   if (match) {
+      //     const snifferId = match[1];
+      //     const sniffer = this.sniffers().find(s => s.id === snifferId);
+      //     seriesName = sniffer?.name || snifferId.substring(0, 8);
+      //   }
+      // }
 
       return {
         name: seriesName,
