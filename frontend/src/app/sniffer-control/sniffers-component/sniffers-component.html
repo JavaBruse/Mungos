@@ -83,7 +83,11 @@
                             <mat-icon (click)="openDialog('0ms', '0ms', sniffer.id)"
                                 matTooltip="Удалить">delete_outline</mat-icon>
                         </div>
+                        } @else {
+                        <span matBadge="{{metricsService.getValue(sniffer.id)}}"></span>
+
                         }
+
                     </div>
                 </div>
             </mat-card>

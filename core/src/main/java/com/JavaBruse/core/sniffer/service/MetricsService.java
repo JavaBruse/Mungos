@@ -123,6 +123,17 @@ public class MetricsService {
         sb.append(String.format("sniffer_tcp_retransmissions{sniffer=\"%s\"} %d\n",
                 sniffer.getId(), metrics.getTcpRetransmissions()));
 
+        // Known и Unknown пакеты
+        sb.append("# HELP sniffer_known_packets Known packets count (with JA4 and SNI)\n");
+        sb.append("# TYPE sniffer_known_packets counter\n");
+        sb.append(String.format("sniffer_known_packets{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getAllKnow()));
+
+        sb.append("# HELP sniffer_unknown_packets Unknown packets count (without JA4 or SNI)\n");
+        sb.append("# TYPE sniffer_unknown_packets counter\n");
+        sb.append(String.format("sniffer_unknown_packets{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getAllUnknow()));
+        log.info("Неизвестные: "+ metrics.getAllUnknow());
         return sb.toString();
     }
 }

@@ -21,6 +21,8 @@ import { SnifferService } from '../service/sniffer.service';
 import { SnifferAddComponent } from "../sniffer-add-component/sniffer-add-component";
 import { CommonModule } from '@angular/common';
 import { SnifferSettingComponent } from '../sniffer-setting-component/sniffer-setting-component';
+import { SnifferMetricsService } from '../service/sniffer-metrics.service';
+
 
 @Component({
   selector: 'app-sniffers-component',
@@ -46,6 +48,7 @@ import { SnifferSettingComponent } from '../sniffer-setting-component/sniffer-se
   styleUrl: './sniffers-component.scss',
 })
 export class SniffersComponent implements OnInit, OnDestroy {
+  metricsService = inject(SnifferMetricsService);
   http = inject(HttpService);
   errorMessageService = inject(ErrorMessageService);
   snifferService = inject(SnifferService);

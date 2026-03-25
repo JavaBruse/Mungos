@@ -5,8 +5,8 @@ import { RouterOutlet, RouterModule, Router } from '@angular/router';
 import { LoadingComponent } from './loading/loading.component';
 import { LoginService } from './services/login.service';
 import { ErrorMessageComponent } from './error-message/error-message.component';
-
-
+import { SnifferMetricsService } from './sniffer-control/service/sniffer-metrics.service';
+import { MatBadgeModule } from '@angular/material/badge';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +14,7 @@ import { ErrorMessageComponent } from './error-message/error-message.component';
     MatIconModule,
     RouterOutlet,
     RouterModule,
+    MatBadgeModule,
     LoadingComponent,
     ErrorMessageComponent
   ],
@@ -21,6 +22,7 @@ import { ErrorMessageComponent } from './error-message/error-message.component';
   styleUrl: './app.scss'
 })
 export class App {
+  metricsService = inject(SnifferMetricsService);
   menuVisible = false;
   isLightTheme = false;
   router = inject(Router);
