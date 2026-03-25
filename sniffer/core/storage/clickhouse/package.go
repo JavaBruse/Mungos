@@ -447,11 +447,7 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 				sni, sni_service, ja4_entry_id, sni_entry_id
 			)) as identification_groups
 		FROM packets
-		WHERE (
-			(src_ip = ? AND dst_ip = ? AND dst_port = ?)
-			OR 
-			(src_ip = ? AND dst_ip = ? AND src_port = ?)
-		)
+		WHERE dst_ip = ? AND dst_port = ?
 	`
 
 	var insight models.ConnectionInsight
@@ -459,10 +455,7 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	var firstTime, lastTime time.Time
 	var identificationGroups [][]interface{}
 
-	err = c.conn.QueryRowContext(ctx, query,
-		localIP, remoteIP, remotePort,
-		remoteIP, localIP, remotePort,
-	).Scan(
+	err = c.conn.QueryRowContext(ctx, query, remoteIP, remotePort).Scan(
 		&localPorts,
 		&insight.TotalPackets,
 		&insight.TotalBytes,
@@ -526,6 +519,22 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 		idMap[key].UniqueSNIService = addUnique(idMap[key].UniqueSNIService, sniService)
 		idMap[key].UniqueJA4EntryID = addUnique(idMap[key].UniqueJA4EntryID, ja4EntryID)
 		idMap[key].UniqueSNIEntryID = addUnique(idMap[key].UniqueSNIEntryID, sniEntryID)
+	}
+
+	for _, data := range idMap {
+		if len(data.UniqueJA4EntryID) > 0 {
+			related, err := c.GetRelatedByJA4(ctx, data.UniqueJA4EntryID)
+			if err == nil {
+				data.RelatedAddressJa4 = related
+			}
+		}
+
+		if len(data.UniqueSNIEntryID) > 0 {
+			related, err := c.GetRelatedBySNI(ctx, data.UniqueSNIEntryID)
+			if err == nil {
+				data.RelatedAddressSNI = related
+			}
+		}
 	}
 
 	for _, data := range idMap {
@@ -652,4 +661,116 @@ func addUnique(slice []string, value string) []string {
 		}
 	}
 	return append(slice, value)
+}
+
+// UpdateConnectionInsight - обновляет JA4 и SNI для всех пакетов соединения
+func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetID, ja4EntryID, sniEntryID string) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("storage not available")
+	}
+
+	// 1. Получаем данные JA4 и SNI
+	var ja4 *models.Ja4Entry
+	var sni *models.SNIEntry
+	var err error
+
+	if ja4EntryID != "" {
+		ja4, err = c.GetJA4ByID(ctx, ja4EntryID)
+		if err != nil {
+			return fmt.Errorf("failed to get JA4 entry: %v", err)
+		}
+	}
+
+	if sniEntryID != "" {
+		sni, err = c.GetSNIByID(ctx, sniEntryID)
+		if err != nil {
+			return fmt.Errorf("failed to get SNI entry: %v", err)
+		}
+	}
+
+	// 2. Получаем параметры соединения по packet_id
+	var srcIP, dstIP string
+	var srcPort, dstPort uint16
+	var srcIPType, dstIPType string
+
+	err = c.conn.QueryRowContext(ctx, `
+		SELECT src_ip, dst_ip, src_port, dst_port, src_ip_type, dst_ip_type
+		FROM packets
+		WHERE packet_id = ?
+		LIMIT 1
+	`, packetID).Scan(&srcIP, &dstIP, &srcPort, &dstPort, &srcIPType, &dstIPType)
+
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("packet not found")
+	}
+	if err != nil {
+		return err
+	}
+
+	// 3. Определяем localIP, remoteIP, remotePort
+	var localIP, remoteIP string
+	var remotePort uint16
+
+	if srcIPType == "private" || srcIPType == "local" {
+		localIP = srcIP
+		remoteIP = dstIP
+		remotePort = dstPort
+	} else {
+		localIP = dstIP
+		remoteIP = srcIP
+		remotePort = srcPort
+	}
+
+	// 4. Обновляем все поля в пакетах
+	query := `
+		ALTER TABLE packets UPDATE 
+			ja4_entry_id = ?,
+			ja4_raw = ?,
+			ja4_application = ?,
+			ja4_device = ?,
+			ja4_os = ?,
+			ja4_verified = ?,
+			ja4_confidence = ?,
+			sni_entry_id = ?,
+			sni = ?,
+			sni_service = ?
+		WHERE (dst_ip = ? AND dst_port = ?)
+		AND (ja4_entry_id = '' OR sni_entry_id = '')
+	`
+
+	// Подготавливаем значения
+	ja4Raw := ""
+	ja4App := ""
+	ja4Device := ""
+	ja4OS := ""
+	ja4Verified := false
+	ja4Confidence := int32(0)
+
+	if ja4 != nil {
+		ja4Raw = ja4.Fingerprint
+		ja4App = ja4.Application
+		if ja4.Device != "" {
+			ja4Device = ja4.Device
+		}
+		ja4OS = ja4.OS
+		ja4Verified = ja4.Verified
+		ja4Confidence = int32(ja4.ObservationCount)
+	}
+
+	sniValue := ""
+	sniService := ""
+
+	if sni != nil {
+		sniValue = sni.SNI
+		sniService = sni.Service
+	}
+
+	_, err = c.conn.ExecContext(ctx, query,
+		ja4EntryID, ja4Raw, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence,
+		sniEntryID, sniValue, sniService,
+		localIP, remoteIP, remotePort,
+		remoteIP, localIP, remotePort,
+	)
+
+	return err
 }

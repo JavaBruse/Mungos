@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { SnifferService } from '../sniffer-control/service/sniffer.service';
 import { ConnectionInsight } from './connection-insight.DTO';
 import { Subscription } from 'rxjs';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-handler-package',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MatTabsModule],
   templateUrl: './handler-package.component.html',
   styleUrl: './handler-package.component.scss',
 })

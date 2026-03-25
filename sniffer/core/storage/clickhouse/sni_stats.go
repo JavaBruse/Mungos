@@ -242,3 +242,34 @@ FROM sni_stats`
 	}
 	return *hash, nil
 }
+
+// GetSNIByID - получает SNI запись по ID
+func (c *ClickHouseStorage) GetSNIByID(ctx context.Context, id string) (*models.SNIEntry, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT id, service, sni, occurrence_count, first_seen, last_seen
+		FROM sni_stats
+		WHERE id = ?
+		LIMIT 1
+	`
+
+	var entry models.SNIEntry
+	err := c.conn.QueryRowContext(ctx, query, id).Scan(
+		&entry.ID,
+		&entry.Service,
+		&entry.SNI,
+		&entry.OccurrenceCount,
+		&entry.FirstSeen,
+		&entry.LastSeen,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("SNI entry not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entry, nil
+}

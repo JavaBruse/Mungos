@@ -115,13 +115,14 @@
 
                         <div class="vendor">{{ packet.srcVendor }} </div>
                         @if (packet.srcIpType==="public") {
-                        <mat-icon>dns</mat-icon>
+                        <div class="endpoint-icon">
+                            <mat-icon>dns</mat-icon>
+                        </div>
                         } @else {
                         <div class="endpoint-icon">
                             <mat-icon>computer</mat-icon>
                         </div>
                         }
-
                         <div class="endpoint-details">
                             <div class="ip">{{ packet.srcIp }}:{{ packet.srcPort }}</div>
                             <div class="mac">{{ packet.srcMac }}</div>
@@ -152,7 +153,9 @@
                     <div class="endpoint destination">
                         <div class="vendor">{{ packet.dstVendor }}</div>
                         @if (packet.dstIpType==="public") {
-                        <mat-icon>dns</mat-icon>
+                        <div class="endpoint-icon">
+                            <mat-icon>dns</mat-icon>
+                        </div>
                         } @else {
                         <div class="endpoint-icon">
                             <mat-icon>computer</mat-icon>

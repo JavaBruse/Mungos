@@ -407,3 +407,38 @@ FROM ja4_database`
 	}
 	return *hash, nil
 }
+
+func (c *ClickHouseStorage) GetJA4ByID(ctx context.Context, id string) (*models.Ja4Entry, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT id, fingerprint, application, library, device, os, 
+		       observation_count, verified, fingerprint_type, updated_at
+		FROM ja4_database
+		WHERE id = ?
+		LIMIT 1
+	`
+
+	var entry models.Ja4Entry
+	err := c.conn.QueryRowContext(ctx, query, id).Scan(
+		&entry.ID,
+		&entry.Fingerprint,
+		&entry.Application,
+		&entry.Library,
+		&entry.Device,
+		&entry.OS,
+		&entry.ObservationCount,
+		&entry.Verified,
+		&entry.FingerprintType,
+		&entry.UpdatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("JA4 entry not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entry, nil
+}
