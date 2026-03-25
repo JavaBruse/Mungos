@@ -246,6 +246,9 @@ message MetricsResponse {
 
   // === География (если будет реализовано) ===
   map<string, int64> geo_countries = 80;      // распределение по странам (ISO коды)
+
+  int64 all_know = 81;      // известные пакеты
+  int64 all_unknow = 82;    // неизвестные пакеты
 }
 
 message PingRequest {

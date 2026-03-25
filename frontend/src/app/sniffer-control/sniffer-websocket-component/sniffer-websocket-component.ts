@@ -80,7 +80,9 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
     const request: TrafficRequest = {
       snifferId: this.id(),
       limit: this.LIMIT,
-      offset: 0
+      offset: 0,
+      knownOnly: false,
+      unknownOnly: false
     };
 
     if (formValues.protocols && formValues.protocols.length) {

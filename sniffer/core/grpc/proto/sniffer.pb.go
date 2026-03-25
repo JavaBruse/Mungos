@@ -1597,6 +1597,8 @@ type MetricsResponse struct {
 	TopDstIps map[string]int64 `protobuf:"bytes,71,rep,name=top_dst_ips,json=topDstIps,proto3" json:"top_dst_ips,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // кому больше всего отправляют (max 10)
 	// === География (если будет реализовано) ===
 	GeoCountries  map[string]int64 `protobuf:"bytes,80,rep,name=geo_countries,json=geoCountries,proto3" json:"geo_countries,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"` // распределение по странам (ISO коды)
+	AllKnow       int64            `protobuf:"varint,81,opt,name=all_know,json=allKnow,proto3" json:"all_know,omitempty"`                                                                                          // известные пакеты
+	AllUnknow     int64            `protobuf:"varint,82,opt,name=all_unknow,json=allUnknow,proto3" json:"all_unknow,omitempty"`                                                                                    // неизвестные пакеты
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1897,6 +1899,20 @@ func (x *MetricsResponse) GetGeoCountries() map[string]int64 {
 	return nil
 }
 
+func (x *MetricsResponse) GetAllKnow() int64 {
+	if x != nil {
+		return x.AllKnow
+	}
+	return 0
+}
+
+func (x *MetricsResponse) GetAllUnknow() int64 {
+	if x != nil {
+		return x.AllUnknow
+	}
+	return 0
+}
+
 type PingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SessionKey    string                 `protobuf:"bytes,1,opt,name=session_key,json=sessionKey,proto3" json:"session_key,omitempty"`
@@ -2155,7 +2171,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\".\n" +
 	"\vAuthRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
-	"sessionKey\"\x8d\x12\n" +
+	"sessionKey\"\xc7\x12\n" +
 	"\x0fMetricsResponse\x12#\n" +
 	"\rpackets_count\x18\x01 \x01(\x03R\fpacketsCount\x12\x1f\n" +
 	"\vbytes_total\x18\x02 \x01(\x03R\n" +
@@ -2197,7 +2213,10 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\rtop_dst_ports\x18= \x03(\v2).sniffer.MetricsResponse.TopDstPortsEntryR\vtopDstPorts\x12G\n" +
 	"\vtop_src_ips\x18F \x03(\v2'.sniffer.MetricsResponse.TopSrcIpsEntryR\ttopSrcIps\x12G\n" +
 	"\vtop_dst_ips\x18G \x03(\v2'.sniffer.MetricsResponse.TopDstIpsEntryR\ttopDstIps\x12O\n" +
-	"\rgeo_countries\x18P \x03(\v2*.sniffer.MetricsResponse.GeoCountriesEntryR\fgeoCountries\x1a<\n" +
+	"\rgeo_countries\x18P \x03(\v2*.sniffer.MetricsResponse.GeoCountriesEntryR\fgeoCountries\x12\x19\n" +
+	"\ball_know\x18Q \x01(\x03R\aallKnow\x12\x1d\n" +
+	"\n" +
+	"all_unknow\x18R \x01(\x03R\tallUnknow\x1a<\n" +
 	"\x0eProtocolsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\x1a?\n" +

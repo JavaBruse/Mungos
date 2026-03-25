@@ -382,3 +382,37 @@ func (c *ClickHouseStorage) GetErrorStats(ctx context.Context, snifferID string)
 	err = c.conn.QueryRowContext(ctx, fragQuery, snifferID).Scan(&fragmented)
 	return fragmented, err
 }
+
+// GetKnownPacketsCount - количество известных пакетов (где заполнены оба поля)
+func (c *ClickHouseStorage) GetKnownPacketsCount(ctx context.Context, snifferID string) (int64, error) {
+	if !c.ensureConnection() {
+		return 0, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT COUNT()
+		FROM packets
+		WHERE (ja4_entry_id != '' AND sni_entry_id != '')
+	`
+
+	var count int64
+	err := c.conn.QueryRowContext(ctx, query, snifferID).Scan(&count)
+	return count, err
+}
+
+// GetUnknownPacketsCount - количество неизвестных пакетов (где нет ja4_entry_id ИЛИ нет sni_entry_id)
+func (c *ClickHouseStorage) GetUnknownPacketsCount(ctx context.Context, snifferID string) (int64, error) {
+	if !c.ensureConnection() {
+		return 0, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT COUNT()
+		FROM packets
+		WHERE (ja4_entry_id = '' OR sni_entry_id = '')
+	`
+
+	var count int64
+	err := c.conn.QueryRowContext(ctx, query, snifferID).Scan(&count)
+	return count, err
+}

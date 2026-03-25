@@ -57,6 +57,8 @@ export interface TrafficRequest {
     textSearch?: string;
     limit: number;
     offset: number;
+    unknownOnly?: boolean;
+    knownOnly?: boolean;
 }
 
 @Injectable({

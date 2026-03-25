@@ -93,6 +93,14 @@ func (s *Server) GetMetrics(ctx context.Context, req *pb.AuthRequest) (*pb.Metri
 			resp.TopSrcIps = srcIPs
 			resp.TopDstIps = dstIPs
 		}
+
+		if known, err := s.GetKnownPacketsCount(ctx, s.config.SnifferID); err == nil {
+			resp.AllKnow = known
+		}
+
+		if unknown, err := s.GetUnknownPacketsCount(ctx, s.config.SnifferID); err == nil {
+			resp.AllUnknow = unknown
+		}
 	}
 
 	// Health метрики (не из БД)
@@ -125,4 +133,18 @@ func (s *Server) getTotalMemory() int64 {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	return int64(m.TotalAlloc)
+}
+
+func (s *Server) GetKnownPacketsCount(ctx context.Context, snifferID string) (int64, error) {
+	if s.storage == nil || !s.storage.Enabled() {
+		return 0, nil
+	}
+	return s.storage.GetKnownPacketsCount(ctx, snifferID)
+}
+
+func (s *Server) GetUnknownPacketsCount(ctx context.Context, snifferID string) (int64, error) {
+	if s.storage == nil || !s.storage.Enabled() {
+		return 0, nil
+	}
+	return s.storage.GetUnknownPacketsCount(ctx, snifferID)
 }

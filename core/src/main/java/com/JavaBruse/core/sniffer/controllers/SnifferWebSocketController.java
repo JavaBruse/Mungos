@@ -49,6 +49,8 @@ public class SnifferWebSocketController {
                 .setStartTime(request.startTime != null ? request.startTime : 0)
                 .setEndTime(request.endTime != null ? request.endTime : 0)
                 .setTextSearch(request.textSearch != null ? request.textSearch : "")
+                .setUnknownOnly(request.unknownOnly)
+                .setKnownOnly(request.knownOnly)
                 .build();
 
         Iterator<TrafficPacket> packets = snifferService.getFilteredTraffic(
@@ -98,6 +100,8 @@ public class SnifferWebSocketController {
             Long startTime,
             Long endTime,
             String textSearch,
+            boolean unknownOnly,
+            boolean knownOnly,
             int limit,
             int offset
     ) {}
