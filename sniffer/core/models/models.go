@@ -9,6 +9,8 @@ type Packet struct {
 	Timestamp time.Time
 	SrcIP     string
 	DstIP     string
+	SrcIPType string // "local", "private", "public"
+	DstIPType string // "local", "private", "public"
 	SrcPort   uint16
 	DstPort   uint16
 	Protocol  []string
@@ -54,6 +56,40 @@ type ClientData struct {
 type SettingsData struct {
 	BPFFilter string
 	CreatedAt time.Time
+}
+
+type ConnectionInsight struct {
+	LocalIP         string
+	LocalPorts      []uint16
+	RemoteIP        string
+	RemotePort      uint16
+	TotalPackets    int64
+	TotalBytes      int64
+	FirstPacketTime int64
+	LastPacketTime  int64
+	SynCount        int64
+	FinCount        int64
+	RstCount        int64
+	IdentificData   []IdentificData
+}
+
+type IdentificData struct {
+	UniqueJA4Raw         []string
+	UniqueJA4Application []string
+	UniqueJA4Device      []string
+	UniqueJA4OS          []string
+	UniqueSNI            []string
+	UniqueSNIService     []string
+	UniqueJA4EntryID     []string
+	UniqueSNIEntryID     []string
+	RelatedAddressJa4    []RelatedAddress
+	RelatedAddressSNI    []RelatedAddress
+}
+
+type RelatedAddress struct {
+	RemoteIP   string
+	RemotePort uint16
+	Count      int64
 }
 
 type SNIEntry struct {

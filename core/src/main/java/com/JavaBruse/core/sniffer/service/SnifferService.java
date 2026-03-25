@@ -3,11 +3,10 @@ package com.JavaBruse.core.sniffer.service;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
+import com.JavaBruse.core.sniffer.converters.ConnectionInsightConverter;
+import com.JavaBruse.core.sniffer.domain.DTO.ConnectionInsightDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SettingDTO;
-import com.JavaBruse.core.sniffer.grpc.command.MetricsCommand;
-import com.JavaBruse.core.sniffer.grpc.command.PingCommand;
-import com.JavaBruse.core.sniffer.grpc.command.SettingCommand;
-import com.JavaBruse.core.sniffer.grpc.command.TrafficCommand;
+import com.JavaBruse.core.sniffer.grpc.command.*;
 import com.JavaBruse.core.sniffer.converters.SnifferConverter;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
@@ -43,7 +42,8 @@ public class SnifferService {
     private final RetryPolicy retryPolicy;
     private final ConnectionValidator connectionValidator;
     private final DataBaseJa4SNIService dataBaseJa4SNIService;
-
+    private final ConnectionInsightCommand connectionInsightCommand;
+    private final ConnectionInsightConverter connectionInsightConverter;
     public String ping(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
@@ -54,6 +54,20 @@ public class SnifferService {
                 this::isRetryableError,
                 "ping-" + id
         );
+    }
+
+    public ConnectionInsightDTO getConnectionInsight(String id, String packetId) {
+        SnifferEntity sniffer = snifferRepository.findById(id)
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
+
+        ConnectionInsight connectionInsight = retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> connectionInsightCommand.getConnectionInsight(sniffer, packetId),
+                this::isRetryableError,
+                "get-connection-insight-" + id
+        );
+
+        return connectionInsightConverter.toDTO(connectionInsight);
     }
 
     public SettingDTO getSettings(String id) {

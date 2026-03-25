@@ -22,8 +22,48 @@ service SnifferService {
   rpc UploadSNIDatabase(stream SNIDataChunk) returns (SNIDataChunkResponse);
   rpc UpdateOrSaveSNIEntry(SNIEntry) returns (SNIEntry);
   rpc GetHashSNIandJa4HashTable(AuthRequest) returns (HashTable);
+  rpc GetConnectionInsight(ConnectionInsightRequest) returns (ConnectionInsight);
 }
 
+
+message ConnectionInsightRequest {
+  string session_key = 1;
+  string packet_id = 2;
+}
+
+message ConnectionInsight {
+  string local_ip = 1;
+  repeated uint32 local_ports = 2;
+  string remote_ip = 3;
+  uint32 remote_port = 4;
+  int64 total_packets = 5;
+  int64 total_bytes = 6;
+  int64 first_packet_time = 7;
+  int64 last_packet_time = 8;
+  int64 syn_count = 9;
+  int64 fin_count = 10;
+  int64 rst_count = 11;
+  repeated IdentificData identific_data = 12;
+}
+
+message IdentificData {
+  repeated string unique_ja4_raw = 1;
+  repeated string unique_ja4_application = 2;
+  repeated string unique_ja4_device = 3;
+  repeated string unique_ja4_os = 4;
+  repeated string unique_sni = 5;
+  repeated string unique_sni_service = 6;
+  repeated string unique_ja4_entry_id = 7;
+  repeated string unique_sni_entry_id = 8;
+  repeated RelatedAddress related_address_ja4 = 9;
+  repeated RelatedAddress related_address_sni = 10;
+}
+
+message RelatedAddress {
+  string remote_ip = 1;
+  uint32 remote_port = 2;
+  int64 count = 3;
+}
 
 message HashTable {
   uint64 sni_hash = 1;
@@ -163,6 +203,10 @@ message TrafficPacket {
   string sni_service = 29;
   string ja4_id = 30;
   string sni_id = 31;
+
+  // IP Type fields (32-33)
+  string src_ip_type = 32;
+  string dst_ip_type = 33;
 }
 
 message RegisterRequest {

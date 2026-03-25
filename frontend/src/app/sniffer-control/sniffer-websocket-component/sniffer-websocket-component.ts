@@ -15,6 +15,8 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { HandlerPackageComponent } from '../../handler-package.component/handler-package.component';
 
 @Component({
   selector: 'app-sniffer-websocket-component',
@@ -32,8 +34,9 @@ import { MatButtonModule } from '@angular/material/button';
     MatDatepickerModule,
     MatIconModule,
     MatTooltipModule,
-    MatButtonModule
-
+    MatButtonModule,
+    MatCheckboxModule,
+    HandlerPackageComponent
   ],
   templateUrl: './sniffer-websocket-component.html',
   styleUrl: './sniffer-websocket-component.scss',
@@ -67,8 +70,25 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
       ips: [''],
       startTime: [null],
       endTime: [null],
-      textSearch: ['']
+      textSearch: [''],
+      knownOnly: [false],
+      unknownOnly: [false]
     });
+  }
+
+  showHandlerPackage = signal(false);
+  currentSnifferId = '';
+  selectedPacketId = '';
+
+  openPacketInsight(packet: TrafficPacket) {
+    this.currentSnifferId = this.id();
+    this.selectedPacketId = packet.packetId;
+    this.showHandlerPackage.set(true);
+  }
+
+  closeHandlerPackage() {
+    this.showHandlerPackage.set(false);
+    this.selectedPacketId = '';
   }
 
   getKeys(obj: any): string[] {
@@ -81,8 +101,8 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
       snifferId: this.id(),
       limit: this.LIMIT,
       offset: 0,
-      knownOnly: false,
-      unknownOnly: false
+      knownOnly: formValues.knownOnly || false,
+      unknownOnly: formValues.unknownOnly || false
     };
 
     if (formValues.protocols && formValues.protocols.length) {
@@ -122,7 +142,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
     this.filterActive.set(
       (values.protocols && values.protocols.length > 0) ||
       !!values.ports || !!values.ips ||
-      !!values.startTime || !!values.endTime || !!values.textSearch
+      !!values.startTime || !!values.endTime || !!values.textSearch || values.knownOnly || values.unknownOnly
     );
   }
 

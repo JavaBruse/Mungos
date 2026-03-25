@@ -5,6 +5,7 @@ import (
 
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
+	"sniffer/core/models"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -62,4 +63,82 @@ func (s *Server) GetPacketPayload(ctx context.Context, req *pb.PayloadRequest) (
 	}
 
 	return &pb.PayloadResponse{Payload: payload}, nil
+}
+
+func (s *Server) GetConnectionInsight(ctx context.Context, req *pb.ConnectionInsightRequest) (*pb.ConnectionInsight, error) {
+	if !s.checkAuth(ctx, req.GetSessionKey()) {
+		return nil, status.Error(codes.Unauthenticated, "invalid session")
+	}
+
+	logger.Info("GetConnectionInsight: packet_id=%s", req.GetPacketId())
+
+	if s.storage == nil || !s.storage.Enabled() {
+		return nil, status.Error(codes.Internal, "storage not available")
+	}
+
+	insight, err := s.storage.GetConnectionInsightByPacket(ctx, req.GetPacketId())
+	if err != nil {
+		logger.Error("Failed to get connection insight: %v", err)
+		return nil, status.Error(codes.Internal, "failed to get connection insight")
+	}
+
+	return convertToProtoConnectionInsight(insight), nil
+}
+
+func convertToProtoConnectionInsight(insight *models.ConnectionInsight) *pb.ConnectionInsight {
+	if insight == nil {
+		return nil
+	}
+
+	localPorts := make([]uint32, len(insight.LocalPorts))
+	for i, port := range insight.LocalPorts {
+		localPorts[i] = uint32(port)
+	}
+
+	identificData := make([]*pb.IdentificData, len(insight.IdentificData))
+	for i, id := range insight.IdentificData {
+		identificData[i] = &pb.IdentificData{
+			UniqueJa4Raw:         id.UniqueJA4Raw,
+			UniqueJa4Application: id.UniqueJA4Application,
+			UniqueJa4Device:      id.UniqueJA4Device,
+			UniqueJa4Os:          id.UniqueJA4OS,
+			UniqueSni:            id.UniqueSNI,
+			UniqueSniService:     id.UniqueSNIService,
+			UniqueJa4EntryId:     id.UniqueJA4EntryID,
+			UniqueSniEntryId:     id.UniqueSNIEntryID,
+			RelatedAddressJa4:    convertToProtoRelatedAddresses(id.RelatedAddressJa4),
+			RelatedAddressSni:    convertToProtoRelatedAddresses(id.RelatedAddressSNI),
+		}
+	}
+
+	return &pb.ConnectionInsight{
+		LocalIp:         insight.LocalIP,
+		LocalPorts:      localPorts,
+		RemoteIp:        insight.RemoteIP,
+		RemotePort:      uint32(insight.RemotePort),
+		TotalPackets:    insight.TotalPackets,
+		TotalBytes:      insight.TotalBytes,
+		FirstPacketTime: insight.FirstPacketTime,
+		LastPacketTime:  insight.LastPacketTime,
+		SynCount:        insight.SynCount,
+		FinCount:        insight.FinCount,
+		RstCount:        insight.RstCount,
+		IdentificData:   identificData,
+	}
+}
+
+func convertToProtoRelatedAddresses(addresses []models.RelatedAddress) []*pb.RelatedAddress {
+	if addresses == nil {
+		return nil
+	}
+
+	result := make([]*pb.RelatedAddress, len(addresses))
+	for i, addr := range addresses {
+		result[i] = &pb.RelatedAddress{
+			RemoteIp:   addr.RemoteIP,
+			RemotePort: uint32(addr.RemotePort),
+			Count:      addr.Count,
+		}
+	}
+	return result
 }

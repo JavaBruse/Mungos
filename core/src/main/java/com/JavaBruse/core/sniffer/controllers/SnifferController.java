@@ -4,6 +4,7 @@ package com.JavaBruse.core.sniffer.controllers;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
+import com.JavaBruse.core.sniffer.domain.DTO.ConnectionInsightDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SettingDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
@@ -59,6 +60,12 @@ public class SnifferController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public SettingDTO getSetting(@PathVariable String id) {
         return snifferService.getSettings(id);
+    }
+
+    @GetMapping("/insight/{id}/{packetId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ANALYTIC', 'ROLE_SECURITY')")
+    public ConnectionInsightDTO getConnectionInsight(@PathVariable String id, @PathVariable String packetId) {
+        return snifferService.getConnectionInsight(id, packetId);
     }
 
     @DeleteMapping("/delete/{id}")

@@ -33,6 +33,7 @@ const (
 	SnifferService_UploadSNIDatabase_FullMethodName         = "/sniffer.SnifferService/UploadSNIDatabase"
 	SnifferService_UpdateOrSaveSNIEntry_FullMethodName      = "/sniffer.SnifferService/UpdateOrSaveSNIEntry"
 	SnifferService_GetHashSNIandJa4HashTable_FullMethodName = "/sniffer.SnifferService/GetHashSNIandJa4HashTable"
+	SnifferService_GetConnectionInsight_FullMethodName      = "/sniffer.SnifferService/GetConnectionInsight"
 )
 
 // SnifferServiceClient is the client API for SnifferService service.
@@ -53,6 +54,7 @@ type SnifferServiceClient interface {
 	UploadSNIDatabase(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[SNIDataChunk, SNIDataChunkResponse], error)
 	UpdateOrSaveSNIEntry(ctx context.Context, in *SNIEntry, opts ...grpc.CallOption) (*SNIEntry, error)
 	GetHashSNIandJa4HashTable(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*HashTable, error)
+	GetConnectionInsight(ctx context.Context, in *ConnectionInsightRequest, opts ...grpc.CallOption) (*ConnectionInsight, error)
 }
 
 type snifferServiceClient struct {
@@ -236,6 +238,16 @@ func (c *snifferServiceClient) GetHashSNIandJa4HashTable(ctx context.Context, in
 	return out, nil
 }
 
+func (c *snifferServiceClient) GetConnectionInsight(ctx context.Context, in *ConnectionInsightRequest, opts ...grpc.CallOption) (*ConnectionInsight, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConnectionInsight)
+	err := c.cc.Invoke(ctx, SnifferService_GetConnectionInsight_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SnifferServiceServer is the server API for SnifferService service.
 // All implementations must embed UnimplementedSnifferServiceServer
 // for forward compatibility.
@@ -254,6 +266,7 @@ type SnifferServiceServer interface {
 	UploadSNIDatabase(grpc.ClientStreamingServer[SNIDataChunk, SNIDataChunkResponse]) error
 	UpdateOrSaveSNIEntry(context.Context, *SNIEntry) (*SNIEntry, error)
 	GetHashSNIandJa4HashTable(context.Context, *AuthRequest) (*HashTable, error)
+	GetConnectionInsight(context.Context, *ConnectionInsightRequest) (*ConnectionInsight, error)
 	mustEmbedUnimplementedSnifferServiceServer()
 }
 
@@ -305,6 +318,9 @@ func (UnimplementedSnifferServiceServer) UpdateOrSaveSNIEntry(context.Context, *
 }
 func (UnimplementedSnifferServiceServer) GetHashSNIandJa4HashTable(context.Context, *AuthRequest) (*HashTable, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetHashSNIandJa4HashTable not implemented")
+}
+func (UnimplementedSnifferServiceServer) GetConnectionInsight(context.Context, *ConnectionInsightRequest) (*ConnectionInsight, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetConnectionInsight not implemented")
 }
 func (UnimplementedSnifferServiceServer) mustEmbedUnimplementedSnifferServiceServer() {}
 func (UnimplementedSnifferServiceServer) testEmbeddedByValue()                        {}
@@ -536,6 +552,24 @@ func _SnifferService_GetHashSNIandJa4HashTable_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SnifferService_GetConnectionInsight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectionInsightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SnifferServiceServer).GetConnectionInsight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SnifferService_GetConnectionInsight_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SnifferServiceServer).GetConnectionInsight(ctx, req.(*ConnectionInsightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SnifferService_ServiceDesc is the grpc.ServiceDesc for SnifferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -578,6 +612,10 @@ var SnifferService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetHashSNIandJa4HashTable",
 			Handler:    _SnifferService_GetHashSNIandJa4HashTable_Handler,
+		},
+		{
+			MethodName: "GetConnectionInsight",
+			Handler:    _SnifferService_GetConnectionInsight_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

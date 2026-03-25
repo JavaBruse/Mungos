@@ -31,9 +31,7 @@
                     <mat-date-range-picker #rangePicker></mat-date-range-picker>
                 </mat-form-field>
             </div>
-
             <div class="filters-row">
-
                 <mat-form-field appearance="outline" class="filter-field">
                     <mat-label>Протокол</mat-label>
                     <mat-select formControlName="protocols" multiple>
@@ -45,19 +43,16 @@
                         }
                     </mat-select>
                 </mat-form-field>
-
                 <mat-form-field appearance="outline" class="filter-field">
                     <mat-label>Порты</mat-label>
                     <input matInput type="text" formControlName="ports" placeholder="80,443,8080">
                 </mat-form-field>
-
                 <mat-form-field appearance="outline" class="filter-field">
                     <mat-label>IP Адреса</mat-label>
                     <input matInput type="text" formControlName="ips" placeholder="192.168.1.1,10.0.0.1">
                 </mat-form-field>
+                <mat-checkbox formControlName="unknownOnly">Только неизвестные пакеты</mat-checkbox>
             </div>
-
-
         </form>
     </div>
     <div class="packets-list">
@@ -95,9 +90,6 @@
                         {{packet.sni}}
                         }
                     </div>
-
-
-
                 </span>
                 <mat-icon class="packet-icon" [style.color]="getPacketColor(packet)" [matTooltip]="getTooltip(packet)">
                     {{ getPacketIcon(packet) }}
@@ -109,6 +101,9 @@
             <div class="packet-details">
                 <div class="packet-timestamp-bar">
                     <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
+                    <button mat-raised-button color="primary"
+                        (click)="openPacketInsight(packet); $event.stopPropagation()"> Анализировать
+                    </button>
                     <span class="protocol-badge">
                         @if(packet.tcpFlags){
                         {{ getTooltip(packet)}}
@@ -118,11 +113,15 @@
                 <div class="request-schema">
                     <div class="endpoint source">
 
-                        <div class="vendor">{{ packet.srcVendor }}</div>
-
+                        <div class="vendor">{{ packet.srcVendor }} </div>
+                        @if (packet.srcIpType==="public") {
+                        <mat-icon>dns</mat-icon>
+                        } @else {
                         <div class="endpoint-icon">
                             <mat-icon>computer</mat-icon>
                         </div>
+                        }
+
                         <div class="endpoint-details">
                             <div class="ip">{{ packet.srcIp }}:{{ packet.srcPort }}</div>
                             <div class="mac">{{ packet.srcMac }}</div>
@@ -152,9 +151,13 @@
 
                     <div class="endpoint destination">
                         <div class="vendor">{{ packet.dstVendor }}</div>
+                        @if (packet.dstIpType==="public") {
+                        <mat-icon>dns</mat-icon>
+                        } @else {
                         <div class="endpoint-icon">
-                            <mat-icon>dns</mat-icon>
+                            <mat-icon>computer</mat-icon>
                         </div>
+                        }
                         <div class="endpoint-details">
                             <div class="mac">{{ packet.dstMac }}</div>
                             <div class="ip">{{ packet.dstIp }}:{{ packet.dstPort }}</div>
@@ -185,6 +188,14 @@
                                 <td class="field-name">JA4 Application</td>
                                 <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
                             </tr>
+                            <tr>
+                                <td class="field-name">srcIpType</td>
+                                <td class="field-value">{{ packet.srcIpType }}</td>
+                            </tr>
+                            <tr>
+                                <td class="field-name">dstIpType</td>
+                                <td class="field-value">{{ packet.dstIpType }}</td>
+                            </tr>
                         </table>
                     </div>
                     <div class="ttl-container">
@@ -206,3 +217,8 @@
         }
     </div>
 </div>
+
+@if (showHandlerPackage()) {
+<app-handler-package [snifferId]="currentSnifferId" [packetId]="selectedPacketId" (close)="closeHandlerPackage()">
+</app-handler-package>
+}

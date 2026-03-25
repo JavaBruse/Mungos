@@ -2,6 +2,7 @@ package capture
 
 import (
 	"fmt"
+	"net"
 	"sniffer/core/models"
 	"sniffer/core/storage/memory"
 
@@ -23,6 +24,8 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		Protocol:  extractProtocolStack(pkt),
 		Length:    pkt.Metadata().CaptureLength,
 		TTL:       ip.TTL,
+		SrcIPType: getIPType(ip.SrcIP.String()),
+		DstIPType: getIPType(ip.DstIP.String()),
 	}
 
 	if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
@@ -54,6 +57,68 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 	}
 
 	return p
+}
+
+func getIPType(ip string) string {
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return "unknown"
+	}
+
+	// Loopback (127.0.0.0/8, ::1)
+	if parsedIP.IsLoopback() {
+		return "private"
+	}
+
+	// Multicast (224.0.0.0/4, ff00::/8)
+	if parsedIP.IsMulticast() {
+		return "private"
+	}
+
+	// Link-local (169.254.0.0/16, fe80::/10)
+	if parsedIP.IsLinkLocalUnicast() || parsedIP.IsLinkLocalMulticast() {
+		return "private"
+	}
+
+	// Broadcast - явная проверка
+	if isBroadcast(parsedIP) {
+		return "private"
+	}
+
+	// Приватные диапазоны (RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+	// и IPv6 unique local (fc00::/7) - Go 1.17+ покрывает оба
+	if parsedIP.IsPrivate() {
+		return "private"
+	}
+
+	return "public"
+}
+
+func isBroadcast(ip net.IP) bool {
+	ip4 := ip.To4()
+	if ip4 == nil {
+		return false
+	}
+
+	// 255.255.255.255
+	if ip4[0] == 255 && ip4[1] == 255 && ip4[2] == 255 && ip4[3] == 255 {
+		return true
+	}
+
+	// Broadcast в сети (последний октет 255)
+	if ip4[3] == 255 {
+		return true
+	}
+
+	// Широковещательные адреса /16 и /8
+	if ip4[0] == 255 && ip4[1] == 255 && ip4[2] == 0 && ip4[3] == 0 {
+		return true
+	}
+	if ip4[0] == 255 && ip4[1] == 0 && ip4[2] == 0 && ip4[3] == 0 {
+		return true
+	}
+
+	return false
 }
 
 func formatTCPFlags(tcp *layers.TCP) string {
@@ -117,13 +182,6 @@ func extractProtocolStack(pkt gopacket.Packet) []string {
 	}
 
 	return stack
-}
-
-func isTLS(payload []byte) bool {
-	if len(payload) < 3 {
-		return false
-	}
-	return payload[0] == 0x16
 }
 
 func isHTTP(payload []byte) bool {

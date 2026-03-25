@@ -1,0 +1,98 @@
+@if (error()) {
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+    <div class="modal-container">
+        <div class="modal-body">
+            <div class="error">{{ error() }}</div>
+            <button class="close-btn" (click)="close.emit()">Закрыть</button>
+        </div>
+    </div>
+</div>
+} @else {
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3>Аналитика соединения</h3>
+            <button class="close-btn" (click)="close.emit()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="section">
+                <h4>Соединение</h4>
+                <div class="info-row">
+                    <span class="label">Локальный:</span>
+                    <span>{{ insight()?.localIp }}:{{ insight()?.localPorts?.join(', ') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Удаленный:</span>
+                    <span>{{ insight()?.remoteIp }}:{{ insight()?.remotePort }}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <h4>Статистика</h4>
+                <div class="stats-grid">
+                    <div>Пакетов: {{ insight()?.totalPackets }}</div>
+                    <div>Байт: {{ insight()?.totalBytes }}</div>
+                    <div>SYN: {{ insight()?.synCount }}</div>
+                    <div>FIN: {{ insight()?.finCount }}</div>
+                    <div>RST: {{ insight()?.rstCount }}</div>
+                </div>
+                <div>Первый пакет: {{ formatTimestamp(insight()?.firstPacketTime ?? 0) }}</div>
+                <div>Последний пакет: {{ formatTimestamp(insight()?.lastPacketTime ?? 0) }}</div>
+            </div>
+
+            @for (data of insight()?.identificData; track $index) {
+            <div class="section">
+                <h4>Идентификация #{{ $index + 1 }}</h4>
+
+                @if (data.uniqueJa4Raw.length) {
+                <div class="info-block">
+                    <strong>JA4 Raw:</strong>
+                    <div class="tags">{{ data.uniqueJa4Raw.join(', ') }}</div>
+                </div>
+                }
+
+                @if (data.uniqueJa4Application.length) {
+                <div class="info-block">
+                    <strong>Приложения:</strong>
+                    <div class="tags">{{ data.uniqueJa4Application.join(', ') }}</div>
+                </div>
+                }
+
+                @if (data.uniqueSni.length) {
+                <div class="info-block">
+                    <strong>SNI:</strong>
+                    <div class="tags">{{ data.uniqueSni.join(', ') }}</div>
+                </div>
+                }
+
+                @if (data.uniqueSniService.length) {
+                <div class="info-block">
+                    <strong>Сервисы SNI:</strong>
+                    <div class="tags">{{ data.uniqueSniService.join(', ') }}</div>
+                </div>
+                }
+
+                @if (data.relatedAddressJa4.length) {
+                <div class="info-block">
+                    <strong>Связанные адреса (JA4):</strong>
+                    @for (addr of data.relatedAddressJa4; track addr.remoteIp) {
+                    <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+                    }
+                </div>
+                }
+
+                @if (data.relatedAddressSni.length) {
+                <div class="info-block">
+                    <strong>Связанные адреса (SNI):</strong>
+                    @for (addr of data.relatedAddressSni; track addr.remoteIp) {
+                    <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+                    }
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}

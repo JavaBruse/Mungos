@@ -39,6 +39,8 @@ public class TrafficPacketDTO {
     int ja4Confidence;
     String sni;
     String sniService;
+    String srcIpType;
+    String dstIpType;
 
     public static TrafficPacketDTO fromProto(TrafficPacket proto) {
 
@@ -72,6 +74,8 @@ public class TrafficPacketDTO {
                 .ja4Confidence(proto.getJa4Confidence())
                 .sni(proto.getSni())
                 .sniService(proto.getSniService())
+                .srcIpType(proto.getSrcIpType())
+                .dstIpType(proto.getDstIpType())
                 .build();
     }
 }

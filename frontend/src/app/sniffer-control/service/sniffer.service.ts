@@ -6,6 +6,7 @@ import { SnifferRequestDTO } from './sniffer-request.DTO';
 import { SnifferResponseDTO } from './sniffer-response.DTO';
 import { ErrorMessageService } from '../../services/error-message.service';
 import { SnifferSetting } from './sniffer-setting';
+import { ConnectionInsight } from '../../handler-package.component/connection-insight.DTO';
 
 @Injectable({
     providedIn: 'root',
@@ -26,6 +27,10 @@ export class SnifferService {
     snifferSetting = signal<SnifferSetting | null>(null);
     private readonly syncInProgressSignal = signal(false);
     readonly syncInProgress = this.syncInProgressSignal.asReadonly();
+
+    getConnectionInsight(snifferId: string, packetId: string) {
+        return this.http.get<ConnectionInsight>(`${this.apiUrl}/insight/${snifferId}/${packetId}`);
+    }
 
     loadAll() {
         this.http.get<SnifferResponseDTO[]>(`${this.apiUrl}/all`).subscribe({

@@ -45,6 +45,8 @@ export interface TrafficPacket {
     // SNI fields
     sni?: string;
     sniService?: string;
+    srcIpType?: string;
+    dstIpType?: string;
 }
 
 export interface TrafficRequest {

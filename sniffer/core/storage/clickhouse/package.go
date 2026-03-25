@@ -39,7 +39,9 @@ func createPacketsTable(conn *sql.DB) error {
 			sni String,
 			sni_service String,
 			ja4_entry_id String,
-			sni_entry_id String
+			sni_entry_id String,
+			src_ip_type String,
+			dst_ip_type String
 		) ENGINE = MergeTree()
 		ORDER BY (timestamp, src_ip, dst_ip)
 	`
@@ -99,6 +101,8 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&pkt.SniService,
 			&pkt.Ja4Id,
 			&pkt.SniId,
+			&pkt.SrcIpType,
+			&pkt.DstIpType,
 		)
 		if err != nil {
 			continue
@@ -171,6 +175,8 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&pkt.SniService,
 			&pkt.Ja4Id,
 			&pkt.SniId,
+			&pkt.SrcIpType,
+			&pkt.DstIpType,
 		)
 		if err != nil {
 			continue
@@ -296,7 +302,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
                src_mac, dst_mac, src_vendor, dst_vendor,
                ja4_raw, ja4_application, ja4_device, ja4_os, 
                ja4_verified, ja4_confidence, sni, sni_service,
-			   ja4_entry_id, sni_entry_id
+			   ja4_entry_id, sni_entry_id, src_ip_type, dst_ip_type
         FROM packets
         WHERE %s
         ORDER BY timestamp DESC
@@ -330,8 +336,8 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			src_mac, dst_mac, src_vendor, dst_vendor,
 			ja4_raw, ja4_application, ja4_device, ja4_os,
 			ja4_verified, ja4_confidence, sni, sni_service,
-			ja4_entry_id, sni_entry_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ja4_entry_id, sni_entry_id, src_ip_type, dst_ip_type
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
@@ -375,6 +381,8 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.SNIService,
 			pkt.JA4EntryID,
 			pkt.SNIEntryID,
+			pkt.SrcIPType,
+			pkt.DstIPType,
 		)
 		if err != nil {
 			return err
@@ -382,4 +390,266 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 	}
 
 	return tx.Commit()
+}
+
+// GetConnectionInsightByPacket - аналитика по соединению на основе packet_id
+func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, packetID string) (*models.ConnectionInsight, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	// 1. Получаем пакет по ID
+	var srcIP, dstIP string
+	var srcPort, dstPort uint16
+	var srcIPType, dstIPType string
+
+	err := c.conn.QueryRowContext(ctx, `
+		SELECT src_ip, dst_ip, src_port, dst_port, src_ip_type, dst_ip_type
+		FROM packets
+		WHERE packet_id = ?
+		LIMIT 1
+	`, packetID).Scan(&srcIP, &dstIP, &srcPort, &dstPort, &srcIPType, &dstIPType)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("packet not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Определяем localIP, remoteIP, remotePort
+	var localIP, remoteIP string
+	var remotePort uint16
+
+	if srcIPType == "private" || srcIPType == "local" {
+		localIP = srcIP
+		remoteIP = dstIP
+		remotePort = dstPort
+	} else {
+		localIP = dstIP
+		remoteIP = srcIP
+		remotePort = srcPort
+	}
+
+	// 3. Получаем аналитику
+	query := `
+		SELECT
+			groupUniqArray(src_port) as local_ports,
+			COUNT() as total_packets,
+			SUM(length) as total_bytes,
+			MIN(timestamp) as first_time,
+			MAX(timestamp) as last_time,
+			COUNT(CASE WHEN tcp_flags LIKE '%S%' AND tcp_flags NOT LIKE '%A%' THEN 1 END) as syn_count,
+			COUNT(CASE WHEN tcp_flags LIKE '%F%' THEN 1 END) as fin_count,
+			COUNT(CASE WHEN tcp_flags LIKE '%R%' THEN 1 END) as rst_count,
+			groupUniqArray((
+				ja4_raw, ja4_application, ja4_device, ja4_os,
+				sni, sni_service, ja4_entry_id, sni_entry_id
+			)) as identification_groups
+		FROM packets
+		WHERE (
+			(src_ip = ? AND dst_ip = ? AND dst_port = ?)
+			OR 
+			(src_ip = ? AND dst_ip = ? AND src_port = ?)
+		)
+	`
+
+	var insight models.ConnectionInsight
+	var localPorts []uint16
+	var firstTime, lastTime time.Time
+	var identificationGroups [][]interface{}
+
+	err = c.conn.QueryRowContext(ctx, query,
+		localIP, remoteIP, remotePort,
+		remoteIP, localIP, remotePort,
+	).Scan(
+		&localPorts,
+		&insight.TotalPackets,
+		&insight.TotalBytes,
+		&firstTime,
+		&lastTime,
+		&insight.SynCount,
+		&insight.FinCount,
+		&insight.RstCount,
+		&identificationGroups,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	insight.LocalIP = localIP
+	insight.LocalPorts = localPorts
+	insight.RemoteIP = remoteIP
+	insight.RemotePort = remotePort
+	insight.FirstPacketTime = firstTime.UnixNano()
+	insight.LastPacketTime = lastTime.UnixNano()
+
+	// Группируем идентификационные данные
+	idMap := make(map[string]*models.IdentificData)
+	for _, group := range identificationGroups {
+		if len(group) < 8 {
+			continue
+		}
+
+		ja4Raw := toString(group[0])
+		ja4App := toString(group[1])
+		ja4Device := toString(group[2])
+		ja4OS := toString(group[3])
+		sni := toString(group[4])
+		sniService := toString(group[5])
+		ja4EntryID := toString(group[6])
+		sniEntryID := toString(group[7])
+
+		key := ja4EntryID + "|" + sniEntryID
+
+		if _, exists := idMap[key]; !exists {
+			idMap[key] = &models.IdentificData{
+				UniqueJA4Raw:         []string{},
+				UniqueJA4Application: []string{},
+				UniqueJA4Device:      []string{},
+				UniqueJA4OS:          []string{},
+				UniqueSNI:            []string{},
+				UniqueSNIService:     []string{},
+				UniqueJA4EntryID:     []string{},
+				UniqueSNIEntryID:     []string{},
+				RelatedAddressJa4:    []models.RelatedAddress{},
+				RelatedAddressSNI:    []models.RelatedAddress{},
+			}
+		}
+
+		idMap[key].UniqueJA4Raw = addUnique(idMap[key].UniqueJA4Raw, ja4Raw)
+		idMap[key].UniqueJA4Application = addUnique(idMap[key].UniqueJA4Application, ja4App)
+		idMap[key].UniqueJA4Device = addUnique(idMap[key].UniqueJA4Device, ja4Device)
+		idMap[key].UniqueJA4OS = addUnique(idMap[key].UniqueJA4OS, ja4OS)
+		idMap[key].UniqueSNI = addUnique(idMap[key].UniqueSNI, sni)
+		idMap[key].UniqueSNIService = addUnique(idMap[key].UniqueSNIService, sniService)
+		idMap[key].UniqueJA4EntryID = addUnique(idMap[key].UniqueJA4EntryID, ja4EntryID)
+		idMap[key].UniqueSNIEntryID = addUnique(idMap[key].UniqueSNIEntryID, sniEntryID)
+	}
+
+	for _, data := range idMap {
+		insight.IdentificData = append(insight.IdentificData, *data)
+	}
+
+	return &insight, nil
+}
+
+// toString - конвертирует interface{} в строку
+func toString(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	switch s := v.(type) {
+	case string:
+		return s
+	case []byte:
+		return string(s)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+// GetRelatedByJA4 - ищет все адреса, где встречаются указанные JA4EntryID (только публичные)
+func (c *ClickHouseStorage) GetRelatedByJA4(ctx context.Context, ja4EntryIDs []string) ([]models.RelatedAddress, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT 
+			dst_ip,
+			dst_port,
+			COUNT() as count
+		FROM packets
+		WHERE ja4_entry_id IN (?)
+			AND dst_ip_type = 'public'
+		GROUP BY dst_ip, dst_port
+		ORDER BY count DESC
+		LIMIT 50
+	`
+
+	placeholders := strings.Repeat("?,", len(ja4EntryIDs))
+	placeholders = placeholders[:len(placeholders)-1]
+	query = strings.Replace(query, "(?)", "("+placeholders+")", 1)
+
+	args := []interface{}{}
+	for _, id := range ja4EntryIDs {
+		args = append(args, id)
+	}
+
+	rows, err := c.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.RelatedAddress
+	for rows.Next() {
+		var addr models.RelatedAddress
+		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
+			continue
+		}
+		results = append(results, addr)
+	}
+
+	return results, nil
+}
+
+// GetRelatedBySNI - ищет все адреса, где встречаются указанные SNIEntryID (только публичные)
+func (c *ClickHouseStorage) GetRelatedBySNI(ctx context.Context, sniEntryIDs []string) ([]models.RelatedAddress, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT 
+			dst_ip,
+			dst_port,
+			COUNT() as count
+		FROM packets
+		WHERE sni_entry_id IN (?)
+			AND dst_ip_type = 'public'
+		GROUP BY dst_ip, dst_port
+		ORDER BY count DESC
+		LIMIT 50
+	`
+
+	placeholders := strings.Repeat("?,", len(sniEntryIDs))
+	placeholders = placeholders[:len(placeholders)-1]
+	query = strings.Replace(query, "(?)", "("+placeholders+")", 1)
+
+	args := []interface{}{}
+	for _, id := range sniEntryIDs {
+		args = append(args, id)
+	}
+
+	rows, err := c.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.RelatedAddress
+	for rows.Next() {
+		var addr models.RelatedAddress
+		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
+			continue
+		}
+		results = append(results, addr)
+	}
+
+	return results, nil
+}
+
+func addUnique(slice []string, value string) []string {
+	if value == "" {
+		return slice
+	}
+	for _, v := range slice {
+		if v == value {
+			return slice
+		}
+	}
+	return append(slice, value)
 }
