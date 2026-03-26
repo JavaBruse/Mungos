@@ -14,90 +14,144 @@
             <h3>Аналитика соединения</h3>
             <button class="close-btn" (click)="close.emit()">✕</button>
         </div>
-
-        <div class="modal-body">
-            <div class="section">
-                <h4>Соединение</h4>
-                <div class="info-row">
-                    <span class="label">Локальный:</span>
-                    <span>{{ insight()?.localIp }}:{{ insight()?.localPorts?.join(', ') }}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Удаленный:</span>
-                    <span>{{ insight()?.remoteIp }}:{{ insight()?.remotePort }}</span>
-                </div>
-            </div>
-
-            <div class="section">
-                <h4>Статистика</h4>
-                <div class="stats-grid">
-                    <div>Пакетов: {{ insight()?.totalPackets }}</div>
-                    <div>Байт: {{ insight()?.totalBytes }}</div>
-                    <div>SYN: {{ insight()?.synCount }}</div>
-                    <div>FIN: {{ insight()?.finCount }}</div>
-                    <div>RST: {{ insight()?.rstCount }}</div>
-                </div>
-
-            </div>
-
-            @if (insight()?.identificData?.length) {
-            <mat-tab-group>
-                @for (data of insight()?.identificData; track $index) {
-                <mat-tab label="Идентификация #{{ $index + 1 }}">
-                    <div class="section">
-                        @if (data.uniqueJa4Raw.length) {
-                        <div class="info-block">
-                            <strong>JA4 Raw:</strong>
-                            <div class="tags">{{ data.uniqueJa4Raw.join(', ') }}</div>
-                        </div>
-                        }
-
-                        @if (data.uniqueJa4Application.length) {
-                        <div class="info-block">
-                            <strong>Приложения:</strong>
-                            <div class="tags">{{ data.uniqueJa4Application.join(', ') }}</div>
-                        </div>
-                        }
-
-                        @if (data.uniqueSni.length) {
-                        <div class="info-block">
-                            <strong>SNI:</strong>
-                            <div class="tags">{{ data.uniqueSni.join(', ') }}</div>
-                        </div>
-                        }
-
-                        @if (data.uniqueSniService.length) {
-                        <div class="info-block">
-                            <strong>Сервисы SNI:</strong>
-                            <div class="tags">{{ data.uniqueSniService.join(', ') }}</div>
-                        </div>
-                        }
-
-                        @if (data.relatedAddressJa4.length) {
-                        <div class="info-block">
-                            <strong>Связанные адреса (JA4):</strong>
-                            @for (addr of data.relatedAddressJa4; track addr.remoteIp) {
-                            <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="section">
+                    <h4>Соединение</h4>
+                    <div class="info-row">
+                        <span class="label">Локальный:</span>
+                        <span>
+                            {{ insight()?.localIp }}:
+                            @if ((insight()?.localPorts?.length ?? 0) > 5) {
+                            {{ getPortRange(insight()?.localPorts ?? []) }}
+                            <span class="ports-count">({{ insight()?.localPorts?.length }} портов)</span>
+                            } @else {
+                            {{ insight()?.localPorts?.join(', ') }}
                             }
-                        </div>
-                        }
-
-                        @if (data.relatedAddressSni.length) {
-                        <div class="info-block">
-                            <strong>Связанные адреса (SNI):</strong>
-                            @for (addr of data.relatedAddressSni; track addr.remoteIp) {
-                            <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
-                            }
-                        </div>
-                        }
+                        </span>
                     </div>
-                </mat-tab>
+                    <div class="info-row">
+                        <span class="label">Удаленный:</span>
+                        <span>{{ insight()?.remoteIp }}:{{ insight()?.remotePort }}</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h4>Статистика</h4>
+                    <div class="stats-grid">
+                        <div>Пакетов: {{ insight()?.totalPackets }}</div>
+                        <div>Байт: {{ insight()?.totalBytes }}</div>
+                        <div>SYN: {{ insight()?.synCount }}</div>
+                        <div>FIN: {{ insight()?.finCount }}</div>
+                        <div>RST: {{ insight()?.rstCount }}</div>
+                    </div>
+
+                </div>
+
+                @if (insight()?.identificData?.length) {
+                <mat-tab-group>
+                    @for (data of insight()?.identificData; track $index) {
+                    <mat-tab label="Идентификация #{{ $index + 1 }}">
+                        <div class="section">
+                            @if (data.uniqueJa4Raw.length) {
+                            <div class="info-block">
+                                <strong>JA4 Raw:</strong>
+                                <div class="tags">{{ data.uniqueJa4Raw.join(', ') }}</div>
+                            </div>
+                            }
+
+                            @if (data.uniqueJa4Application.length) {
+                            <div class="info-block">
+                                <strong>Приложения:</strong>
+                                <div class="tags">{{ data.uniqueJa4Application.join(', ') }}</div>
+                            </div>
+                            }
+
+                            @if (data.uniqueSni.length) {
+                            <div class="info-block">
+                                <strong>SNI:</strong>
+                                <div class="tags">{{ data.uniqueSni.join(', ') }}</div>
+                            </div>
+                            }
+
+                            @if (data.uniqueSniService.length) {
+                            <div class="info-block">
+                                <strong>Сервисы SNI:</strong>
+                                <div class="tags">{{ data.uniqueSniService.join(', ') }}</div>
+                            </div>
+                            }
+
+                            @if (data.relatedAddressJa4.length) {
+                            <div class="info-block">
+                                <strong>Связанные адреса (JA4):</strong>
+                                @for (addr of data.relatedAddressJa4; track addr.remoteIp) {
+                                <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+                                }
+                            </div>
+                            }
+
+                            @if (data.relatedAddressSni.length) {
+                            <div class="info-block">
+                                <strong>Связанные адреса (SNI):</strong>
+                                @for (addr of data.relatedAddressSni; track addr.remoteIp) {
+                                <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+                                }
+                            </div>
+                            }
+
+                            @if (data.uniqueJa4EntryId.length) {
+                            <div class="info-block">
+                                <strong>JA4 Entry ID:</strong>
+                                <div class="tags">{{ data.uniqueJa4EntryId.join(', ') }}</div>
+                            </div>
+                            }
+
+                            @if (data.uniqueSniEntryId.length) {
+                            <div class="info-block">
+                                <strong>SNI Entry ID:</strong>
+                                <div class="tags">{{ data.uniqueSniEntryId.join(', ') }}</div>
+                            </div>
+                            }
+                        </div>
+                    </mat-tab>
+                    }
+                </mat-tab-group>
                 }
-            </mat-tab-group>
-            }
-            <div class="date-grid">
-                <div>Первый пакет: {{ formatTimestamp(insight()?.firstPacketTime ?? 0) }}</div>
-                <div>Последний пакет: {{ formatTimestamp(insight()?.lastPacketTime ?? 0) }}</div>
+                <div class="date-grid">
+                    <div>Первый пакет: {{ formatTimestamp(insight()?.firstPacketTime ?? 0) }}</div>
+                    <div>Последний пакет: {{ formatTimestamp(insight()?.lastPacketTime ?? 0) }}</div>
+                </div>
+            </div>
+            <div class="modal-sidebar">
+                <h4>Применить идентификацию</h4>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>JA4 идентификатор</mat-label>
+                    <mat-select [(value)]="selectedJa4Id">
+                        <mat-option value="">Не выбрано</mat-option>
+                        @for (id of allJa4EntryIds(); track id) {
+                        <mat-option [value]="id">{{ id }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>SNI идентификатор</mat-label>
+                    <mat-select [(value)]="selectedSniId">
+                        <mat-option value="">Не выбрано</mat-option>
+                        @for (id of allSniEntryIds(); track id) {
+                        <mat-option [value]="id">{{ id }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <div class="action-buttons">
+                    <button mat-raised-button color="primary" [disabled]="!selectedJa4Id && !selectedSniId"
+                        (click)="applyInsight()">
+                        Применить
+                    </button>
+                    <button mat-raised-button (click)="close.emit()">Отмена</button>
+                </div>
             </div>
         </div>
     </div>

@@ -44,6 +44,8 @@ public class SnifferService {
     private final DataBaseJa4SNIService dataBaseJa4SNIService;
     private final ConnectionInsightCommand connectionInsightCommand;
     private final ConnectionInsightConverter connectionInsightConverter;
+    private final UpdateConnectionInsightCommand updateConnectionInsightCommand;
+
     public String ping(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
@@ -68,6 +70,18 @@ public class SnifferService {
         );
 
         return connectionInsightConverter.toDTO(connectionInsight);
+    }
+
+    public void updateConnectionInsight(String id, String packetId, String ja4EntryId, String sniEntryId) {
+        SnifferEntity sniffer = snifferRepository.findById(id)
+                .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
+
+        retryPolicy.executeWithRetry(
+                RetryStrategy.defaultPingStrategy(),
+                () -> updateConnectionInsightCommand.updateConnectionInsight(sniffer, packetId, ja4EntryId, sniEntryId),
+                this::isRetryableError,
+                "update-connection-insight-" + id
+        );
     }
 
     public SettingDTO getSettings(String id) {

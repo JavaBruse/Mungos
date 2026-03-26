@@ -273,3 +273,34 @@ func (c *ClickHouseStorage) GetSNIByID(ctx context.Context, id string) (*models.
 	}
 	return &entry, nil
 }
+
+// LookupSNIBySNI - ищет SNI запись по имени домена
+func (c *ClickHouseStorage) LookupSNIBySNI(ctx context.Context, sni string) (*models.SNIEntry, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT id, service, sni, occurrence_count, first_seen, last_seen
+		FROM sni_stats
+		WHERE sni = ?
+		LIMIT 1
+	`
+
+	var entry models.SNIEntry
+	err := c.conn.QueryRowContext(ctx, query, sni).Scan(
+		&entry.ID,
+		&entry.Service,
+		&entry.SNI,
+		&entry.OccurrenceCount,
+		&entry.FirstSeen,
+		&entry.LastSeen,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &entry, nil
+}

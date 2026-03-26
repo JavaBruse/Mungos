@@ -20,8 +20,20 @@ service SnifferService {
   rpc UpdateOrSaveSNIEntry(SNIEntry) returns (SNIEntry);
   rpc GetHashSNIandJa4HashTable(AuthRequest) returns (HashTable);
   rpc GetConnectionInsight(ConnectionInsightRequest) returns (ConnectionInsight);
+  rpc UpdateConnectionInsight(UpdateConnectionInsightRequest) returns (UpdateConnectionInsightResponse);
 }
 
+message UpdateConnectionInsightRequest {
+  string session_key = 1;
+  string packet_id = 2;
+  string ja4_entry_id = 3;
+  string sni_entry_id = 4;
+}
+
+message UpdateConnectionInsightResponse {
+  bool success = 1;
+  string message = 2;
+}
 
 message ConnectionInsightRequest {
   string session_key = 1;

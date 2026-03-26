@@ -7,6 +7,7 @@ import { SnifferResponseDTO } from './sniffer-response.DTO';
 import { ErrorMessageService } from '../../services/error-message.service';
 import { SnifferSetting } from './sniffer-setting';
 import { ConnectionInsight } from '../../handler-package.component/connection-insight.DTO';
+import { UpdateInsightDTO } from '../../handler-package.component/update-insight.DTO';
 
 @Injectable({
     providedIn: 'root',
@@ -32,9 +33,17 @@ export class SnifferService {
         return this.http.get<ConnectionInsight>(`${this.apiUrl}/insight/${snifferId}/${packetId}`);
     }
 
+    updateConnectionInsight(snifferId: string, packetId: string, ja4EntryId?: string, sniEntryId?: string) {
+        const body: UpdateInsightDTO = { ja4EntryId, sniEntryId };
+        return this.http.post<void>(`${this.apiUrl}/insight/${snifferId}/${packetId}`, body);
+    }
+
     loadAll() {
         this.http.get<SnifferResponseDTO[]>(`${this.apiUrl}/all`).subscribe({
-            next: (sniffers) => this.sniffersSignal.set(sniffers),
+            next: (sniffers) => {
+                const sorted = sniffers.sort((a, b) => a.id.localeCompare(b.id));
+                this.sniffersSignal.set(sorted);
+            },
             error: () => { },
         });
     }

@@ -87,14 +87,15 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 }
 
 func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
+	if entry == nil {
+		return
+	}
 	packet.JA4EntryID = entry.ID
 	packet.JA4Application = entry.Application
+	packet.JA4Device = entry.Device
 	packet.JA4OS = entry.OS
 	packet.JA4Verified = entry.Verified
 	packet.JA4Confidence = entry.ObservationCount
-	if entry.Device != "" {
-		packet.JA4Device = entry.Device
-	}
 }
 
 // -----------------------------------------------------------------------------

@@ -142,3 +142,21 @@ func convertToProtoRelatedAddresses(addresses []models.RelatedAddress) []*pb.Rel
 	}
 	return result
 }
+
+func (s *Server) UpdateConnectionInsight(ctx context.Context, req *pb.UpdateConnectionInsightRequest) (*pb.UpdateConnectionInsightResponse, error) {
+	if !s.checkAuth(ctx, req.GetSessionKey()) {
+		return nil, status.Error(codes.Unauthenticated, "invalid session")
+	}
+
+	if s.storage == nil || !s.storage.Enabled() {
+		return nil, status.Error(codes.Internal, "storage not available")
+	}
+
+	err := s.storage.UpdateConnectionInsight(ctx, req.GetPacketId(), req.GetJa4EntryId(), req.GetSniEntryId())
+	if err != nil {
+		logger.Error("Failed to update connection insight: %v", err)
+		return nil, status.Error(codes.Internal, "failed to update")
+	}
+
+	return &pb.UpdateConnectionInsightResponse{Success: true}, nil
+}

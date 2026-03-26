@@ -4,10 +4,7 @@ package com.JavaBruse.core.sniffer.controllers;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
-import com.JavaBruse.core.sniffer.domain.DTO.ConnectionInsightDTO;
-import com.JavaBruse.core.sniffer.domain.DTO.SettingDTO;
-import com.JavaBruse.core.sniffer.domain.DTO.SnifferRequestDTO;
-import com.JavaBruse.core.sniffer.domain.DTO.SnifferResponseDTO;
+import com.JavaBruse.core.sniffer.domain.DTO.*;
 import com.JavaBruse.core.sniffer.service.DataBaseJa4SNIService;
 import com.JavaBruse.core.sniffer.service.SnifferService;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +63,15 @@ public class SnifferController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ANALYTIC', 'ROLE_SECURITY')")
     public ConnectionInsightDTO getConnectionInsight(@PathVariable String id, @PathVariable String packetId) {
         return snifferService.getConnectionInsight(id, packetId);
+    }
+
+    @PostMapping("/insight/{id}/{packetId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_ANALYTIC', 'ROLE_SECURITY')")
+    public void updateConnectionInsight(
+            @PathVariable String id,
+            @PathVariable String packetId,
+            @RequestBody UpdateInsightRequestDTO request) {
+        snifferService.updateConnectionInsight(id, packetId, request.getJa4EntryId(), request.getSniEntryId());
     }
 
     @DeleteMapping("/delete/{id}")

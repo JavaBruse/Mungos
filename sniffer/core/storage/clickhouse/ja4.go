@@ -205,9 +205,9 @@ func (c *ClickHouseStorage) LookupJA4(ctx context.Context, fp string) (*models.J
 	var lib, dev sql.NullString
 
 	err := c.conn.QueryRowContext(ctx, `
-    SELECT application, library, device, os, observation_count, verified, updated_at
+    SELECT id, application, library, device, os, observation_count, verified, updated_at
     FROM ja4_database WHERE fingerprint = ? LIMIT 1
-`, fp).Scan(&e.Application, &lib, &dev, &e.OS, &e.ObservationCount, &e.Verified, &updatedAt)
+`, fp).Scan(&e.ID, &e.Application, &lib, &dev, &e.OS, &e.ObservationCount, &e.Verified, &updatedAt)
 
 	if err == sql.ErrNoRows {
 		return nil, nil

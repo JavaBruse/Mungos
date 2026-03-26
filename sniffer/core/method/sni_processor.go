@@ -31,6 +31,16 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 
 	packet.SNI = ExtractSNI(packet)
 
+	// Ищем SNI в базе сразу
+	if packet.SNI != "" && p.db != nil && p.db.Enabled() {
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+		if entry, err := p.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
+			packet.SNIService = entry.Service
+			packet.SNIEntryID = entry.ID
+		}
+	}
+
 	if p.isSessionEnd(packet) {
 		go p.classifySessionAsync(sessionPackets)
 	}

@@ -9,15 +9,17 @@
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    user-select: text;
 }
 
 .modal-container {
     background: var(--background);
     border-radius: 12px;
     width: 90%;
-    max-width: 800px;
+    max-width: 1200px;
     max-height: 85vh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -25,12 +27,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0px 10px;
-    border-bottom: 1px solid var(--background);
-    position: sticky;
-    top: 0;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color, #333);
     background: var(--background);
     border-radius: 12px 12px 0 0;
+    flex-shrink: 0;
 
     h3 {
         margin: 0;
@@ -50,12 +51,49 @@
     }
 }
 
+.modal-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
 .modal-body {
-    padding: 20px 20px 0px 20px;
+    flex: 2;
+    padding: 20px;
+    overflow-y: auto;
     color: var(--color);
 }
 
+.modal-sidebar {
+    flex: 1;
+    padding: 20px;
+    border-left: 1px solid var(--border-color, #333);
+    overflow-y: auto;
+
+    h4 {
+        margin: 0 0 16px 0;
+        color: var(--color);
+    }
+}
+
+.full-width {
+    width: 100%;
+    margin-bottom: 16px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+
+    button {
+        flex: 1;
+    }
+}
+
 .section {
+    margin-bottom: 24px;
+
     h4 {
         margin: 0 0 12px 0;
         color: var(--color);
@@ -86,6 +124,7 @@
     color: rgb(121, 121, 121);
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    margin-top: 16px;
 }
 
 .info-block {
@@ -99,7 +138,7 @@
 }
 
 .tags {
-    background: var(--background);
+    background: var(--background-secondary);
     padding: 4px 8px;
     border-radius: 4px;
     font-family: monospace;
@@ -111,4 +150,10 @@
     text-align: center;
     padding: 20px;
     color: #f44336;
+}
+
+.ports-count {
+    font-size: 12px;
+    color: #888;
+    margin-left: 4px;
 }
