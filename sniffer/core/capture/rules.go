@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 	"fmt"
+	"sniffer/core/logger"
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 	"sync"
@@ -66,6 +67,7 @@ func (c *RuleCache) Get(key string) *ServiceRule {
 
 func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry, sniEntry *models.SNIEntry) {
 	key := fmt.Sprintf("%s:%d", dstIP, dstPort)
+	logger.Info("Adding rule to cache: key=%s, ja4=%v, sni=%v", key, ja4Entry != nil, sniEntry != nil)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.rules[key] = &ServiceRule{
