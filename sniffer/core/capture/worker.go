@@ -63,23 +63,44 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		return nil
 	}
 
-	// Применяем правила из кэша
-	if w.ruleCache != nil && packet.DstIPType == "public" {
-		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
-		if rule := w.ruleCache.Get(key); rule != nil {
-			if rule.JA4Entry != nil {
-				fillPacketFromEntry(packet, rule.JA4Entry)
-			}
-			if rule.SNIEntry != nil {
-				packet.SNIService = rule.SNIEntry.Service
-				packet.SNIEntryID = rule.SNIEntry.ID
-				if packet.SNI == "" {
-					packet.SNI = rule.SNIEntry.SNI
+	// Применяем правила из кэша (проверяем и dst, и src)
+	if w.ruleCache != nil {
+		// Проверяем по dst
+		if packet.DstIPType == "public" {
+			key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
+			if rule := w.ruleCache.Get(key); rule != nil {
+				if rule.JA4Entry != nil {
+					fillPacketFromEntry(packet, rule.JA4Entry)
+				}
+				if rule.SNIEntry != nil {
+					packet.SNIService = rule.SNIEntry.Service
+					packet.SNIEntryID = rule.SNIEntry.ID
+					if packet.SNI == "" {
+						packet.SNI = rule.SNIEntry.SNI
+					}
 				}
 			}
-			if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
-				return packet
+		}
+		// Проверяем по src (обратные пакеты)
+		if packet.SrcIPType == "public" && packet.SNIEntryID == "" {
+			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
+			if rule := w.ruleCache.Get(key); rule != nil {
+				if rule.JA4Entry != nil {
+					fillPacketFromEntry(packet, rule.JA4Entry)
+				}
+				if rule.SNIEntry != nil {
+					packet.SNIService = rule.SNIEntry.Service
+					packet.SNIEntryID = rule.SNIEntry.ID
+					if packet.SNI == "" {
+						packet.SNI = rule.SNIEntry.SNI
+					}
+				}
 			}
+		}
+
+		// Если уже есть полная идентификация - возвращаем
+		if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
+			return packet
 		}
 	}
 
