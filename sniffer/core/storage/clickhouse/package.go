@@ -284,10 +284,10 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 		}
 
 		if filter.KnownOnly {
-			conditions = append(conditions, "ja4_entry_id != '' AND sni_entry_id != ''")
+			conditions = append(conditions, "(ja4_entry_id != '' OR sni_entry_id != '')")
 		}
 		if filter.UnknownOnly {
-			conditions = append(conditions, "ja4_entry_id = '' OR sni_entry_id = ''")
+			conditions = append(conditions, "(ja4_entry_id = '' AND sni_entry_id = '')")
 		}
 	}
 
@@ -448,7 +448,8 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 				sni, sni_service, ja4_entry_id, sni_entry_id
 			)) as identification_groups
 		FROM packets
-		WHERE dst_ip = ? AND dst_port = ?
+		WHERE (dst_ip = ? AND dst_port = ?) 
+		OR (src_ip = ? AND src_port = ?)
 	`
 
 	var insight models.ConnectionInsight
@@ -456,7 +457,10 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	var firstTime, lastTime time.Time
 	var identificationGroups [][]interface{}
 
-	err = c.conn.QueryRowContext(ctx, query, remoteIP, remotePort).Scan(
+	err = c.conn.QueryRowContext(ctx, query,
+		remoteIP, remotePort,
+		remoteIP, remotePort,
+	).Scan(
 		&localPorts,
 		&insight.TotalPackets,
 		&insight.TotalBytes,
