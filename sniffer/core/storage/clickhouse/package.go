@@ -666,9 +666,9 @@ func addUnique(slice []string, value string) []string {
 }
 
 // UpdateConnectionInsight - обновляет JA4 и SNI для всех пакетов соединения
-func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetID, ja4EntryID, sniEntryID string) error {
+func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetID, ja4EntryID, sniEntryID string) (string, uint16, *models.Ja4Entry, *models.SNIEntry, error) {
 	if !c.ensureConnection() {
-		return fmt.Errorf("storage not available")
+		return "", 0, nil, nil, fmt.Errorf("storage not available")
 	}
 
 	// 1. Получаем данные JA4 и SNI
@@ -679,14 +679,14 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	if ja4EntryID != "" {
 		ja4, err = c.GetJA4ByID(ctx, ja4EntryID)
 		if err != nil {
-			return fmt.Errorf("failed to get JA4 entry: %v", err)
+			return "", 0, nil, nil, fmt.Errorf("failed to get JA4 entry: %v", err)
 		}
 	}
 
 	if sniEntryID != "" {
 		sni, err = c.GetSNIByID(ctx, sniEntryID)
 		if err != nil {
-			return fmt.Errorf("failed to get SNI entry: %v", err)
+			return "", 0, nil, nil, fmt.Errorf("failed to get SNI entry: %v", err)
 		}
 	}
 
@@ -703,10 +703,10 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	`, packetID).Scan(&srcIP, &dstIP, &srcPort, &dstPort, &srcIPType, &dstIPType)
 
 	if err == sql.ErrNoRows {
-		return fmt.Errorf("packet not found")
+		return "", 0, nil, nil, fmt.Errorf("packet not found")
 	}
 	if err != nil {
-		return err
+		return "", 0, nil, nil, err
 	}
 
 	// 3. Определяем remoteIP, remotePort
@@ -775,5 +775,46 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 		remoteIP, remotePort,
 	)
 
-	return err
+	if err != nil {
+		return "", 0, nil, nil, err
+	}
+
+	return remoteIP, remotePort, ja4, sni, nil
+}
+
+// GetServiceRules - получить все примененные правила
+func (c *ClickHouseStorage) GetServiceRules(ctx context.Context) ([]ServiceRuleData, error) {
+	if !c.ensureConnection() {
+		return nil, fmt.Errorf("storage not available")
+	}
+
+	query := `
+		SELECT DISTINCT dst_ip, dst_port, ja4_entry_id, sni_entry_id
+		FROM packets
+		WHERE (ja4_entry_id != '' OR sni_entry_id != '')
+		  AND dst_ip_type = 'public'
+	`
+
+	rows, err := c.conn.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rules []ServiceRuleData
+	for rows.Next() {
+		var rule ServiceRuleData
+		if err := rows.Scan(&rule.DstIP, &rule.DstPort, &rule.JA4EntryID, &rule.SNIEntryID); err != nil {
+			continue
+		}
+		rules = append(rules, rule)
+	}
+	return rules, nil
+}
+
+type ServiceRuleData struct {
+	DstIP      string
+	DstPort    uint16
+	JA4EntryID string
+	SNIEntryID string
 }

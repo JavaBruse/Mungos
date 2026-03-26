@@ -57,6 +57,7 @@ message ConnectionInsight {
   int64 fin_count = 10;
   int64 rst_count = 11;
   repeated IdentificData identific_data = 12;
+  int64 identified_packets = 13;
 }
 
 message IdentificData {

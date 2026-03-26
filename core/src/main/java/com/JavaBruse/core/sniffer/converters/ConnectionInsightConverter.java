@@ -31,6 +31,7 @@ public class ConnectionInsightConverter {
         dto.setFinCount(proto.getFinCount());
         dto.setRstCount(proto.getRstCount());
         dto.setIdentificData(toIdentificDataDTOList(proto.getIdentificDataList()));
+        dto.setIdentifiedPackets(proto.getIdentifiedPackets());
 
         return dto;
     }

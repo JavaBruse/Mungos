@@ -33,14 +33,22 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		p.SrcPort = uint16(tcp.SrcPort)
 		p.DstPort = uint16(tcp.DstPort)
 		p.TCPFlags = formatTCPFlags(tcp)
-		p.Payload = tcp.Payload
+		if len(tcp.Payload) > 500 {
+			p.Payload = tcp.Payload[:500]
+		} else {
+			p.Payload = tcp.Payload
+		}
 	}
 
 	if udpLayer := pkt.Layer(layers.LayerTypeUDP); udpLayer != nil {
 		udp, _ := udpLayer.(*layers.UDP)
 		p.SrcPort = uint16(udp.SrcPort)
 		p.DstPort = uint16(udp.DstPort)
-		p.Payload = udp.Payload
+		if len(udp.Payload) > 500 {
+			p.Payload = udp.Payload[:500]
+		} else {
+			p.Payload = udp.Payload
+		}
 	}
 
 	if ethLayer := pkt.Layer(layers.LayerTypeEthernet); ethLayer != nil {
@@ -54,6 +62,10 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		if p.DstMAC != "" {
 			p.DstVendor = memory.GetVendor(p.DstMAC, p.DstIP, p.DstPort)
 		}
+	}
+
+	if p.SrcIPType != "public" && p.DstIPType != "public" {
+		return nil
 	}
 
 	return p

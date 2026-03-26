@@ -153,10 +153,14 @@ func (s *Server) UpdateConnectionInsight(ctx context.Context, req *pb.UpdateConn
 		return nil, status.Error(codes.Internal, "storage not available")
 	}
 
-	err := s.storage.UpdateConnectionInsight(ctx, req.GetPacketId(), req.GetJa4EntryId(), req.GetSniEntryId())
+	remoteIP, remotePort, ja4Entry, sniEntry, err := s.storage.UpdateConnectionInsight(ctx, req.GetPacketId(), req.GetJa4EntryId(), req.GetSniEntryId())
 	if err != nil {
 		logger.Error("Failed to update connection insight: %v", err)
 		return nil, status.Error(codes.Internal, "failed to update")
+	}
+
+	if s.ruleCache != nil {
+		s.ruleCache.Add(remoteIP, remotePort, ja4Entry, sniEntry)
 	}
 
 	return &pb.UpdateConnectionInsightResponse{Success: true}, nil

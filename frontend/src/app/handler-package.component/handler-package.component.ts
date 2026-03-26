@@ -98,10 +98,8 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   allJa4EntryIds = computed(() => {
     const ids = new Set<string>();
     this.insight()?.identificData?.forEach(data => {
-      console.log('JA4 IDs from data:', data.uniqueJa4EntryId); // 👈 лог
       data.uniqueJa4EntryId.forEach(id => ids.add(id));
     });
-    console.log('All JA4 IDs:', Array.from(ids)); // 👈 лог
     return Array.from(ids);
   });
 

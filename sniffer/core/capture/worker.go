@@ -1,6 +1,7 @@
 package capture
 
 import (
+	"fmt"
 	"sniffer/core/logger"
 	"sniffer/core/method"
 	"sniffer/core/models"
@@ -22,11 +23,12 @@ type captureWorker struct {
 	controlCh <-chan string
 	stopCh    <-chan struct{}
 	db        *clickhouse.ClickHouseStorage
+	ruleCache *RuleCache
 }
 
 func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Duration, filter string,
 	packetCh chan<- *models.Packet, controlCh <-chan string, stopCh <-chan struct{},
-	db *clickhouse.ClickHouseStorage) *captureWorker {
+	db *clickhouse.ClickHouseStorage, ruleCache *RuleCache) *captureWorker {
 	return &captureWorker{
 		device:    device,
 		snaplen:   snaplen,
@@ -37,13 +39,47 @@ func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Dur
 		controlCh: controlCh,
 		stopCh:    stopCh,
 		db:        db,
+		ruleCache: ruleCache,
 	}
+}
+
+func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
+	if entry == nil {
+		return
+	}
+	packet.JA4EntryID = entry.ID
+	packet.JA4Raw = entry.Fingerprint
+	packet.JA4Application = entry.Application
+	packet.JA4Device = entry.Device
+	packet.JA4OS = entry.OS
+	packet.JA4Verified = entry.Verified
+	packet.JA4Confidence = entry.ObservationCount
 }
 
 func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	packet := NewPacketFromGopacket(pkt)
 	if packet == nil {
 		return nil
+	}
+
+	if w.ruleCache != nil && packet.DstIPType == "public" {
+		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
+		if rule := w.ruleCache.Get(key); rule != nil {
+			if rule.JA4Entry != nil {
+				fillPacketFromEntry(packet, rule.JA4Entry)
+			}
+			if rule.SNIEntry != nil {
+				packet.SNIService = rule.SNIEntry.Service
+				packet.SNIEntryID = rule.SNIEntry.ID
+				if packet.SNI == "" {
+					packet.SNI = rule.SNIEntry.SNI
+				}
+			}
+			// Если уже есть идентификация, JA4/SNI анализ можно пропустить
+			if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
+				return packet
+			}
+		}
 	}
 
 	// JA4 анализ

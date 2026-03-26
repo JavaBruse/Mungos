@@ -18,6 +18,7 @@ public class ConnectionInsightDTO {
     private Long finCount;
     private Long rstCount;
     private List<IdentificDataDTO> identificData;
+    private Long identifiedPackets;
 
     @Data
     public static class IdentificDataDTO {
