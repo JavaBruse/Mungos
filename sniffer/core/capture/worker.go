@@ -94,9 +94,18 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	if packet.SNI != "" && w.db != nil && w.db.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
-		if entry, err := w.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
+
+		entry, err := w.db.LookupSNIBySNI(ctx, packet.SNI)
+		if err == nil && entry != nil {
 			packet.SNIService = entry.Service
 			packet.SNIEntryID = entry.ID
+		} else {
+			if err := w.db.UpdateSNIStat(ctx, "unknown", packet.SNI); err == nil {
+				if newEntry, err := w.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && newEntry != nil {
+					packet.SNIService = newEntry.Service
+					packet.SNIEntryID = newEntry.ID
+				}
+			}
 		}
 	}
 
