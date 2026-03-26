@@ -83,7 +83,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		}
 		// Проверяем по src (обратные пакеты)
 		if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
-			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.DstPort)
+			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
 			logger.Info("Checking src rule: key=%s", key) // 👈 лог
 			if rule := w.ruleCache.Get(key); rule != nil {
 				logger.Info("Rule found for src: %s", key) // 👈 лог
