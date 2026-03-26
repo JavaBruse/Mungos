@@ -11,6 +11,7 @@ import (
 	"sniffer/core/config"
 	"sniffer/core/grpc/server"
 	"sniffer/core/logger"
+	"sniffer/core/method"
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 )
@@ -34,6 +35,7 @@ func New(cfg *config.Config) (*App, error) {
 	)
 
 	capture.InitRuleCache(chStorage)
+	method.GetSNIProcessor(chStorage)
 
 	filter := loadFilterFromStorage(chStorage)
 

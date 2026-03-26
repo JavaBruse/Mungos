@@ -1,8 +1,6 @@
 package capture
 
 import (
-	"context"
-	"fmt"
 	"sniffer/core/logger"
 	"sniffer/core/method"
 	"sniffer/core/models"
@@ -63,44 +61,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 
 	// Применяем правила из кэша (проверяем и dst, и src)
 	ruleCache := GetRuleCache()
-	if ruleCache != nil {
-		// Проверяем по dst (прямые пакеты)
-		if packet.DstIPType == "public" {
-			key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
-			if rule := ruleCache.Get(key); rule != nil {
-				if rule.JA4Entry != nil {
-					fillPacketFromEntry(packet, rule.JA4Entry)
-				}
-				if rule.SNIEntry != nil {
-					packet.SNIService = rule.SNIEntry.Service
-					packet.SNIEntryID = rule.SNIEntry.ID
-					if packet.SNI == "" {
-						packet.SNI = rule.SNIEntry.SNI
-					}
-				}
-			}
-		}
-		// Проверяем по src (обратные пакеты)
-		if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
-			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
-			logger.Info("Checking src rule: key=%s", key)
-			if rule := ruleCache.Get(key); rule != nil {
-				logger.Info("Rule found for src: %s", key)
-				if rule.JA4Entry != nil {
-					fillPacketFromEntry(packet, rule.JA4Entry)
-				}
-				if rule.SNIEntry != nil {
-					packet.SNIService = rule.SNIEntry.Service
-					packet.SNIEntryID = rule.SNIEntry.ID
-					if packet.SNI == "" {
-						packet.SNI = rule.SNIEntry.SNI
-					}
-				}
-			} else {
-				logger.Info("Rule NOT found for src: %s", key)
-			}
-		}
-
+	if ruleCache != nil && ruleCache.ApplyRule(packet) {
 		if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
 			return packet
 		}
@@ -112,25 +73,8 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		packet = method.ProcessJA4(packet, tcp, w.db)
 	}
 
-	// SNI извлечение и поиск в базе
-	packet.SNI = method.ExtractSNI(packet)
-	if packet.SNI != "" && w.db != nil && w.db.Enabled() {
-		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-		defer cancel()
-
-		entry, err := w.db.LookupSNIBySNI(ctx, packet.SNI)
-		if err == nil && entry != nil {
-			packet.SNIService = entry.Service
-			packet.SNIEntryID = entry.ID
-		} else {
-			if err := w.db.UpdateSNIStat(ctx, "unknown", packet.SNI); err == nil {
-				if newEntry, err := w.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && newEntry != nil {
-					packet.SNIService = newEntry.Service
-					packet.SNIEntryID = newEntry.ID
-				}
-			}
-		}
-	}
+	// SNI обработка через процессор
+	packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 
 	return packet
 }

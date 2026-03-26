@@ -99,3 +99,47 @@ func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry,
 		SNIEntry: sniEntry,
 	}
 }
+
+func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
+	if c == nil {
+		return false
+	}
+
+	// Проверяем по dst (прямые пакеты)
+	if packet.DstIPType == "public" {
+		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
+		if rule := c.Get(key); rule != nil {
+			if rule.JA4Entry != nil {
+				fillPacketFromEntry(packet, rule.JA4Entry)
+			}
+			if rule.SNIEntry != nil {
+				packet.SNIService = rule.SNIEntry.Service
+				packet.SNIEntryID = rule.SNIEntry.ID
+				if packet.SNI == "" {
+					packet.SNI = rule.SNIEntry.SNI
+				}
+			}
+			return true
+		}
+	}
+
+	// Проверяем по src (обратные пакеты)
+	if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
+		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
+		if rule := c.Get(key); rule != nil {
+			if rule.JA4Entry != nil {
+				fillPacketFromEntry(packet, rule.JA4Entry)
+			}
+			if rule.SNIEntry != nil {
+				packet.SNIService = rule.SNIEntry.Service
+				packet.SNIEntryID = rule.SNIEntry.ID
+				if packet.SNI == "" {
+					packet.SNI = rule.SNIEntry.SNI
+				}
+			}
+			return true
+		}
+	}
+
+	return false
+}

@@ -5,6 +5,7 @@ import (
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,6 +22,18 @@ func (p *SNIProcessor) ClassifySession(sessionPackets []*models.Packet) {
 		return
 	}
 	go p.classifySessionAsync(sessionPackets)
+}
+
+var (
+	globalSNIProcessor *SNIProcessor
+	sniOnce            sync.Once
+)
+
+func GetSNIProcessor(db *clickhouse.ClickHouseStorage) *SNIProcessor {
+	sniOnce.Do(func() {
+		globalSNIProcessor = NewSNIProcessor(db)
+	})
+	return globalSNIProcessor
 }
 
 // ProcessSNI - единая точка входа для обработки SNI
