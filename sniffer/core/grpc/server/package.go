@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
 	"sniffer/core/models"
@@ -159,9 +160,8 @@ func (s *Server) UpdateConnectionInsight(ctx context.Context, req *pb.UpdateConn
 		return nil, status.Error(codes.Internal, "failed to update")
 	}
 
-	if s.ruleCache != nil {
-		s.ruleCache.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+	if ruleCache := capture.GetRuleCache(); ruleCache != nil {
+		ruleCache.Add(remoteIP, remotePort, ja4Entry, sniEntry)
 	}
-
 	return &pb.UpdateConnectionInsightResponse{Success: true}, nil
 }

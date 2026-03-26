@@ -16,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"sniffer/core/capture"
 	pb "sniffer/core/grpc/proto"
 	"sniffer/core/logger"
 	"sniffer/core/models"
@@ -54,7 +53,6 @@ type Server struct {
 	certPEM    []byte
 	keyPEM     []byte
 	storage    *clickhouse.ClickHouseStorage
-	ruleCache  *capture.RuleCache
 }
 
 type StatsCollector struct {

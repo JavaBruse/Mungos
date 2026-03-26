@@ -33,6 +33,8 @@ func New(cfg *config.Config) (*App, error) {
 		cfg.DBName,
 	)
 
+	capture.InitRuleCache(chStorage)
+
 	filter := loadFilterFromStorage(chStorage)
 
 	sniffer := capture.NewSniffer(

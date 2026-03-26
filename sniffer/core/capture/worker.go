@@ -24,12 +24,11 @@ type captureWorker struct {
 	controlCh <-chan string
 	stopCh    <-chan struct{}
 	db        *clickhouse.ClickHouseStorage
-	ruleCache *RuleCache
 }
 
 func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Duration, filter string,
 	packetCh chan<- *models.Packet, controlCh <-chan string, stopCh <-chan struct{},
-	db *clickhouse.ClickHouseStorage, ruleCache *RuleCache) *captureWorker {
+	db *clickhouse.ClickHouseStorage) *captureWorker {
 	return &captureWorker{
 		device:    device,
 		snaplen:   snaplen,
@@ -40,7 +39,6 @@ func newCaptureWorker(device string, snaplen int, promisc bool, timeout time.Dur
 		controlCh: controlCh,
 		stopCh:    stopCh,
 		db:        db,
-		ruleCache: ruleCache,
 	}
 }
 
@@ -64,11 +62,12 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	}
 
 	// Применяем правила из кэша (проверяем и dst, и src)
-	if w.ruleCache != nil {
+	ruleCache := GetRuleCache()
+	if ruleCache != nil {
 		// Проверяем по dst (прямые пакеты)
 		if packet.DstIPType == "public" {
 			key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
-			if rule := w.ruleCache.Get(key); rule != nil {
+			if rule := ruleCache.Get(key); rule != nil {
 				if rule.JA4Entry != nil {
 					fillPacketFromEntry(packet, rule.JA4Entry)
 				}
@@ -84,9 +83,9 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		// Проверяем по src (обратные пакеты)
 		if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
 			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
-			logger.Info("Checking src rule: key=%s", key) // 👈 лог
-			if rule := w.ruleCache.Get(key); rule != nil {
-				logger.Info("Rule found for src: %s", key) // 👈 лог
+			logger.Info("Checking src rule: key=%s", key)
+			if rule := ruleCache.Get(key); rule != nil {
+				logger.Info("Rule found for src: %s", key)
 				if rule.JA4Entry != nil {
 					fillPacketFromEntry(packet, rule.JA4Entry)
 				}
@@ -98,7 +97,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 					}
 				}
 			} else {
-				logger.Info("Rule NOT found for src: %s", key) // 👈 лог
+				logger.Info("Rule NOT found for src: %s", key)
 			}
 		}
 

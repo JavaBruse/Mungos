@@ -3,10 +3,17 @@ package capture
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"sniffer/core/logger"
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
-	"sync"
+)
+
+var (
+	globalRuleCache *RuleCache
+	globalOnce      sync.Once
 )
 
 type ServiceRule struct {
@@ -27,6 +34,21 @@ func NewRuleCache(db *clickhouse.ClickHouseStorage) *RuleCache {
 		rules: make(map[string]*ServiceRule),
 		db:    db,
 	}
+}
+
+func InitRuleCache(db *clickhouse.ClickHouseStorage) {
+	globalOnce.Do(func() {
+		globalRuleCache = NewRuleCache(db)
+		if db != nil && db.Enabled() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			globalRuleCache.LoadRules(ctx)
+		}
+	})
+}
+
+func GetRuleCache() *RuleCache {
+	return globalRuleCache
 }
 
 func (c *RuleCache) LoadRules(ctx context.Context) error {

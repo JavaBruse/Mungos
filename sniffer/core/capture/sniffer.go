@@ -1,7 +1,6 @@
 package capture
 
 import (
-	"context"
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 	"time"
@@ -18,17 +17,10 @@ type Sniffer struct {
 	stopCh    chan struct{}
 	worker    *captureWorker
 	db        *clickhouse.ClickHouseStorage
-	ruleCache *RuleCache
 }
 
 func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration,
 	BPFFilter string, bufferSize int, db *clickhouse.ClickHouseStorage) *Sniffer {
-	ruleCache := NewRuleCache(db)
-	if db != nil && db.Enabled() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		ruleCache.LoadRules(ctx)
-	}
 	return &Sniffer{
 		device:    device,
 		snaplen:   snaplen,
@@ -39,14 +31,13 @@ func NewSniffer(device string, snaplen int, promisc bool, timeout time.Duration,
 		controlCh: make(chan string, 10),
 		stopCh:    make(chan struct{}),
 		db:        db,
-		ruleCache: ruleCache,
 	}
 }
 
 func (s *Sniffer) Start() error {
 	s.worker = newCaptureWorker(
 		s.device, s.snaplen, s.promisc, s.timeout, s.BPFFilter,
-		s.packetCh, s.controlCh, s.stopCh, s.db, s.ruleCache,
+		s.packetCh, s.controlCh, s.stopCh, s.db,
 	)
 	go s.worker.run()
 	return nil
