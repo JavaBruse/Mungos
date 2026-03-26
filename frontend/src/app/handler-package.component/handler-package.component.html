@@ -44,6 +44,9 @@
                         <div>SYN: {{ insight()?.synCount }}</div>
                         <div>FIN: {{ insight()?.finCount }}</div>
                         <div>RST: {{ insight()?.rstCount }}</div>
+                        <div>Идентифицировано: {{ insight()?.identifiedPackets }}</div>
+                        <div>Не идентифицировано: {{ (insight()?.totalPackets ?? 0) - (insight()?.identifiedPackets ??
+                            0) }}</div>
                     </div>
 
                 </div>

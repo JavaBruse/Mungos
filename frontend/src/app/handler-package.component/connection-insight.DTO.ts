@@ -11,6 +11,7 @@ export interface ConnectionInsight {
     synCount: number;
     finCount: number;
     rstCount: number;
+    identifiedPackets: number;
     identificData: IdentificData[];
 }
 

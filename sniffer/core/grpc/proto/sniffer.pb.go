@@ -194,21 +194,22 @@ func (x *ConnectionInsightRequest) GetPacketId() string {
 }
 
 type ConnectionInsight struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	LocalIp         string                 `protobuf:"bytes,1,opt,name=local_ip,json=localIp,proto3" json:"local_ip,omitempty"`
-	LocalPorts      []uint32               `protobuf:"varint,2,rep,packed,name=local_ports,json=localPorts,proto3" json:"local_ports,omitempty"`
-	RemoteIp        string                 `protobuf:"bytes,3,opt,name=remote_ip,json=remoteIp,proto3" json:"remote_ip,omitempty"`
-	RemotePort      uint32                 `protobuf:"varint,4,opt,name=remote_port,json=remotePort,proto3" json:"remote_port,omitempty"`
-	TotalPackets    int64                  `protobuf:"varint,5,opt,name=total_packets,json=totalPackets,proto3" json:"total_packets,omitempty"`
-	TotalBytes      int64                  `protobuf:"varint,6,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
-	FirstPacketTime int64                  `protobuf:"varint,7,opt,name=first_packet_time,json=firstPacketTime,proto3" json:"first_packet_time,omitempty"`
-	LastPacketTime  int64                  `protobuf:"varint,8,opt,name=last_packet_time,json=lastPacketTime,proto3" json:"last_packet_time,omitempty"`
-	SynCount        int64                  `protobuf:"varint,9,opt,name=syn_count,json=synCount,proto3" json:"syn_count,omitempty"`
-	FinCount        int64                  `protobuf:"varint,10,opt,name=fin_count,json=finCount,proto3" json:"fin_count,omitempty"`
-	RstCount        int64                  `protobuf:"varint,11,opt,name=rst_count,json=rstCount,proto3" json:"rst_count,omitempty"`
-	IdentificData   []*IdentificData       `protobuf:"bytes,12,rep,name=identific_data,json=identificData,proto3" json:"identific_data,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	LocalIp           string                 `protobuf:"bytes,1,opt,name=local_ip,json=localIp,proto3" json:"local_ip,omitempty"`
+	LocalPorts        []uint32               `protobuf:"varint,2,rep,packed,name=local_ports,json=localPorts,proto3" json:"local_ports,omitempty"`
+	RemoteIp          string                 `protobuf:"bytes,3,opt,name=remote_ip,json=remoteIp,proto3" json:"remote_ip,omitempty"`
+	RemotePort        uint32                 `protobuf:"varint,4,opt,name=remote_port,json=remotePort,proto3" json:"remote_port,omitempty"`
+	TotalPackets      int64                  `protobuf:"varint,5,opt,name=total_packets,json=totalPackets,proto3" json:"total_packets,omitempty"`
+	TotalBytes        int64                  `protobuf:"varint,6,opt,name=total_bytes,json=totalBytes,proto3" json:"total_bytes,omitempty"`
+	FirstPacketTime   int64                  `protobuf:"varint,7,opt,name=first_packet_time,json=firstPacketTime,proto3" json:"first_packet_time,omitempty"`
+	LastPacketTime    int64                  `protobuf:"varint,8,opt,name=last_packet_time,json=lastPacketTime,proto3" json:"last_packet_time,omitempty"`
+	SynCount          int64                  `protobuf:"varint,9,opt,name=syn_count,json=synCount,proto3" json:"syn_count,omitempty"`
+	FinCount          int64                  `protobuf:"varint,10,opt,name=fin_count,json=finCount,proto3" json:"fin_count,omitempty"`
+	RstCount          int64                  `protobuf:"varint,11,opt,name=rst_count,json=rstCount,proto3" json:"rst_count,omitempty"`
+	IdentificData     []*IdentificData       `protobuf:"bytes,12,rep,name=identific_data,json=identificData,proto3" json:"identific_data,omitempty"`
+	IdentifiedPackets int64                  `protobuf:"varint,13,opt,name=identified_packets,json=identifiedPackets,proto3" json:"identified_packets,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ConnectionInsight) Reset() {
@@ -323,6 +324,13 @@ func (x *ConnectionInsight) GetIdentificData() []*IdentificData {
 		return x.IdentificData
 	}
 	return nil
+}
+
+func (x *ConnectionInsight) GetIdentifiedPackets() int64 {
+	if x != nil {
+		return x.IdentifiedPackets
+	}
+	return 0
 }
 
 type IdentificData struct {
@@ -2533,7 +2541,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x18ConnectionInsightRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\x12\x1b\n" +
-	"\tpacket_id\x18\x02 \x01(\tR\bpacketId\"\xbf\x03\n" +
+	"\tpacket_id\x18\x02 \x01(\tR\bpacketId\"\xee\x03\n" +
 	"\x11ConnectionInsight\x12\x19\n" +
 	"\blocal_ip\x18\x01 \x01(\tR\alocalIp\x12\x1f\n" +
 	"\vlocal_ports\x18\x02 \x03(\rR\n" +
@@ -2550,7 +2558,8 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\tfin_count\x18\n" +
 	" \x01(\x03R\bfinCount\x12\x1b\n" +
 	"\trst_count\x18\v \x01(\x03R\brstCount\x12=\n" +
-	"\x0eidentific_data\x18\f \x03(\v2\x16.sniffer.IdentificDataR\ridentificData\"\xf8\x03\n" +
+	"\x0eidentific_data\x18\f \x03(\v2\x16.sniffer.IdentificDataR\ridentificData\x12-\n" +
+	"\x12identified_packets\x18\r \x01(\x03R\x11identifiedPackets\"\xf8\x03\n" +
 	"\rIdentificData\x12$\n" +
 	"\x0eunique_ja4_raw\x18\x01 \x03(\tR\funiqueJa4Raw\x124\n" +
 	"\x16unique_ja4_application\x18\x02 \x03(\tR\x14uniqueJa4Application\x12*\n" +

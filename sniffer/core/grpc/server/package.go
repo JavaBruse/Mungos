@@ -112,18 +112,19 @@ func convertToProtoConnectionInsight(insight *models.ConnectionInsight) *pb.Conn
 	}
 
 	return &pb.ConnectionInsight{
-		LocalIp:         insight.LocalIP,
-		LocalPorts:      localPorts,
-		RemoteIp:        insight.RemoteIP,
-		RemotePort:      uint32(insight.RemotePort),
-		TotalPackets:    insight.TotalPackets,
-		TotalBytes:      insight.TotalBytes,
-		FirstPacketTime: insight.FirstPacketTime,
-		LastPacketTime:  insight.LastPacketTime,
-		SynCount:        insight.SynCount,
-		FinCount:        insight.FinCount,
-		RstCount:        insight.RstCount,
-		IdentificData:   identificData,
+		LocalIp:           insight.LocalIP,
+		LocalPorts:        localPorts,
+		RemoteIp:          insight.RemoteIP,
+		RemotePort:        uint32(insight.RemotePort),
+		TotalPackets:      insight.TotalPackets,
+		TotalBytes:        insight.TotalBytes,
+		FirstPacketTime:   insight.FirstPacketTime,
+		LastPacketTime:    insight.LastPacketTime,
+		SynCount:          insight.SynCount,
+		FinCount:          insight.FinCount,
+		RstCount:          insight.RstCount,
+		IdentifiedPackets: insight.IdentifiedPackets,
+		IdentificData:     identificData,
 	}
 }
 

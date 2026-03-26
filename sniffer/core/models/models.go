@@ -59,18 +59,19 @@ type SettingsData struct {
 }
 
 type ConnectionInsight struct {
-	LocalIP         string
-	LocalPorts      []uint16
-	RemoteIP        string
-	RemotePort      uint16
-	TotalPackets    int64
-	TotalBytes      int64
-	FirstPacketTime int64
-	LastPacketTime  int64
-	SynCount        int64
-	FinCount        int64
-	RstCount        int64
-	IdentificData   []IdentificData
+	LocalIP           string
+	LocalPorts        []uint16
+	RemoteIP          string
+	RemotePort        uint16
+	TotalPackets      int64
+	TotalBytes        int64
+	FirstPacketTime   int64
+	LastPacketTime    int64
+	SynCount          int64
+	FinCount          int64
+	RstCount          int64
+	IdentificData     []IdentificData
+	IdentifiedPackets int64
 }
 
 type IdentificData struct {

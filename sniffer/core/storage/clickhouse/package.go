@@ -442,6 +442,7 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 			COUNT(CASE WHEN tcp_flags LIKE '%S%' AND tcp_flags NOT LIKE '%A%' THEN 1 END) as syn_count,
 			COUNT(CASE WHEN tcp_flags LIKE '%F%' THEN 1 END) as fin_count,
 			COUNT(CASE WHEN tcp_flags LIKE '%R%' THEN 1 END) as rst_count,
+			COUNT(CASE WHEN ja4_entry_id != '' OR sni_entry_id != '' THEN 1 END) as identified_packets,
 			groupUniqArray((
 				ja4_raw, ja4_application, ja4_device, ja4_os,
 				sni, sni_service, ja4_entry_id, sni_entry_id
@@ -464,6 +465,7 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 		&insight.SynCount,
 		&insight.FinCount,
 		&insight.RstCount,
+		&insight.IdentifiedPackets,
 		&identificationGroups,
 	)
 
@@ -707,7 +709,7 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 		return err
 	}
 
-	// 3. Определяем localIP, remoteIP, remotePort
+	// 3. Определяем remoteIP, remotePort
 	var remoteIP string
 	var remotePort uint16
 
@@ -732,11 +734,14 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 			sni_entry_id = ?,
 			sni = ?,
 			sni_service = ?
-		WHERE (dst_ip = ? AND dst_port = ?)
+		WHERE (
+			(dst_ip = ? AND dst_port = ?)
+			OR 
+			(src_ip = ? AND src_port = ?)
+		)
 		AND (ja4_entry_id = '' OR sni_entry_id = '')
 	`
 
-	// Подготавливаем значения
 	ja4Raw := ""
 	ja4App := ""
 	ja4Device := ""
@@ -766,6 +771,7 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	_, err = c.conn.ExecContext(ctx, query,
 		ja4EntryID, ja4Raw, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence,
 		sniEntryID, sniValue, sniService,
+		remoteIP, remotePort,
 		remoteIP, remotePort,
 	)
 
