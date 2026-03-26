@@ -422,12 +422,15 @@ func (c *ClickHouseStorage) GetJA4ByID(ctx context.Context, id string) (*models.
 	`
 
 	var entry models.Ja4Entry
+	var library sql.NullString
+	var device sql.NullString
+
 	err := c.conn.QueryRowContext(ctx, query, id).Scan(
 		&entry.ID,
 		&entry.Fingerprint,
 		&entry.Application,
-		&entry.Library,
-		&entry.Device,
+		&library,
+		&device,
 		&entry.OS,
 		&entry.ObservationCount,
 		&entry.Verified,
@@ -440,5 +443,13 @@ func (c *ClickHouseStorage) GetJA4ByID(ctx context.Context, id string) (*models.
 	if err != nil {
 		return nil, err
 	}
+
+	if library.Valid {
+		entry.Library = library.String
+	}
+	if device.Valid {
+		entry.Device = device.String
+	}
+
 	return &entry, nil
 }
