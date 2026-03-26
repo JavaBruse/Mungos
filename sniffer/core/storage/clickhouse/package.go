@@ -708,15 +708,13 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	}
 
 	// 3. Определяем localIP, remoteIP, remotePort
-	var localIP, remoteIP string
+	var remoteIP string
 	var remotePort uint16
 
 	if srcIPType == "private" || srcIPType == "local" {
-		localIP = srcIP
 		remoteIP = dstIP
 		remotePort = dstPort
 	} else {
-		localIP = dstIP
 		remoteIP = srcIP
 		remotePort = srcPort
 	}
@@ -768,8 +766,7 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	_, err = c.conn.ExecContext(ctx, query,
 		ja4EntryID, ja4Raw, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence,
 		sniEntryID, sniValue, sniService,
-		localIP, remoteIP, remotePort,
-		remoteIP, localIP, remotePort,
+		remoteIP, remotePort,
 	)
 
 	return err
