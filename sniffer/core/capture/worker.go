@@ -56,7 +56,8 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	}
 
 	// SNI извлечение
-	packet.SNI = method.ExtractSNI(packet)
+	processor := method.NewSNIProcessor(w.db)
+	packet = processor.ProcessSNI(packet, nil)
 
 	return packet
 }
