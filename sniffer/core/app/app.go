@@ -4,8 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -13,7 +11,6 @@ import (
 	"sniffer/core/config"
 	"sniffer/core/grpc/server"
 	"sniffer/core/logger"
-	"sniffer/core/method"
 	"sniffer/core/models"
 	"sniffer/core/storage/clickhouse"
 )
@@ -120,42 +117,15 @@ func (a *App) Run() error {
 	go func() { _ = a.grpc.Start() }()
 	go func() { _ = a.sniffer.Start() }()
 
-	// === Группировка по сессиям и классификация ===
-	go func() {
-		sessions := make(map[string][]*models.Packet)
-		classifier := method.NewSNIProcessor(a.chStorage)
-
-		for pkt := range a.sniffer.Packets() {
-			// Ключ сессии: srcIP:dstIP:srcPort:dstPort
-			key := pkt.SrcIP + ":" + pkt.DstIP + ":" +
-				strconv.Itoa(int(pkt.SrcPort)) + ":" + strconv.Itoa(int(pkt.DstPort))
-
-			// Добавляем пакет в сессию
-			sessions[key] = append(sessions[key], pkt)
-
-			// Проверяем завершение сессии (FIN или RST)
-			if strings.Contains(pkt.TCPFlags, "F") || strings.Contains(pkt.TCPFlags, "R") {
-				// Копируем сессию для асинхронной обработки
-				sessionCopy := make([]*models.Packet, len(sessions[key]))
-				copy(sessionCopy, sessions[key])
-
-				// Классифицируем сессию
-				go classifier.ClassifySession(sessionCopy)
-
-				// Удаляем сессию из активных
-				delete(sessions, key)
-			}
-
-			// Отправляем в канал для сохранения
-			select {
-			case a.packetChan <- pkt:
-			default:
-				logger.Warn("packet channel full, dropping packet")
-			}
-			a.grpc.UpdateStats(pkt)
+	// Просто передаем пакеты в канал для сохранения
+	for pkt := range a.sniffer.Packets() {
+		select {
+		case a.packetChan <- pkt:
+		default:
+			logger.Warn("packet channel full, dropping packet")
 		}
-	}()
-	// ======================================================
+		a.grpc.UpdateStats(pkt)
+	}
 
 	logger.Info("App started")
 	<-sigChan

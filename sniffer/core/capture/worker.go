@@ -1,6 +1,7 @@
 package capture
 
 import (
+	"context"
 	"fmt"
 	"sniffer/core/logger"
 	"sniffer/core/method"
@@ -62,6 +63,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		return nil
 	}
 
+	// Применяем правила из кэша
 	if w.ruleCache != nil && packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
 		if rule := w.ruleCache.Get(key); rule != nil {
@@ -75,7 +77,6 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 					packet.SNI = rule.SNIEntry.SNI
 				}
 			}
-			// Если уже есть идентификация, JA4/SNI анализ можно пропустить
 			if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
 				return packet
 			}
@@ -86,14 +87,18 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
 		tcp, _ := tcpLayer.(*layers.TCP)
 		packet = method.ProcessJA4(packet, tcp, w.db)
-		if packet.JA4Application != "" {
-			logger.Info("ja4: %v", packet.JA4Application)
-		}
 	}
 
-	// SNI извлечение
-	processor := method.NewSNIProcessor(w.db)
-	packet = processor.ProcessSNI(packet, nil)
+	// SNI извлечение и поиск в базе
+	packet.SNI = method.ExtractSNI(packet)
+	if packet.SNI != "" && w.db != nil && w.db.Enabled() {
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+		if entry, err := w.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
+			packet.SNIService = entry.Service
+			packet.SNIEntryID = entry.ID
+		}
+	}
 
 	return packet
 }
