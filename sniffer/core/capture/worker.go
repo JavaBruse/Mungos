@@ -65,7 +65,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 
 	// Применяем правила из кэша (проверяем и dst, и src)
 	if w.ruleCache != nil {
-		// Проверяем по dst
+		// Проверяем по dst (прямые пакеты)
 		if packet.DstIPType == "public" {
 			key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
 			if rule := w.ruleCache.Get(key); rule != nil {
@@ -82,9 +82,11 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 			}
 		}
 		// Проверяем по src (обратные пакеты)
-		if packet.SrcIPType == "public" && packet.SNIEntryID == "" {
-			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
+		if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
+			key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.DstPort)
+			logger.Info("Checking src rule: key=%s", key) // 👈 лог
 			if rule := w.ruleCache.Get(key); rule != nil {
+				logger.Info("Rule found for src: %s", key) // 👈 лог
 				if rule.JA4Entry != nil {
 					fillPacketFromEntry(packet, rule.JA4Entry)
 				}
@@ -95,10 +97,11 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 						packet.SNI = rule.SNIEntry.SNI
 					}
 				}
+			} else {
+				logger.Info("Rule NOT found for src: %s", key) // 👈 лог
 			}
 		}
 
-		// Если уже есть полная идентификация - возвращаем
 		if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
 			return packet
 		}
