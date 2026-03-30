@@ -1,6 +1,5 @@
 package com.JavaBruse.core.sniffer.domain.DTO;
 
-import com.JavaBruse.proto.TrafficPacket;
 import lombok.Builder;
 import lombok.Value;
 
@@ -41,41 +40,4 @@ public class TrafficPacketDTO {
     String sniService;
     String srcIpType;
     String dstIpType;
-
-    public static TrafficPacketDTO fromProto(TrafficPacket proto) {
-
-        return TrafficPacketDTO.builder()
-                .packetId(proto.getPacketId())
-                .timestamp(proto.getTimestamp())
-                .protocols(proto.getProtocolStackList())
-                .srcPort(proto.getSrcPort())
-                .dstPort(proto.getDstPort())
-                .srcIp(proto.getSrcIp())
-                .dstIp(proto.getDstIp())
-                .length(proto.getLength())
-                .ttl(proto.getTtl())
-                .tcpFlags(proto.getTcpFlags())
-                .hasPayload(!proto.getPayload().isEmpty())
-                .headers(proto.getHeadersMap())
-                .method(proto.getMethod())
-                .uri(proto.getUri())
-                .status(proto.getStatus())
-                .dnsQuery(proto.getDnsQuery())
-                .dnsAnswer(proto.getDnsAnswer())
-                .srcMac(proto.getSrcMac())
-                .dstMac(proto.getDstMac())
-                .srcVendor(proto.getSrcVendor())
-                .dstVendor(proto.getDstVendor())
-                .ja4Raw(proto.getJa4Raw())
-                .ja4Application(proto.getJa4Application())
-                .ja4Device(proto.getJa4Device())
-                .ja4Os(proto.getJa4Os())
-                .ja4Verified(proto.getJa4Verified())
-                .ja4Confidence(proto.getJa4Confidence())
-                .sni(proto.getSni())
-                .sniService(proto.getSniService())
-                .srcIpType(proto.getSrcIpType())
-                .dstIpType(proto.getDstIpType())
-                .build();
-    }
 }

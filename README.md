@@ -144,6 +144,98 @@ SELECT * FROM sniffers;
 TRUNCATE TABLE sniffers;
 ```
 
+```text
+Mungos/
+├── sniffer/                     # Модуль захвата и классификации трафика (Golang)
+├── core/                        # Бэкенд-ядро (Java/Spring Boot)
+├── frontend/                    # Веб-интерфейс (Angular)
+└── deploy/                      # Оркестрация и конфигурация окружения
+    ├── .env                     # Переменные окружения
+    ├── docker-compose.master.yml      # Запуск основного модуля
+    ├── docker-compose.sniffer.yml     # Запуск сниффер модуля
+    ├── docker-compose.sniffer-host.yml # Запуск сниффера модуля в режиме host
+    ├── data/                    # Персистентные данные (БД, кэши)
+    ├── grafana/                 # Конфигурация Grafana
+    └── prometheus/              # Конфигурация Prometheus (сбор метрик)
+```
+
+
+```text
+Mungos/
+├── core/                        # Бэкенд-ядро (Java/Spring Boot)
+└── frontend/                    # Веб-интерфейс (Angular)
+```
+
+
+```text
+sniffer/
+├── main.go                       # Точка входа
+├── Dockerfile                    # Инструкция сборки образа
+├── .dockerignore                 # Исключения для Docker-сборки
+├── go.mod                        # Управление зависимостями Go
+├── go.sum                        # Контрольные суммы зависимостей
+├── proto/                        # Protobuf-контракты для gRPC
+└── core/                         # Основная логика
+    ├── app/                      # Инициализация и жизненный цикл
+    ├── config/                   # Конфигурация
+    ├── logger/                   # Логирование
+    ├── models/                   # Общие структуры данных
+    ├── capture/                  # Захват пакетов (libpcap/gopacket)
+    ├── method/                   # Методы классификации (SNI, JA4+)
+    ├── grpc/                     # gRPC-клиент для связи с Core
+    ├── storage/                  # Хранение (ClickHouse, memory)
+    └── utils/                    # Вспомогательные функции
+```
+
+```text
+core/
+├── .dockerignore                   # Исключения для Docker-сборки
+├── Dockerfile                      # Инструкция сборки образа
+├── mvnw                            # Maven Wrapper (Linux/Mac)
+├── mvnw.cmd                        # Maven Wrapper (Windows)
+├── pom.xml                         # Управление зависимостями Maven
+├── .idea/                          # Конфигурация IntelliJ IDEA
+├── .mvn/                           # Конфигурация Maven Wrapper
+└── src/
+    └── main/
+        ├── java/com/JavaBruse/core/
+        │   ├── CoreApplication.java # Точка входа Spring Boot
+        │   ├── config/             # Конфигурация (Security, WebSocket, JWT)
+        │   ├── exaption/           # Обработка исключений
+        │   ├── security/           # Аутентификация и пользователи
+        │   │   ├── controllers/    # REST-контроллеры (Auth, User)
+        │   │   ├── converters/     # Мапперы сущностей в DTO
+        │   │   ├── domain/         # DTO и сущности (User, Role)
+        │   │   ├── repository/     # JPA-репозитории
+        │   │   └── service/        # Сервисы (Authentication, Jwt, User)
+        │   └── sniffer/            # Управление снифферами и обработка данных
+        │       ├── controllers/    # REST API для снифферов и метрик
+        │       ├── converters/     # Мапперы DTO
+        │       ├── domain/         # DTO и сущности (SnifferEntity)
+        │       ├── grpc/           # gRPC-клиент для связи со снифферами
+        │       │   ├── client/     # Управление подключениями
+        │       │   ├── command/    # Реализация RPC-команд
+        │       │   ├── retry/      # Механизм повторных подключений
+        │       │   └── session/    # Управление сессиями
+        │       ├── repository/     # JPA-репозитории
+        │       └── service/        # Сервисы (SnifferService, MetricsService)
+        ├── proto/                  # Protobuf-контракты (gRPC)
+        └── resources/              # application.yaml, логирование
+```
+
+```text
+frontend/
+├── Dockerfile                      # Инструкция сборки образа
+├── dockerignore                    # Исключения для Docker-сборки
+├── nginx.conf                      # Конфигурация Nginx
+├── package.json                    # Зависимости и скрипты сборки
+├── public/                         # Публичные статические файлы
+└── src/
+    ├── environments/               # Конфигурация окружений (dev/prod)
+    └── app/                        # Исходный код приложения
+```
+
+
 
 
 BPF фильтры в Sniffer

@@ -1,5 +1,6 @@
 package com.JavaBruse.core.sniffer.controllers;
 
+import com.JavaBruse.core.sniffer.converters.PacketConverter;
 import com.JavaBruse.core.sniffer.domain.DTO.PayloadRequestDTO;
 import com.JavaBruse.core.sniffer.domain.DTO.TrafficPacketDTO;
 import com.JavaBruse.core.sniffer.service.SnifferService;
@@ -63,7 +64,7 @@ public class SnifferWebSocketController {
         int count = 0;
         while (packets.hasNext()) {
             TrafficPacket protoPacket = packets.next();
-            TrafficPacketDTO dto = TrafficPacketDTO.fromProto(protoPacket);
+            TrafficPacketDTO dto = PacketConverter.fromProto(protoPacket);
             messagingTemplate.convertAndSend(destination + "/packet", dto);
             count++;
         }
