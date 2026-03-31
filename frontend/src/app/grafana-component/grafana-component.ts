@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { StyleSwitcherService } from '../services/style-switcher.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-grafana-component',
@@ -8,14 +9,26 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   templateUrl: './grafana-component.html',
   styleUrl: './grafana-component.scss',
 })
-export class GrafanaComponent {
+export class GrafanaComponent implements OnInit {
   style = inject(StyleSwitcherService);
   private sanitizer = inject(DomSanitizer);
+  private url = environment.apiUrl;
+  public safeUrl: SafeResourceUrl | undefined;
 
-  getGrafanaUrl(): SafeResourceUrl {
-    const baseUrl = "http://localhost:3000/d/ad8mqvg?orgId=1";
+  ngOnInit() {
+    this.safeUrl = this.generateGrafanaUrl();
+  }
+
+  private generateGrafanaUrl(): SafeResourceUrl {
+    const token = localStorage.getItem('Authorization');
+    if (token) {
+      document.cookie = `grafana_auth=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
+    }
+
+    const baseUrl = this.url + "grafana/d/ad8mqvg?orgId=1";
     const theme = this.style.themeSignal ? "light" : "dark";
     const url = `${baseUrl}&theme=${theme}`;
+
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   }
 }

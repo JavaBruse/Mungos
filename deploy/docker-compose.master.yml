@@ -74,8 +74,8 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       mungos-network:
         ipv4_address: 172.20.0.100
@@ -89,19 +89,14 @@ services:
     container_name: mungos-grafana
     depends_on:
       - prometheus
-    ports:
-      - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
-      GF_SECURITY_ALLOW_EMBEDDING: true
-      GF_SECURITY_X_FRAME_OPTIONS: ""
-      GF_AUTH_ANONYMOUS_ENABLED: false
-      GF_AUTH_BASIC_ENABLED: true
-      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL}
-      GF_AUTH_DISABLE_LOGIN_FORM: false
     volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     networks:
       mungos-network:
         ipv4_address: 172.20.0.101

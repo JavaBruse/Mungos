@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,17 +37,17 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/v1/auth/**", "/metrics/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/v1/sniffer/**", "/api/proxy/prometheus/**").authenticated()
-                        .requestMatchers("/api/v1/ws-sniffer/**").permitAll() // этот адрес для всех, потому что это webSocket и там авторизация своя, т.к. спринг не умеет
-                        .requestMatchers("/api/v1/users-control/**").hasAuthority(Role.ROLE_ADMIN.name())
-//                        .requestMatchers( "/metrics/**").access((authentication, context) ->
-//                                new AuthorizationDecision(
-//                                        context.getRequest().getRemoteAddr().equals("172.20.0.100")
-//                                )
-//                        )
-                        .anyRequest().authenticated()
+                                .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                .requestMatchers("/api/v1/sniffer/**", "/api/proxy/prometheus/**").authenticated()
+                                .requestMatchers("/api/v1/ws-sniffer/**").permitAll()
+                                .requestMatchers("/api/v1/users-control/**").hasAuthority(Role.ROLE_ADMIN.name())
+                        .requestMatchers( "/metrics/**").access((authentication, context) ->
+                                new AuthorizationDecision(
+                                        context.getRequest().getRemoteAddr().equals("172.20.0.100")
+                                )
+                        )
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())
@@ -83,5 +84,10 @@ public class SecurityConfiguration {
                         .allowedHeaders("*"); // все заголовки
             }
         };
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring().requestMatchers("/grafana/**");
     }
 }
