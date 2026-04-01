@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { HttpService } from '../services/http.service';
+import { HttpService } from './http.service';
 import { HttpParams } from '@angular/common/http';
 
 export interface MetricData {
