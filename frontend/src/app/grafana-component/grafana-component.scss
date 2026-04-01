@@ -1,0 +1,59 @@
+.grafana-wrapper {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 26px);
+}
+
+.iframe-container {
+    width: 100%;
+    height: 100%;
+
+    &.maximized {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        background: #000;
+    }
+}
+
+.maximize-btn {
+    position: fixed;
+    top: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    cursor: pointer;
+    background: var(--background);
+    color: var(--color);
+    padding: 0px;
+
+    mat-icon {
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+    }
+}
+
+.custom-tooltip {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color);
+    color: var(--background);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 10002;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+
+    &.visible {
+        opacity: 1;
+    }
+}
