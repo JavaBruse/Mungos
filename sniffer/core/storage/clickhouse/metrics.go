@@ -140,7 +140,6 @@ func (c *ClickHouseStorage) GetWellKnownPortsStats(ctx context.Context) (map[str
 			END as port_name,
 			COUNT() as count
 		FROM packets
-		WHERE timestamp > now() - INTERVAL 5 SECOND
 		GROUP BY port_name
 		ORDER BY count DESC
 	`
