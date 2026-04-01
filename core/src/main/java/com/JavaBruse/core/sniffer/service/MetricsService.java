@@ -65,49 +65,37 @@ public class MetricsService {
             }
         }
 
-        // Приложения
-        if (metrics.getApplicationsMap() != null) {
-            for (Map.Entry<String, Long> entry : metrics.getApplicationsMap().entrySet()) {
-                sb.append(String.format("sniffer_app_packets{sniffer=\"%s\",app=\"%s\"} %d\n",
+        // Известные порты (well known ports)
+        if (metrics.getWellKnownPortsMap() != null) {
+            for (Map.Entry<String, Long> entry : metrics.getWellKnownPortsMap().entrySet()) {
+                sb.append(String.format("sniffer_well_known_ports{sniffer=\"%s\",port=\"%s\"} %d\n",
                         sniffer.getId(), entry.getKey(), entry.getValue()));
             }
         }
 
-        // Health метрики
-        sb.append("# HELP sniffer_cpu_usage CPU usage percentage\n");
-        sb.append("# TYPE sniffer_cpu_usage gauge\n");
-        sb.append(String.format("sniffer_cpu_usage{sniffer=\"%s\"} %f\n",
-                sniffer.getId(), metrics.getCpuUsage()));
+        // Топ сервисов по пакетам
+        if (metrics.getTopServicesMap() != null) {
+            for (Map.Entry<String, Long> entry : metrics.getTopServicesMap().entrySet()) {
+                sb.append(String.format("sniffer_top_services{sniffer=\"%s\",service=\"%s\"} %d\n",
+                        sniffer.getId(), entry.getKey(), entry.getValue()));
+            }
+        }
 
-        sb.append("# HELP sniffer_memory_bytes Memory usage in bytes\n");
-        sb.append("# TYPE sniffer_memory_bytes gauge\n");
-        sb.append(String.format("sniffer_memory_bytes{sniffer=\"%s\"} %d\n",
-                sniffer.getId(), metrics.getMemoryBytes()));
-
-        sb.append("# HELP sniffer_uptime_seconds Uptime in seconds\n");
-        sb.append("# TYPE sniffer_uptime_seconds counter\n");
-        sb.append(String.format("sniffer_uptime_seconds{sniffer=\"%s\"} %d\n",
-                sniffer.getId(), metrics.getUptimeSeconds()));
-
-        sb.append("# HELP sniffer_goroutines Number of goroutines\n");
-        sb.append("# TYPE sniffer_goroutines gauge\n");
-        sb.append(String.format("sniffer_goroutines{sniffer=\"%s\"} %d\n",
-                sniffer.getId(), metrics.getNumGoroutines()));
-
-        sb.append("# HELP sniffer_go_version Go version\n");
-        sb.append("# TYPE sniffer_go_version gauge\n");
-        sb.append(String.format("sniffer_go_version{sniffer=\"%s\"} 1\n",
-                sniffer.getId()));
-        sb.append(String.format("sniffer_go_version_info{sniffer=\"%s\",version=\"%s\"} 1\n",
-                sniffer.getId(), metrics.getGoVersion()));
+        // Топ сервисов по соединениям
+        if (metrics.getTopServicesByConnectionsMap() != null) {
+            for (Map.Entry<String, Long> entry : metrics.getTopServicesByConnectionsMap().entrySet()) {
+                sb.append(String.format("sniffer_top_services_connections{sniffer=\"%s\",service=\"%s\"} %d\n",
+                        sniffer.getId(), entry.getKey(), entry.getValue()));
+            }
+        }
 
         // Скорости
-        sb.append("# HELP sniffer_packets_per_second Current packets per second\n");
+        sb.append("# HELP sniffer_packets_per_second Current packets per second (last 5 seconds)\n");
         sb.append("# TYPE sniffer_packets_per_second gauge\n");
         sb.append(String.format("sniffer_packets_per_second{sniffer=\"%s\"} %d\n",
                 sniffer.getId(), metrics.getPacketsPerSecond()));
 
-        sb.append("# HELP sniffer_bytes_per_second Current bytes per second\n");
+        sb.append("# HELP sniffer_bytes_per_second Current bytes per second (last 5 seconds)\n");
         sb.append("# TYPE sniffer_bytes_per_second gauge\n");
         sb.append(String.format("sniffer_bytes_per_second{sniffer=\"%s\"} %f\n",
                 sniffer.getId(), metrics.getBytesPerSecond()));
@@ -118,22 +106,43 @@ public class MetricsService {
         sb.append(String.format("sniffer_tcp_connections{sniffer=\"%s\"} %d\n",
                 sniffer.getId(), metrics.getTcpConnections()));
 
-        sb.append("# HELP sniffer_tcp_retransmissions TCP retransmissions\n");
-        sb.append("# TYPE sniffer_tcp_retransmissions counter\n");
-        sb.append(String.format("sniffer_tcp_retransmissions{sniffer=\"%s\"} %d\n",
-                sniffer.getId(), metrics.getTcpRetransmissions()));
+        sb.append("# HELP sniffer_tcp_syn_packets TCP SYN packets\n");
+        sb.append("# TYPE sniffer_tcp_syn_packets counter\n");
+        sb.append(String.format("sniffer_tcp_syn_packets{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getTcpSynPackets()));
 
-        // Known и Unknown пакеты
-        sb.append("# HELP sniffer_known_packets Known packets count (with JA4 and SNI)\n");
-        sb.append("# TYPE sniffer_known_packets counter\n");
-        sb.append(String.format("sniffer_known_packets{sniffer=\"%s\"} %d\n",
+        sb.append("# HELP sniffer_tcp_fin_packets TCP FIN packets\n");
+        sb.append("# TYPE sniffer_tcp_fin_packets counter\n");
+        sb.append(String.format("sniffer_tcp_fin_packets{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getTcpFinPackets()));
+
+        sb.append("# HELP sniffer_tcp_rst_packets TCP RST packets\n");
+        sb.append("# TYPE sniffer_tcp_rst_packets counter\n");
+        sb.append(String.format("sniffer_tcp_rst_packets{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getTcpRstPackets()));
+
+        // Known и Unknown пакеты (общие)
+        sb.append("# HELP sniffer_known_packets_total Known packets count (with JA4 and SNI)\n");
+        sb.append("# TYPE sniffer_known_packets_total counter\n");
+        sb.append(String.format("sniffer_known_packets_total{sniffer=\"%s\"} %d\n",
                 sniffer.getId(), metrics.getAllKnow()));
 
-        sb.append("# HELP sniffer_unknown_packets Unknown packets count (without JA4 or SNI)\n");
-        sb.append("# TYPE sniffer_unknown_packets counter\n");
-        sb.append(String.format("sniffer_unknown_packets{sniffer=\"%s\"} %d\n",
+        sb.append("# HELP sniffer_unknown_packets_total Unknown packets count (without JA4 or SNI)\n");
+        sb.append("# TYPE sniffer_unknown_packets_total counter\n");
+        sb.append(String.format("sniffer_unknown_packets_total{sniffer=\"%s\"} %d\n",
                 sniffer.getId(), metrics.getAllUnknow()));
-        log.info("Неизвестные: "+ metrics.getAllUnknow());
+
+        // Known и Unknown пакеты за последние 5 секунд
+        sb.append("# HELP sniffer_known_packets_5sec Known packets in last 5 seconds\n");
+        sb.append("# TYPE sniffer_known_packets_5sec gauge\n");
+        sb.append(String.format("sniffer_known_packets_5sec{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getKnownPackets5Sec()));
+
+        sb.append("# HELP sniffer_unknown_packets_5sec Unknown packets in last 5 seconds\n");
+        sb.append("# TYPE sniffer_unknown_packets_5sec gauge\n");
+        sb.append(String.format("sniffer_unknown_packets_5sec{sniffer=\"%s\"} %d\n",
+                sniffer.getId(), metrics.getUnknownPackets5Sec()));
+
         return sb.toString();
     }
 }

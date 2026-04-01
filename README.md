@@ -123,6 +123,7 @@ docker volume rm mungos_clickhouse_sniffer-data
 docker volume rm mungos_postgres-core-data
 docker volume rm mungos_prometheus-data
 ```
+
 ### Удалить все тома сразу
 ```sh
 docker volume prune -f
