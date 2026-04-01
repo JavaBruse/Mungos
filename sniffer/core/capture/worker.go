@@ -80,14 +80,32 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 }
 
 func (w *captureWorker) run() {
+	device := w.device
 	handle, err := pcap.OpenLive(w.device, int32(w.snaplen), w.promisc, w.timeout)
 	if err != nil {
-		logger.Error("Failed to open device: %v", err)
-		time.Sleep(5 * time.Second)
-		return
+		logger.Warn("Failed to open device %s: %v, trying to find available interface", device, err)
+		devices, err := pcap.FindAllDevs()
+		if err != nil {
+			logger.Error("Failed to find devices: %v", err)
+			time.Sleep(5 * time.Second)
+			return
+		}
+		if len(devices) == 0 {
+			logger.Error("No network interfaces found")
+			time.Sleep(5 * time.Second)
+			return
+		}
+		device = devices[0].Name
+		logger.Info("Using first available interface: %s", device)
+
+		handle, err = pcap.OpenLive(device, int32(w.snaplen), w.promisc, w.timeout)
+		if err != nil {
+			logger.Error("Failed to open fallback device %s: %v", device, err)
+			time.Sleep(5 * time.Second)
+			return
+		}
 	}
 	defer handle.Close()
-
 	if w.BPFFilter != "" {
 		if err := handle.SetBPFFilter(w.BPFFilter); err != nil {
 			logger.Error("Failed to set filter: %v", err)
@@ -95,9 +113,8 @@ func (w *captureWorker) run() {
 		}
 	}
 
-	logger.Info("Sniffer started on %s with filter: %s", w.device, w.BPFFilter)
+	logger.Info("Sniffer started on %s with filter: %s", device, w.BPFFilter)
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-
 	for {
 		select {
 		case <-w.stopCh:

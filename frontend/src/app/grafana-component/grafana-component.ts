@@ -45,7 +45,7 @@ export class GrafanaComponent implements OnInit {
     if (token) {
       document.cookie = `grafana_auth=${encodeURIComponent(token)}; path=/; SameSite=Lax`;
     }
-    const baseUrl = this.url + "grafana/d/ad8mqvg?orgId=1";
+    const baseUrl = this.url + "grafana/d/ad8mqvg?orgId=1&from=now-6h&to=now";
     const theme = this.theme() ? "light" : "dark";
     const url = `${baseUrl}&theme=${theme}`;
     this.safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
