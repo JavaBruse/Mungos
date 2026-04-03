@@ -55,27 +55,29 @@
                         <table class="candidates-table">
                             <thead>
                                 <tr>
-                                    <th>Hop</th>
-                                    <th>Fingerprint</th>
-                                    <th>Application</th>
-                                    <th>Device</th>
-                                    <th>OS</th>
-                                    <th>Count</th>
-                                    <th>Confidence</th>
-                                    <th>ID</th>
+                                    <th>Глубина</th>
+                                    <th>Приложение</th>
+                                    <th>Устройство</th>
+                                    <th>ОС</th>
+                                    <th>Встречаемость</th>
+                                    <th>Доверие</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (candidate of insight()?.ja4Candidates; track candidate.id) {
+                                @for (candidate of insight()?.ja4Candidates; track trackByJA4($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
                                     <td>{{ candidate.hop }}</td>
-                                    <td>{{ candidate.fingerprint }}</td>
-                                    <td>{{ candidate.application }}</td>
+                                    @if(candidate.application){
+                                    <td [matTooltip]="candidate.fingerprint">{{ candidate.application }}</td>
+
+                                    } @else {
+                                    <td matTooltip="Новый слепок, еще не идентифицирован">{{ candidate.fingerprint }}
+                                    </td>
+                                    }
                                     <td>{{ candidate.device }}</td>
                                     <td>{{ candidate.os }}</td>
                                     <td>{{ candidate.count }}</td>
                                     <td>{{ candidate.confidence }}</td>
-                                    <td class="id-cell">{{ candidate.id }}</td>
                                 </tr>
                                 }
                             </tbody>
@@ -85,23 +87,21 @@
                         <table class="candidates-table">
                             <thead>
                                 <tr>
-                                    <th>Hop</th>
+                                    <th>Глубина</th>
                                     <th>SNI</th>
-                                    <th>Service</th>
-                                    <th>Count</th>
-                                    <th>Confidence</th>
-                                    <th>ID</th>
+                                    <th>Сервис</th>
+                                    <th>Встречаемость</th>
+                                    <th>Доверие</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (candidate of insight()?.sniCandidates; track candidate.id) {
+                                @for (candidate of insight()?.sniCandidates; track trackBySNI($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
                                     <td>{{ candidate.hop }}</td>
                                     <td>{{ candidate.sni }}</td>
                                     <td>{{ candidate.service }}</td>
                                     <td>{{ candidate.count }}</td>
                                     <td>{{ candidate.confidence }}</td>
-                                    <td class="id-cell">{{ candidate.id }}</td>
                                 </tr>
                                 }
                             </tbody>
@@ -121,7 +121,7 @@
                     <mat-label>JA4 идентификатор</mat-label>
                     <mat-select [(value)]="selectedJa4Id">
                         <mat-option value="">Не выбрано</mat-option>
-                        @for (candidate of allJa4Candidates(); track candidate.id) {
+                        @for (candidate of allJa4Candidates(); track trackByJA4($index, candidate)) {
                         <mat-option [value]="candidate.id">{{ candidate.application || candidate.fingerprint ||
                             candidate.id }}</mat-option>
                         }
@@ -132,7 +132,7 @@
                     <mat-label>SNI идентификатор</mat-label>
                     <mat-select [(value)]="selectedSniId">
                         <mat-option value="">Не выбрано</mat-option>
-                        @for (candidate of allSniCandidates(); track candidate.id) {
+                        @for (candidate of allSniCandidates(); track trackBySNI($index, candidate)) {
                         <mat-option [value]="candidate.id">{{ candidate.sni || candidate.service || candidate.id
                             }}</mat-option>
                         }

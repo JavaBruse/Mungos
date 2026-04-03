@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -254,96 +255,79 @@ public class DataBaseJa4SNIService {
         return false;
     }
 
-    public byte[] exportJA4DatabaseToExcel(String snifferId) {
+    public void exportJA4DatabaseToExcelStream(String snifferId, OutputStream outputStream) {
         List<JA4Entry> entries = downloadJA4Database(snifferId);
         List<JA4EntryDTO> dtos = entries.stream()
                 .map(Ja4SniConverter::toDTO)
                 .collect(Collectors.toList());
 
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("JA4 Database");
+        try (Workbook workbook = new SXSSFWorkbook(100)) {
+            Sheet sheet = workbook.createSheet("JA4 Database");
 
-        Row header = sheet.createRow(0);
-        String[] columns = {"id", "fingerprint", "application", "library", "device", "os", "observationCount", "verified", "fingerprintType", "sessionKey", "updatedAt"};
-        for (int i = 0; i < columns.length; i++) {
-            header.createCell(i).setCellValue(columns[i]);
-        }
+            Row header = sheet.createRow(0);
+            String[] columns = {"id", "fingerprint", "application", "library", "device", "os",
+                    "observationCount", "verified", "fingerprintType", "sessionKey", "updatedAt"};
+            for (int i = 0; i < columns.length; i++) {
+                header.createCell(i).setCellValue(columns[i]);
+            }
 
-        int rowNum = 1;
-        for (JA4EntryDTO dto : dtos) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(dto.getId());
-            row.createCell(1).setCellValue(dto.getFingerprint());
-            row.createCell(2).setCellValue(dto.getApplication());
-            row.createCell(3).setCellValue(dto.getLibrary());
-            row.createCell(4).setCellValue(dto.getDevice());
-            row.createCell(5).setCellValue(dto.getOs());
-            row.createCell(6).setCellValue(dto.getObservationCount());
-            row.createCell(7).setCellValue(dto.isVerified());
-            row.createCell(8).setCellValue(dto.getFingerprintType());
-            row.createCell(9).setCellValue(dto.getSessionKey());
-            row.createCell(10).setCellValue(dto.getUpdatedAt());
-        }
+            int rowNum = 1;
+            for (JA4EntryDTO dto : dtos) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(dto.getId());
+                row.createCell(1).setCellValue(dto.getFingerprint());
+                row.createCell(2).setCellValue(dto.getApplication());
+                row.createCell(3).setCellValue(dto.getLibrary());
+                row.createCell(4).setCellValue(dto.getDevice());
+                row.createCell(5).setCellValue(dto.getOs());
+                row.createCell(6).setCellValue(dto.getObservationCount());
+                row.createCell(7).setCellValue(dto.isVerified());
+                row.createCell(8).setCellValue(dto.getFingerprintType());
+                row.createCell(9).setCellValue(dto.getSessionKey());
+                row.createCell(10).setCellValue(dto.getUpdatedAt());
+            }
 
-        for (int i = 0; i < columns.length; i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            workbook.write(out);
-            workbook.close();
+            workbook.write(outputStream);
         } catch (IOException e) {
             throw new RuntimeException("Failed to export JA4 to Excel", e);
         }
-        return out.toByteArray();
     }
 
-    public byte[] exportSNIDatabaseToExcel(String snifferId) {
+    public void exportSNIDatabaseToExcelStream(String snifferId, OutputStream outputStream) {
         List<SNIEntry> entries = downloadSNIDatabase(snifferId);
         List<SNIEntryDTO> dtos = entries.stream()
                 .map(Ja4SniConverter::toDTO)
                 .collect(Collectors.toList());
 
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("SNI Database");
+        try (Workbook workbook = new SXSSFWorkbook(100)) {
+            Sheet sheet = workbook.createSheet("SNI Database");
 
-        Row header = sheet.createRow(0);
-        String[] columns = {"id", "service", "sni", "occurrenceCount", "firstSeen", "lastSeen", "sessionKey"};
-        for (int i = 0; i < columns.length; i++) {
-            header.createCell(i).setCellValue(columns[i]);
-        }
+            Row header = sheet.createRow(0);
+            String[] columns = {"id", "service", "sni", "occurrenceCount", "firstSeen", "lastSeen", "sessionKey"};
+            for (int i = 0; i < columns.length; i++) {
+                header.createCell(i).setCellValue(columns[i]);
+            }
 
-        int rowNum = 1;
-        for (SNIEntryDTO dto : dtos) {
-            Row row = sheet.createRow(rowNum++);
-            row.createCell(0).setCellValue(dto.getId());
-            row.createCell(1).setCellValue(dto.getService());
-            row.createCell(2).setCellValue(dto.getSni());
-            row.createCell(3).setCellValue(dto.getOccurrenceCount());
-            row.createCell(4).setCellValue(dto.getFirstSeen());
-            row.createCell(5).setCellValue(dto.getLastSeen());
-            row.createCell(6).setCellValue(dto.getSessionKey());
-        }
+            int rowNum = 1;
+            for (SNIEntryDTO dto : dtos) {
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(dto.getId());
+                row.createCell(1).setCellValue(dto.getService());
+                row.createCell(2).setCellValue(dto.getSni());
+                row.createCell(3).setCellValue(dto.getOccurrenceCount());
+                row.createCell(4).setCellValue(dto.getFirstSeen());
+                row.createCell(5).setCellValue(dto.getLastSeen());
+                row.createCell(6).setCellValue(dto.getSessionKey());
+            }
 
-        for (int i = 0; i < columns.length; i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        try {
-            workbook.write(out);
-            workbook.close();
+            workbook.write(outputStream);
         } catch (IOException e) {
             throw new RuntimeException("Failed to export SNI to Excel", e);
         }
-        return out.toByteArray();
     }
 
-    public void uploadJA4DatabaseFromExcel(String snifferId, byte[] excelBytes) {
-        try (InputStream inputStream = new ByteArrayInputStream(excelBytes);
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-
+    public void uploadJA4DatabaseFromExcel(String snifferId, InputStream inputStream) {
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
             List<JA4EntryDTO> dtos = new ArrayList<>();
 
@@ -375,10 +359,8 @@ public class DataBaseJa4SNIService {
         }
     }
 
-    public void uploadSNIDatabaseFromExcel(String snifferId, byte[] excelBytes) {
-        try (InputStream inputStream = new ByteArrayInputStream(excelBytes);
-             Workbook workbook = new XSSFWorkbook(inputStream)) {
-
+    public void uploadSNIDatabaseFromExcel(String snifferId, InputStream inputStream) {
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
             List<SNIEntryDTO> dtos = new ArrayList<>();
 

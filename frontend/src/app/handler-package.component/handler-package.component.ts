@@ -8,13 +8,17 @@ import { ErrorMessageService } from '../services/error-message.service';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { JA4Candidate, SNICandidate } from './connection-insight.DTO';
 
 @Component({
   selector: 'app-handler-package',
   standalone: true,
   imports: [CommonModule, MatTabsModule, MatSelectModule,
     MatButtonModule,
-    MatFormFieldModule],
+    MatFormFieldModule,
+    MatTooltipModule
+  ],
   templateUrl: './handler-package.component.html',
   styleUrl: './handler-package.component.scss',
 })
@@ -105,5 +109,13 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   applyInsight() {
     if (!this.selectedJa4Id && !this.selectedSniId) return;
     this.updateInsight(this.selectedJa4Id, this.selectedSniId);
+  }
+
+  trackByJA4(index: number, item: JA4Candidate): string {
+    return item.id || item.fingerprint || `ja4-${index}`;
+  }
+
+  trackBySNI(index: number, item: SNICandidate): string {
+    return item.id || item.sni || `sni-${index}`;
   }
 }

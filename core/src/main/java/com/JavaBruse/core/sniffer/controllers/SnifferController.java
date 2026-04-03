@@ -9,6 +9,7 @@ import com.JavaBruse.core.exaption.ServiceException;
 import com.JavaBruse.core.sniffer.domain.DTO.*;
 import com.JavaBruse.core.sniffer.service.DataBaseJa4SNIService;
 import com.JavaBruse.core.sniffer.service.SnifferService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -130,22 +131,21 @@ public class SnifferController {
 
 
     @GetMapping("/export/ja4")
-    public ResponseEntity<byte[]> downloadJA4Database(@RequestParam String snifferId) {
-        byte[] excel = databaseService.exportJA4DatabaseToExcel(snifferId);
+    public void downloadJA4Database(@RequestParam String snifferId, HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ja4_database_" + snifferId + ".xlsx");
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ja4_database_" + snifferId + ".xlsx")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .body(excel);
+        databaseService.exportJA4DatabaseToExcelStream(snifferId, response.getOutputStream());
+        response.getOutputStream().flush();
     }
 
     @GetMapping("/export/sni")
-    public ResponseEntity<byte[]> downloadSNIDatabase(@RequestParam String snifferId) {
-        byte[] excel = databaseService.exportSNIDatabaseToExcel(snifferId);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=sni_database_" + snifferId + ".xlsx")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-                .body(excel);
+    public void downloadSNIDatabase(@RequestParam String snifferId, HttpServletResponse response) throws IOException {
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=sni_database_" + snifferId + ".xlsx");
+
+        databaseService.exportSNIDatabaseToExcelStream(snifferId, response.getOutputStream());
+        response.getOutputStream().flush();
     }
 
     @PostMapping("/upload/ja4")
@@ -153,7 +153,7 @@ public class SnifferController {
             @RequestParam String snifferId,
             @RequestParam("file") MultipartFile file) {
         try {
-            databaseService.uploadJA4DatabaseFromExcel(snifferId, file.getBytes());
+            databaseService.uploadJA4DatabaseFromExcel(snifferId, file.getInputStream());
             return ResponseEntity.ok().build();
         } catch (IOException e) {
             log.error("Failed to upload JA4 database", e);
@@ -166,7 +166,7 @@ public class SnifferController {
             @RequestParam String snifferId,
             @RequestParam("file") MultipartFile file) {
         try {
-            databaseService.uploadSNIDatabaseFromExcel(snifferId, file.getBytes());
+            databaseService.uploadSNIDatabaseFromExcel(snifferId, file.getInputStream());
             return ResponseEntity.ok().build();
         } catch (IOException e) {
             log.error("Failed to upload SNI database", e);
