@@ -1,5 +1,7 @@
 package com.JavaBruse.core.security.controllers;
 
+import com.JavaBruse.core.security.domain.model.AuditAction;
+import com.JavaBruse.core.security.service.AuditLogService;
 import com.JavaBruse.core.security.domain.DTO.SignUpRequest;
 import com.JavaBruse.core.security.domain.DTO.UserDTO;
 import com.JavaBruse.core.security.domain.model.Role;
@@ -22,10 +24,12 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final AuthenticationService authenticationService;
     private final UserService userService;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public void signUp(@RequestBody @Valid SignUpRequest request) {
+        auditLogService.log(AuditAction.CREATE_USER);
         authenticationService.addUser(request);
     }
 
@@ -41,6 +45,7 @@ public class UserController {
 
     @DeleteMapping("/delete/{id}")
     public void deleteUser (@PathVariable String id) {
+        auditLogService.log(AuditAction.DELETE_USER);
         userService.deleteUser(id);
     }
 
@@ -51,6 +56,5 @@ public class UserController {
 
     @GetMapping("/blocked/{id}")
     public void getUsers(@PathVariable String id) {
-
     }
 }

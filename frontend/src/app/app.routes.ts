@@ -10,6 +10,7 @@ import { SniffersComponent } from './sniffer-control/sniffers-component/sniffers
 import { SnifferWebsocketComponent } from './sniffer-control/sniffer-websocket-component/sniffer-websocket-component';
 import { GrafanaComponent } from './grafana-component/grafana-component';
 import { DashboardsComponent } from './dashboards-component/dashboards-component';
+import { AuditLogComponent } from './audit-log.component/audit-log.component';
 
 
 export const routes: Routes = [
@@ -17,9 +18,10 @@ export const routes: Routes = [
     { path: 'login', component: LoginComponent, canActivate: [LoginGuard] },
     { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
     { path: 'dashboards', component: DashboardsComponent, canActivate: [AuthGuard] },
-    { path: 'grafana', component: GrafanaComponent, canActivate: [AuthGuard] },
+    { path: 'settings/grafana', component: GrafanaComponent, canActivate: [AuthGuard] },
     { path: 'settings/users', component: UsersComponent, canActivate: [AuthGuard] },
     { path: 'settings/sniffers', component: SniffersComponent, canActivate: [AuthGuard] },
+    { path: 'settings/audit-logs', component: AuditLogComponent, canActivate: [AuthGuard] },
     { path: 'sniffers', component: SniffersComponent, canActivate: [AuthGuard] },
     { path: 'sniffer/:id', component: SnifferWebsocketComponent, canActivate: [AuthGuard] },
     { path: 'update-password', component: FirstLoginPassword, canActivate: [AuthGuard] },

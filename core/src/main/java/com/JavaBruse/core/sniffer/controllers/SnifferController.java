@@ -1,6 +1,8 @@
 package com.JavaBruse.core.sniffer.controllers;
 
 
+import com.JavaBruse.core.security.domain.model.AuditAction;
+import com.JavaBruse.core.security.service.AuditLogService;
 import com.JavaBruse.core.exaption.BusyException;
 import com.JavaBruse.core.exaption.ConnectionException;
 import com.JavaBruse.core.exaption.ServiceException;
@@ -24,12 +26,14 @@ public class SnifferController {
 
     private final SnifferService snifferService;
     private final DataBaseJa4SNIService databaseService;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/create")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> create(@RequestBody SnifferRequestDTO request) {
         try {
             snifferService.addSniffer(request);
+            auditLogService.log(AuditAction.ADD_SNIFFER);
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (ServiceException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -46,6 +50,7 @@ public class SnifferController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> saveSetting(@RequestBody SettingDTO request) {
         try {
+            auditLogService.log(AuditAction.UPDATE_SNIFFER_SETTINGS);
             snifferService.setSettings(request);
             return ResponseEntity.status(HttpStatus.CREATED).build();
         } catch (ServiceException e) {
@@ -71,12 +76,14 @@ public class SnifferController {
             @PathVariable String id,
             @PathVariable String packetId,
             @RequestBody UpdateInsightRequestDTO request) {
+        auditLogService.log(AuditAction.UPDATE_INSIGHT, null, "packetId="+ packetId, "ja4EntryId=" + request.getJa4EntryId() + ", sniEntryId=" + request.getSniEntryId());
         snifferService.updateConnectionInsight(id, packetId, request.getJa4EntryId(), request.getSniEntryId());
     }
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteSniffer(@PathVariable String id) {
+        auditLogService.log(AuditAction.DELETE_SNIFFER);
         snifferService.delete(id);
     }
 
@@ -97,7 +104,7 @@ public class SnifferController {
     @PostMapping("/ja4/sync")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> syncJA4Databases() {
-        log.info("POST sync all JA4 databases");
+        auditLogService.log(AuditAction.SYNC_JA4);
         databaseService.syncJA4Databases();
         return ResponseEntity.ok().build();
     }
@@ -105,7 +112,7 @@ public class SnifferController {
     @PostMapping("/sni/sync")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> syncSNIDatabases() {
-        log.info("POST sync all SNI databases");
+        auditLogService.log(AuditAction.SYNC_SNI);
         databaseService.syncSNIDatabases();
         return ResponseEntity.ok().build();
     }

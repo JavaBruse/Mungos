@@ -1,5 +1,6 @@
 package com.JavaBruse.core.security.service;
 
+import com.JavaBruse.core.security.domain.model.AuditAction;
 import com.JavaBruse.core.security.domain.DTO.FirstUpdateRequest;
 import com.JavaBruse.core.security.domain.DTO.JwtAuthenticationResponse;
 import com.JavaBruse.core.security.domain.DTO.SignInRequest;
@@ -21,7 +22,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-
+    private final AuditLogService auditLogService;
 
     public void addUser(SignUpRequest request) {
         var user = User.builder()
@@ -49,17 +50,19 @@ public class AuthenticationService {
     }
 
     public JwtAuthenticationResponse signIn(SignInRequest request) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                request.getUsername(),
-                request.getPassword()
-        ));
-
-        var user = userService
-                .userDetailsService()
-                .loadUserByUsername(request.getUsername());
-
-        var jwt = jwtService.generateToken(user);
-        return new JwtAuthenticationResponse(jwt);
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    request.getUsername(),
+                    request.getPassword()
+            ));
+            var user = userService.userDetailsService().loadUserByUsername(request.getUsername());
+            var jwt = jwtService.generateToken(user);
+            auditLogService.log(AuditAction.LOGIN_SUCCESS, request.getUsername(), null, null);
+            return new JwtAuthenticationResponse(jwt);
+        } catch (Exception e) {
+            auditLogService.log(AuditAction.LOGIN_FAILED, request.getUsername(), null,"Неверный пароль");
+            throw e;
+        }
     }
 
     public String getUUID(Authentication authentication) {

@@ -35,9 +35,13 @@
       <span class="label">НАСТРОЙКИ</span>
       <span class="divider-line"></span>
     </div>
-    <a class="item" routerLink="/grafana" routerLinkActive="active" (click)="closeMenu()">
+    <a class="item" routerLink="settings/grafana" routerLinkActive="active" (click)="closeMenu()">
       <mat-icon>insights</mat-icon>
       <span class="label">Grafana</span>
+    </a>
+    <a class="item" routerLink="settings/audit-logs" routerLinkActive="active" (click)="closeMenu()">
+      <mat-icon>library_books</mat-icon>
+      <span class="label">Аудит</span>
     </a>
     <a class="item" routerLink="/settings/users" routerLinkActive="active" (click)="closeMenu()">
       <mat-icon>people</mat-icon>

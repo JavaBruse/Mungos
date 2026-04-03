@@ -1,0 +1,57 @@
+<div class="audit-container">
+    <div class="paginator-container">
+        <mat-paginator [length]="totalElements()" [pageSize]="pageSize()" [pageIndex]="currentPage()"
+            [pageSizeOptions]="[25, 50, 100]" (page)="onPageChange($event)">
+        </mat-paginator>
+        <div class="paginator-panel-left">
+            <button mat-icon-button color="primary" (click)="refresh()" matTooltip="Обновить список"
+                class="refresh-button-overlay">
+                <mat-icon>update</mat-icon>
+            </button>
+            <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+                <mat-label>Поиск</mat-label>
+                <input matInput (input)="onSearch($event)" [value]="searchTerm()"
+                    placeholder="Введите имя или действие">
+                <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+        </div>
+
+    </div>
+
+    <table mat-table [dataSource]="logs()" class="audit-table">
+        <ng-container matColumnDef="timestamp">
+            <th mat-header-cell *matHeaderCellDef> Время </th>
+            <td mat-cell *matCellDef="let row"> {{ formatTimestamp(row.timestamp) }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="userId">
+            <th mat-header-cell *matHeaderCellDef> Пользователь </th>
+            <td mat-cell *matCellDef="let row" [matTooltip]="row.userId ? row.userId : 'Пользователь не существует'">
+                {{ row.userName || '—' }}
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="action">
+            <th mat-header-cell *matHeaderCellDef> Действие </th>
+            <td mat-cell *matCellDef="let row"> {{ row.action }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="target">
+            <th mat-header-cell *matHeaderCellDef> Цель </th>
+            <td mat-cell *matCellDef="let row"> {{ row.target || '—' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="details">
+            <th mat-header-cell *matHeaderCellDef> Детали </th>
+            <td mat-cell *matCellDef="let row"> {{ row.details || '—' }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="ipAddress">
+            <th mat-header-cell *matHeaderCellDef> IP адрес </th>
+            <td mat-cell *matCellDef="let row"> {{ row.ipAddress || '—' }} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+</div>
