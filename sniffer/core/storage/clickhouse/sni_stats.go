@@ -67,12 +67,17 @@ func (c *ClickHouseStorage) UpdateSNIStat(ctx context.Context, service, sni stri
 	if !c.ensureConnection() {
 		return fmt.Errorf("clickhouse not available")
 	}
-	id := uuid.New().String()
-	firstSeen := time.Now()
 
 	existing, _ := c.GetSNIEntry(ctx, service, sni)
+
+	var id string
+	firstSeen := time.Now()
+
 	if existing != nil {
+		id = existing.ID
 		firstSeen = existing.FirstSeen
+	} else {
+		id = uuid.New().String()
 	}
 
 	query := `

@@ -56,7 +56,7 @@
                                     class="info-value">{{ sniffer.location }}</span></div>
                             <div class="info-row"><span class="info-label">Последний контакт:</span> <span
                                     class="info-value">{{ sniffer.lastSeen * 1000 | date:'dd.MM.yyyy HH:mm' }}</span>
-                            </div>
+                            </div>@if (isSettingsPage) {
                             <div class="info-row">
                                 <div class="database-group">
                                     <div class="database-label">JA4+</div>
@@ -103,7 +103,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div>}
                         </mat-card-content>
                     </div>
                     <div class="card-side">
