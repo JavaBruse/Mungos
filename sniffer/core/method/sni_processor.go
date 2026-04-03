@@ -43,26 +43,15 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 	}
 
 	packet.SNI = ExtractSNI(packet)
-
 	if packet.SNI != "" && p.db != nil && p.db.Enabled() {
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
 
-		entry, err := p.db.LookupSNIBySNI(ctx, packet.SNI)
-		if err == nil && entry != nil {
+		p.updateStats(ctx, "unknown", []string{packet.SNI})
+
+		if entry, err := p.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
 			packet.SNIService = entry.Service
 			packet.SNIEntryID = entry.ID
-		} else {
-			ctx2, cancel2 := context.WithTimeout(context.Background(), 100*time.Millisecond)
-			defer cancel2()
-
-			if err := p.db.UpdateSNIStat(ctx2, "unknown", packet.SNI); err == nil {
-				newEntry, _ := p.db.LookupSNIBySNI(ctx2, packet.SNI)
-				if newEntry != nil {
-					packet.SNIEntryID = newEntry.ID
-					packet.SNIService = "unknown"
-				}
-			}
 		}
 	}
 

@@ -35,16 +35,10 @@ func (c *ClickHouseStorage) GetSNIEntry(ctx context.Context, service, sni string
 	var entry models.SNIEntry
 
 	err := c.conn.QueryRowContext(ctx, `
-		SELECT 
-			any(id) as id,
-			service,
-			sni,
-			SUM(occurrence_count) as occurrence_count,
-			min(first_seen) as first_seen,
-			max(last_seen) as last_seen
+		SELECT id, service, sni, occurrence_count, first_seen, last_seen
 		FROM sni_stats
 		WHERE service = ? AND sni = ?
-		GROUP BY service, sni
+		LIMIT 1
 	`, service, sni).Scan(
 		&entry.ID,
 		&entry.Service,
@@ -67,24 +61,24 @@ func (c *ClickHouseStorage) UpdateSNIStat(ctx context.Context, service, sni stri
 	if !c.ensureConnection() {
 		return fmt.Errorf("clickhouse not available")
 	}
+	existing, err := c.GetSNIEntry(ctx, service, sni)
+	if err != nil {
+		return err
+	}
 
-	existing, _ := c.GetSNIEntry(ctx, service, sni)
-
-	var id string
+	id := uuid.New().String()
 	firstSeen := time.Now()
 
 	if existing != nil {
 		id = existing.ID
 		firstSeen = existing.FirstSeen
-	} else {
-		id = uuid.New().String()
 	}
 
 	query := `
 		INSERT INTO sni_stats (id, service, sni, occurrence_count, first_seen, last_seen)
 		VALUES (?, ?, ?, 1, ?, now())
 	`
-	_, err := c.conn.ExecContext(ctx, query, id, service, sni, firstSeen)
+	_, err = c.conn.ExecContext(ctx, query, id, service, sni, firstSeen)
 	return err
 }
 
@@ -191,22 +185,15 @@ func (c *ClickHouseStorage) ReplaceSNIDatabase(ctx context.Context, entries []mo
 	return tx.Commit()
 }
 
-// GetAllSNIEntries - получить все записи SNI базы с суммированием
+// GetAllSNIEntries - получить все записи SNI базы
 func (c *ClickHouseStorage) GetAllSNIEntries(ctx context.Context) ([]models.SNIEntry, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("clickhouse not available")
 	}
 
 	rows, err := c.conn.QueryContext(ctx, `
-        SELECT 
-			any(id) as id,
-			service, 
-			sni, 
-			SUM(occurrence_count) as occurrence_count,
-			min(first_seen) as first_seen,
-			max(last_seen) as last_seen
+        SELECT service, sni, occurrence_count, first_seen, last_seen
         FROM sni_stats
-        GROUP BY service, sni
     `)
 	if err != nil {
 		return nil, err
@@ -217,7 +204,6 @@ func (c *ClickHouseStorage) GetAllSNIEntries(ctx context.Context) ([]models.SNIE
 	for rows.Next() {
 		var entry models.SNIEntry
 		err := rows.Scan(
-			&entry.ID,
 			&entry.Service,
 			&entry.SNI,
 			&entry.OccurrenceCount,
@@ -288,26 +274,21 @@ func (c *ClickHouseStorage) GetSNIByID(ctx context.Context, id string) (*models.
 	return &entry, nil
 }
 
-// LookupSNIBySNI - ищет SNI запись по имени домена с суммированием
+// LookupSNIBySNI - ищет SNI запись по имени домена
 func (c *ClickHouseStorage) LookupSNIBySNI(ctx context.Context, sni string) (*models.SNIEntry, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("storage not available")
 	}
 
-	var entry models.SNIEntry
-	err := c.conn.QueryRowContext(ctx, `
-		SELECT 
-			any(id) as id,
-			service,
-			sni,
-			SUM(occurrence_count) as occurrence_count,
-			min(first_seen) as first_seen,
-			max(last_seen) as last_seen
+	query := `
+		SELECT id, service, sni, occurrence_count, first_seen, last_seen
 		FROM sni_stats
 		WHERE sni = ?
-		GROUP BY service, sni
 		LIMIT 1
-	`, sni).Scan(
+	`
+
+	var entry models.SNIEntry
+	err := c.conn.QueryRowContext(ctx, query, sni).Scan(
 		&entry.ID,
 		&entry.Service,
 		&entry.SNI,
@@ -315,7 +296,6 @@ func (c *ClickHouseStorage) LookupSNIBySNI(ctx context.Context, sni string) (*mo
 		&entry.FirstSeen,
 		&entry.LastSeen,
 	)
-
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
