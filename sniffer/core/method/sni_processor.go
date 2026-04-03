@@ -47,7 +47,7 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
 
-		p.updateStats(ctx, "unknown", []string{packet.SNI})
+		p.updateStats(ctx, "", []string{packet.SNI})
 
 		if entry, err := p.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
 			packet.SNIService = entry.Service
@@ -176,7 +176,7 @@ func (p *SNIProcessor) classifySessionAsync(packets []*models.Packet) {
 		}
 	}
 
-	service := "unknown"
+	service := ""
 	if bestEntry != nil {
 		service = bestEntry.Service
 	}
@@ -217,7 +217,7 @@ func (p *SNIProcessor) classifySession(ctx context.Context, packets []*models.Pa
 		if prob > bestProb {
 			bestProb = prob
 			for sni := range sniSet {
-				if entry, _ := p.db.GetSNIEntry(ctx, service, sni); entry != nil {
+				if entry, _ := p.db.GetSNIEntry(ctx, sni); entry != nil {
 					bestEntry = entry
 					break
 				}

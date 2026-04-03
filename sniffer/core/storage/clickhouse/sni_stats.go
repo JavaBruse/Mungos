@@ -26,8 +26,8 @@ func createSNIStatsTable(conn *sql.DB) error {
 	return err
 }
 
-// GetSNIEntry находит существующую запись SNI и возвращает её ID
-func (c *ClickHouseStorage) GetSNIEntry(ctx context.Context, service, sni string) (*models.SNIEntry, error) {
+// GetSNIEntry находит существующую запись SNI по домену
+func (c *ClickHouseStorage) GetSNIEntry(ctx context.Context, sni string) (*models.SNIEntry, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("clickhouse not available")
 	}
@@ -35,11 +35,18 @@ func (c *ClickHouseStorage) GetSNIEntry(ctx context.Context, service, sni string
 	var entry models.SNIEntry
 
 	err := c.conn.QueryRowContext(ctx, `
-		SELECT id, service, sni, occurrence_count, first_seen, last_seen
+		SELECT 
+			any(id) as id,
+			any(service) as service,
+			sni,
+			SUM(occurrence_count) as occurrence_count,
+			min(first_seen) as first_seen,
+			max(last_seen) as last_seen
 		FROM sni_stats
-		WHERE service = ? AND sni = ?
+		WHERE sni = ?
+		GROUP BY sni
 		LIMIT 1
-	`, service, sni).Scan(
+	`, sni).Scan(
 		&entry.ID,
 		&entry.Service,
 		&entry.SNI,
@@ -61,24 +68,28 @@ func (c *ClickHouseStorage) UpdateSNIStat(ctx context.Context, service, sni stri
 	if !c.ensureConnection() {
 		return fmt.Errorf("clickhouse not available")
 	}
-	existing, err := c.GetSNIEntry(ctx, service, sni)
+	existing, err := c.GetSNIEntry(ctx, sni)
 	if err != nil {
 		return err
 	}
 
 	id := uuid.New().String()
 	firstSeen := time.Now()
+	finalService := service
 
 	if existing != nil {
 		id = existing.ID
 		firstSeen = existing.FirstSeen
+		if existing.Service != "" && service == "" {
+			finalService = existing.Service
+		}
 	}
 
 	query := `
 		INSERT INTO sni_stats (id, service, sni, occurrence_count, first_seen, last_seen)
 		VALUES (?, ?, ?, 1, ?, now())
 	`
-	_, err = c.conn.ExecContext(ctx, query, id, service, sni, firstSeen)
+	_, err = c.conn.ExecContext(ctx, query, id, finalService, sni, firstSeen)
 	return err
 }
 
