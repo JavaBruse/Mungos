@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
@@ -22,6 +22,7 @@ import { SnifferAddComponent } from "../sniffer-add-component/sniffer-add-compon
 import { CommonModule } from '@angular/common';
 import { SnifferSettingComponent } from '../sniffer-setting-component/sniffer-setting-component';
 import { SnifferMetricsService } from '../service/sniffer-metrics.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 
 @Component({
@@ -42,7 +43,8 @@ import { SnifferMetricsService } from '../service/sniffer-metrics.service';
     MatButtonModule,
     MatCheckboxModule,
     SnifferAddComponent,
-    SnifferSettingComponent
+    SnifferSettingComponent,
+    MatTooltipModule
   ],
   templateUrl: './sniffers-component.html',
   styleUrl: './sniffers-component.scss',
@@ -59,6 +61,9 @@ export class SniffersComponent implements OnInit, OnDestroy {
   route = inject(ActivatedRoute);
   private router = inject(Router);
   snifferSettingID: string | null = null;
+  @ViewChild('globalJA4Input') globalJA4Input!: ElementRef<HTMLInputElement>;
+  @ViewChild('globalSNIInput') globalSNIInput!: ElementRef<HTMLInputElement>;
+  currentUploadSnifferId: string | null = null;
 
   constructor() {
     this.snifferService.loadAll();
@@ -117,4 +122,41 @@ export class SniffersComponent implements OnInit, OnDestroy {
     this.snifferSettingID = null;
   }
 
+  downloadJA4(snifferId: string) {
+    if (!snifferId) return;
+    this.snifferService.downloadJA4Database(snifferId);
+  }
+
+  downloadSNI(snifferId: string) {
+    if (!snifferId) return;
+    this.snifferService.downloadSNIDatabase(snifferId);
+  }
+
+  triggerUploadJA4(snifferId: string) {
+    this.currentUploadSnifferId = snifferId;
+    this.globalJA4Input.nativeElement.click();
+  }
+
+  triggerUploadSNI(snifferId: string) {
+    this.currentUploadSnifferId = snifferId;
+    this.globalSNIInput.nativeElement.click();
+  }
+
+  onUploadJA4FileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0 && this.currentUploadSnifferId) {
+      this.snifferService.uploadJA4Database(this.currentUploadSnifferId, input.files[0]);
+      input.value = '';
+      this.currentUploadSnifferId = null;
+    }
+  }
+
+  onUploadSNIFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0 && this.currentUploadSnifferId) {
+      this.snifferService.uploadSNIDatabase(this.currentUploadSnifferId, input.files[0]);
+      input.value = '';
+      this.currentUploadSnifferId = null;
+    }
+  }
 }

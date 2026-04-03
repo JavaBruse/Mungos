@@ -1,19 +1,17 @@
 <div class="sniffers-container">
     @if (isSettingsPage) {
     <div class="horizontal-box">
-
-        <button [disabled]="sniffers().length <= 1" mat-raised-button color="primary"
-            (click)="snifferService.syncSNIDatabases()" class="button-add">
-            Синхронизировать базы SNI
-        </button>
-        <button [disabled]="sniffers().length <= 1" mat-raised-button color="primary"
+        <button [disabled]="!snifferService.canSyncJA4()" mat-raised-button color="primary"
             (click)="snifferService.syncJA4Databases()" class="button-add">
             Синхронизировать базы JA4+
+        </button>
+        <button [disabled]="!snifferService.canSyncSNI()" mat-raised-button color="primary"
+            (click)="snifferService.syncSNIDatabases()" class="button-add">
+            Синхронизировать базы SNI
         </button>
         <button mat-raised-button color="primary" (click)="snifferService.updateAllHashes()" class="button-add">
             Обновить Hash баз данных
         </button>
-
         <button mat-raised-button color="primary" (click)="snifferService.setVisibleAdd(true)" class="button-add">
             Добавить сниффер
         </button>
@@ -32,62 +30,95 @@
                 <app-sniffer-setting-component [snifferId]="sniffer.id" (saved)="finishSetting()"
                     (cancelled)="finishSetting()"></app-sniffer-setting-component>
             </mat-card>
-
             } @else {
             <mat-card tabindex="0" class="card-style" [class.clickable]="!isSettingsPage"
                 (click)="!isSettingsPage && navigateToSniffer(sniffer.id)">
+
                 <div class="card-layout">
                     <div class="card-side left">
                         <img src="label_clear.png" alt="" style="width: 50px;">
                         @if (isSettingsPage) {
                         <div class="button-size">
-                            <mat-icon (click)="ping(sniffer.id)"
+                            <mat-icon (click)="$event.stopPropagation(); ping(sniffer.id)"
                                 matTooltip="test-coonect">connect_without_contact</mat-icon>
                         </div>
                         }
-
                     </div>
+
                     <div class="card-main">
                         <mat-card-header>
                             <mat-card-title class="user-name">{{ sniffer.name }}</mat-card-title>
                         </mat-card-header>
                         <mat-card-content>
-                            <div class="info-row">
-                                <span class="info-label">Сетевой адрес:</span>
-                                <span class="info-value">{{ sniffer.host }}:{{ sniffer.port }}</span>
+                            <div class="info-row"><span class="info-label">Сетевой адрес:</span> <span
+                                    class="info-value">{{ sniffer.host }}:{{ sniffer.port }}</span></div>
+                            <div class="info-row"><span class="info-label">Физический адрес:</span> <span
+                                    class="info-value">{{ sniffer.location }}</span></div>
+                            <div class="info-row"><span class="info-label">Последний контакт:</span> <span
+                                    class="info-value">{{ sniffer.lastSeen * 1000 | date:'dd.MM.yyyy HH:mm' }}</span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">Физический адрес:</span>
-                                <span class="info-value">{{ sniffer.location }}</span>
+                                <div class="database-group">
+                                    <div class="database-label">JA4+</div>
+                                    <div class="button-group">
+                                        <div class="left-content">
+                                            <span class="info-label">Hash JA4 DB:</span> <span class="info-value">{{
+                                                sniffer.Ja4Hash }}</span>
+                                        </div>
+                                        <div class="right-buttons">
+                                            <button mat-icon-button
+                                                (click)="$event.stopPropagation(); downloadJA4(sniffer.id)"
+                                                matTooltip="Скачать JA4 базу">
+                                                <mat-icon>download</mat-icon>
+                                            </button>
+                                            <button mat-icon-button
+                                                (click)="$event.stopPropagation(); triggerUploadJA4(sniffer.id)"
+                                                matTooltip="Загрузить JA4 базу">
+                                                <mat-icon>upload</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">Последний контакт:</span>
-                                <span class="info-value">{{ sniffer.lastSeen * 1000 | date:'dd.MM.yyyy HH:mm' }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Hash JA4 DB:</span>
-                                <span class="info-value">{{ sniffer.Ja4Hash }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Hash SNI DB:</span>
-                                <span class="info-value">{{ sniffer.SNIHash }}</span>
+                                <div class="database-group">
+                                    <div class="database-label">SNI</div>
+                                    <div class="button-group">
+
+                                        <div class="left-content">
+                                            <span class="info-label">Hash SNI DB:</span> <span class="info-value">{{
+                                                sniffer.SNIHash }}</span>
+                                        </div>
+                                        <div class="right-buttons">
+                                            <button mat-icon-button
+                                                (click)="$event.stopPropagation(); downloadSNI(sniffer.id)"
+                                                matTooltip="Скачать SNI базу">
+                                                <mat-icon>download</mat-icon>
+                                            </button>
+                                            <button mat-icon-button
+                                                (click)="$event.stopPropagation(); triggerUploadSNI(sniffer.id)"
+                                                matTooltip="Загрузить SNI базу">
+                                                <mat-icon>upload</mat-icon>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </mat-card-content>
                     </div>
                     <div class="card-side">
                         @if (isSettingsPage) {
                         <div class="button-size">
-                            <mat-icon (click)="startSetting(sniffer.id)" matTooltip="Редактировать">settings</mat-icon>
+                            <mat-icon (click)="$event.stopPropagation(); startSetting(sniffer.id)"
+                                matTooltip="Редактировать">settings</mat-icon>
                         </div>
                         <div class="button-size">
-                            <mat-icon (click)="openDialog('0ms', '0ms', sniffer.id)"
+                            <mat-icon (click)="$event.stopPropagation(); openDialog('0ms', '0ms', sniffer.id)"
                                 matTooltip="Удалить">delete_outline</mat-icon>
                         </div>
                         } @else {
                         <span matBadge="{{metricsService.getValue(sniffer.id)}}"></span>
-
                         }
-
                     </div>
                 </div>
             </mat-card>
@@ -96,3 +127,6 @@
         </div>
     </div>
 </div>
+
+<input type="file" #globalJA4Input (change)="onUploadJA4FileSelected($event)" style="display: none" accept=".xlsx">
+<input type="file" #globalSNIInput (change)="onUploadSNIFileSelected($event)" style="display: none" accept=".xlsx">

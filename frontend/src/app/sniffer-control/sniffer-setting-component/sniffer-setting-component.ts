@@ -27,7 +27,6 @@ export class SnifferSettingComponent implements OnChanges {
   @Output() saved = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
   messageService = inject(ErrorMessageService);
-
   private snifferService = inject(SnifferService);
   private fb = inject(FormBuilder);
 

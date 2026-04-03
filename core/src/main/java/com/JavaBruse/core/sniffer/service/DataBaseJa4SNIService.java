@@ -1,6 +1,9 @@
 package com.JavaBruse.core.sniffer.service;
 
 import com.JavaBruse.core.exaption.ConnectionException;
+import com.JavaBruse.core.sniffer.converters.Ja4SniConverter;
+import com.JavaBruse.core.sniffer.domain.DTO.JA4EntryDTO;
+import com.JavaBruse.core.sniffer.domain.DTO.SNIEntryDTO;
 import com.JavaBruse.core.sniffer.domain.model.SnifferEntity;
 import com.JavaBruse.core.sniffer.grpc.ProtoCompressor;
 import com.JavaBruse.core.sniffer.grpc.command.HashTableCommand;
@@ -14,13 +17,19 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,9 +57,6 @@ public class DataBaseJa4SNIService {
     public JA4Entry updateOrSaveJA4Entry(String id, JA4Entry entry) {
         SnifferEntity sniffer = snifferRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Updating JA4 entry: {}", entry.getId());
-
         return retryPolicy.executeWithRetry(
                 RetryStrategy.defaultPingStrategy(),
                 () -> ja4DatabaseCommand.updateOrSaveEntry(sniffer, entry),
@@ -62,9 +68,6 @@ public class DataBaseJa4SNIService {
     public SNIEntry updateOrSaveSNIEntry(String id, SNIEntry entry) {
         SnifferEntity sniffer = snifferRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Updating SNI entry: {}", entry.getId());
-
         return retryPolicy.executeWithRetry(
                 RetryStrategy.defaultPingStrategy(),
                 () -> sniDatabaseCommand.updateOrSaveEntry(sniffer, entry),
@@ -76,12 +79,9 @@ public class DataBaseJa4SNIService {
     public void syncJA4Databases() {
         List<SnifferEntity> allSniffers = snifferRepository.findByDeletedFalse();
         if (allSniffers.size() <= 1) return;
-        log.info("Starting JA4 sync for {} sniffers", allSniffers.size());
         Map<String, JA4Entry> masterDatabase = new HashMap<>();
-
         for (SnifferEntity sniffer : allSniffers) {
             try {
-                log.debug("Collecting from sniffer: {}", sniffer.getId());
                 List<JA4Entry> snifferEntries = downloadJA4Database(sniffer.getId());
 
                 for (JA4Entry entry : snifferEntries) {
@@ -96,32 +96,23 @@ public class DataBaseJa4SNIService {
                 log.error("Failed to collect from sniffer: {}", sniffer.getId(), e);
             }
         }
-
-        log.info("Master database built with {} unique entries", masterDatabase.size());
-
-        // Рассылаем всем
         List<JA4Entry> masterList = new ArrayList<>(masterDatabase.values());
         for (SnifferEntity sniffer : allSniffers) {
             try {
                 uploadJA4Database(sniffer.getId(), masterList);
-                log.debug("Updated sniffer: {}", sniffer.getId());
             } catch (Exception e) {
                 log.error("Failed to update sniffer: {}", sniffer.getId(), e);
             }
         }
-
-        log.info("JA4 sync completed for {} sniffers", allSniffers.size());
     }
 
     public void syncSNIDatabases() {
         List<SnifferEntity> allSniffers = snifferRepository.findByDeletedFalse();
         if (allSniffers.size() <= 1) return;
-        log.info("Starting SNI sync for {} sniffers", allSniffers.size());
         Map<String, SNIEntry> masterDatabase = new HashMap<>();
 
         for (SnifferEntity sniffer : allSniffers) {
             try {
-                log.debug("Collecting from sniffer: {}", sniffer.getId());
                 List<SNIEntry> snifferEntries = downloadSNIDatabase(sniffer.getId());
 
                 for (SNIEntry entry : snifferEntries) {
@@ -155,7 +146,6 @@ public class DataBaseJa4SNIService {
             }
         }
 
-        log.info("Master database built with {} unique entries", masterDatabase.size());
         List<SNIEntry> masterList = new ArrayList<>(masterDatabase.values());
         for (SnifferEntity sniffer : allSniffers) {
             try {
@@ -166,28 +156,11 @@ public class DataBaseJa4SNIService {
             }
         }
 
-        log.info("SNI sync completed for {} sniffers", allSniffers.size());
-    }
-
-    private SNIEntry mergeSNIEntries(SNIEntry e1, SNIEntry e2) {
-        if (e1.getLastSeen() >= e2.getLastSeen()) {
-            return e1;
-        }
-        return e2;
-    }
-
-    private JA4Entry mergeJA4Entries(JA4Entry e1, JA4Entry e2) {
-        if (e1.getUpdatedAt() >= e2.getUpdatedAt()) {
-            return e1;
-        }
-        return e2;
     }
 
     private List<JA4Entry> downloadJA4Database(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Downloading JA4 database from sniffer: {}", id);
 
         byte[] compressedData = retryPolicy.executeWithRetry(
                 RetryStrategy.defaultPingStrategy(),
@@ -198,7 +171,6 @@ public class DataBaseJa4SNIService {
 
         try {
             JA4EntryList entryList = ProtoCompressor.decompressProto(compressedData, JA4EntryList.class);
-            log.info("Downloaded {} JA4 entries", entryList.getEntriesCount());
             return entryList.getEntriesList();
         } catch (IOException e) {
             log.error("Failed to decompress JA4 database", e);
@@ -209,9 +181,6 @@ public class DataBaseJa4SNIService {
     private void uploadJA4Database(String id, List<JA4Entry> entries) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Uploading JA4 database to sniffer: {}, entries: {}", id, entries.size());
-
         try {
             JA4EntryList entryList = JA4EntryList.newBuilder()
                     .addAllEntries(entries)
@@ -235,9 +204,6 @@ public class DataBaseJa4SNIService {
     private List<SNIEntry> downloadSNIDatabase(String id) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Downloading SNI database from sniffer: {}", id);
-
         byte[] compressedData = retryPolicy.executeWithRetry(
                 RetryStrategy.defaultPingStrategy(),
                 () -> sniDatabaseCommand.downloadDatabase(sniffer),
@@ -247,7 +213,6 @@ public class DataBaseJa4SNIService {
 
         try {
             SNIEntryList entryList = ProtoCompressor.decompressProto(compressedData, SNIEntryList.class);
-            log.info("Downloaded {} SNI entries", entryList.getEntriesCount());
             return entryList.getEntriesList();
         } catch (IOException e) {
             log.error("Failed to decompress SNI database", e);
@@ -258,9 +223,6 @@ public class DataBaseJa4SNIService {
     private void uploadSNIDatabase(String id, List<SNIEntry> entries) {
         SnifferEntity sniffer = snifferRepository.findById(id)
                 .orElseThrow(() -> new ConnectionException("Sniffer not found: " + id));
-
-        log.info("Uploading SNI database to sniffer: {}, entries: {}", id, entries.size());
-
         try {
             SNIEntryList entryList = SNIEntryList.newBuilder()
                     .addAllEntries(entries)
@@ -290,5 +252,181 @@ public class DataBaseJa4SNIService {
             return code == Status.Code.UNAVAILABLE || code == Status.Code.UNAUTHENTICATED;
         }
         return false;
+    }
+
+    public byte[] exportJA4DatabaseToExcel(String snifferId) {
+        List<JA4Entry> entries = downloadJA4Database(snifferId);
+        List<JA4EntryDTO> dtos = entries.stream()
+                .map(Ja4SniConverter::toDTO)
+                .collect(Collectors.toList());
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("JA4 Database");
+
+        Row header = sheet.createRow(0);
+        String[] columns = {"id", "fingerprint", "application", "library", "device", "os", "observationCount", "verified", "fingerprintType", "sessionKey", "updatedAt"};
+        for (int i = 0; i < columns.length; i++) {
+            header.createCell(i).setCellValue(columns[i]);
+        }
+
+        int rowNum = 1;
+        for (JA4EntryDTO dto : dtos) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(dto.getId());
+            row.createCell(1).setCellValue(dto.getFingerprint());
+            row.createCell(2).setCellValue(dto.getApplication());
+            row.createCell(3).setCellValue(dto.getLibrary());
+            row.createCell(4).setCellValue(dto.getDevice());
+            row.createCell(5).setCellValue(dto.getOs());
+            row.createCell(6).setCellValue(dto.getObservationCount());
+            row.createCell(7).setCellValue(dto.isVerified());
+            row.createCell(8).setCellValue(dto.getFingerprintType());
+            row.createCell(9).setCellValue(dto.getSessionKey());
+            row.createCell(10).setCellValue(dto.getUpdatedAt());
+        }
+
+        for (int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            workbook.write(out);
+            workbook.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to export JA4 to Excel", e);
+        }
+        return out.toByteArray();
+    }
+
+    public byte[] exportSNIDatabaseToExcel(String snifferId) {
+        List<SNIEntry> entries = downloadSNIDatabase(snifferId);
+        List<SNIEntryDTO> dtos = entries.stream()
+                .map(Ja4SniConverter::toDTO)
+                .collect(Collectors.toList());
+
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("SNI Database");
+
+        Row header = sheet.createRow(0);
+        String[] columns = {"id", "service", "sni", "occurrenceCount", "firstSeen", "lastSeen", "sessionKey"};
+        for (int i = 0; i < columns.length; i++) {
+            header.createCell(i).setCellValue(columns[i]);
+        }
+
+        int rowNum = 1;
+        for (SNIEntryDTO dto : dtos) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(dto.getId());
+            row.createCell(1).setCellValue(dto.getService());
+            row.createCell(2).setCellValue(dto.getSni());
+            row.createCell(3).setCellValue(dto.getOccurrenceCount());
+            row.createCell(4).setCellValue(dto.getFirstSeen());
+            row.createCell(5).setCellValue(dto.getLastSeen());
+            row.createCell(6).setCellValue(dto.getSessionKey());
+        }
+
+        for (int i = 0; i < columns.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            workbook.write(out);
+            workbook.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to export SNI to Excel", e);
+        }
+        return out.toByteArray();
+    }
+
+    public void uploadJA4DatabaseFromExcel(String snifferId, byte[] excelBytes) {
+        try (InputStream inputStream = new ByteArrayInputStream(excelBytes);
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            List<JA4EntryDTO> dtos = new ArrayList<>();
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                JA4EntryDTO dto = new JA4EntryDTO();
+                dto.setId(getCellValue(row.getCell(0)));
+                dto.setFingerprint(getCellValue(row.getCell(1)));
+                dto.setApplication(getCellValue(row.getCell(2)));
+                dto.setLibrary(getCellValue(row.getCell(3)));
+                dto.setDevice(getCellValue(row.getCell(4)));
+                dto.setOs(getCellValue(row.getCell(5)));
+                dto.setObservationCount((int) getNumericCellValue(row.getCell(6)));
+                dto.setVerified(Boolean.parseBoolean(getCellValue(row.getCell(7))));
+                dto.setFingerprintType(getCellValue(row.getCell(8)));
+                dto.setSessionKey(getCellValue(row.getCell(9)));
+                dto.setUpdatedAt((long) getNumericCellValue(row.getCell(10)));
+                dtos.add(dto);
+            }
+
+            List<JA4Entry> entries = dtos.stream()
+                    .map(Ja4SniConverter::toProto)
+                    .collect(Collectors.toList());
+            uploadJA4Database(snifferId, entries);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload JA4 from Excel", e);
+        }
+    }
+
+    public void uploadSNIDatabaseFromExcel(String snifferId, byte[] excelBytes) {
+        try (InputStream inputStream = new ByteArrayInputStream(excelBytes);
+             Workbook workbook = new XSSFWorkbook(inputStream)) {
+
+            Sheet sheet = workbook.getSheetAt(0);
+            List<SNIEntryDTO> dtos = new ArrayList<>();
+
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                SNIEntryDTO dto = new SNIEntryDTO();
+                dto.setId(getCellValue(row.getCell(0)));
+                dto.setService(getCellValue(row.getCell(1)));
+                dto.setSni(getCellValue(row.getCell(2)));
+                dto.setOccurrenceCount((int) getNumericCellValue(row.getCell(3)));
+                dto.setFirstSeen((long) getNumericCellValue(row.getCell(4)));
+                dto.setLastSeen((long) getNumericCellValue(row.getCell(5)));
+                dto.setSessionKey(getCellValue(row.getCell(6)));
+                dtos.add(dto);
+            }
+
+            List<SNIEntry> entries = dtos.stream()
+                    .map(Ja4SniConverter::toProto)
+                    .collect(Collectors.toList());
+            uploadSNIDatabase(snifferId, entries);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to upload SNI from Excel", e);
+        }
+    }
+
+    private String getCellValue(Cell cell) {
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING: return cell.getStringCellValue();
+            case NUMERIC: return String.valueOf((long) cell.getNumericCellValue());
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+            default: return "";
+        }
+    }
+
+    private double getNumericCellValue(Cell cell) {
+        if (cell == null) return 0;
+        switch (cell.getCellType()) {
+            case NUMERIC: return cell.getNumericCellValue();
+            case STRING:
+                try {
+                    return Double.parseDouble(cell.getStringCellValue());
+                } catch (NumberFormatException e) {
+                    return 0;
+                }
+            default: return 0;
+        }
     }
 }

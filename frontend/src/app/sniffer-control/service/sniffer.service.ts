@@ -148,4 +148,87 @@ export class SnifferService {
             },
         });
     }
+
+    downloadJA4Database(snifferId: string) {
+        this.http.getBlob(`${this.apiUrl}/export/ja4?snifferId=${snifferId}`).subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ja4_database.xlsx`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.errorMessageService.showSuccess("JA4 база скачана");
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка скачивания JA4 базы");
+            }
+        });
+    }
+
+    downloadSNIDatabase(snifferId: string) {
+        this.http.getBlob(`${this.apiUrl}/export/sni?snifferId=${snifferId}`).subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sni_database.xlsx`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.errorMessageService.showSuccess("SNI база скачана");
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка скачивания SNI базы");
+            }
+        });
+    }
+
+    uploadJA4Database(snifferId: string, file: File) {
+        const formData = new FormData();
+        formData.append('snifferId', snifferId);
+        formData.append('file', file);
+
+        this.http.post<void>(`${this.apiUrl}/upload/ja4`, formData).subscribe({
+            next: () => {
+                this.errorMessageService.showSuccess("JA4 база загружена");
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка загрузки JA4 базы");
+            }
+        });
+    }
+
+    uploadSNIDatabase(snifferId: string, file: File) {
+        const formData = new FormData();
+        formData.append('snifferId', snifferId);
+        formData.append('file', file);
+
+        this.http.post<void>(`${this.apiUrl}/upload/sni`, formData).subscribe({
+            next: () => {
+                this.errorMessageService.showSuccess("SNI база загружена");
+            },
+            error: () => {
+                this.errorMessageService.showError("Ошибка загрузки SNI базы");
+            }
+        });
+    }
+
+    canSyncJA4(): boolean {
+        const sniffers = this.sniffersSignal();
+        if (sniffers.length <= 1) return false;
+
+        const hashes = sniffers.map(s => s.Ja4Hash);
+        const firstHash = hashes[0];
+        return !hashes.every(hash => hash === firstHash);
+    }
+
+    canSyncSNI(): boolean {
+        const sniffers = this.sniffersSignal();
+        if (sniffers.length <= 1) return false;
+
+        const hashes = sniffers.map(s => s.SNIHash);
+        const firstHash = hashes[0];
+        return !hashes.every(hash => hash === firstHash);
+    }
+
 }
