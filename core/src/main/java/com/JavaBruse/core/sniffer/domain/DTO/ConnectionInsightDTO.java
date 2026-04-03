@@ -17,27 +17,29 @@ public class ConnectionInsightDTO {
     private Long synCount;
     private Long finCount;
     private Long rstCount;
-    private List<IdentificDataDTO> identificData;
     private Long identifiedPackets;
+    private List<JA4CandidateDTO> ja4Candidates;
+    private List<SNICandidateDTO> sniCandidates;
 
     @Data
-    public static class IdentificDataDTO {
-        private List<String> uniqueJa4Raw;
-        private List<String> uniqueJa4Application;
-        private List<String> uniqueJa4Device;
-        private List<String> uniqueJa4Os;
-        private List<String> uniqueSni;
-        private List<String> uniqueSniService;
-        private List<String> uniqueJa4EntryId;
-        private List<String> uniqueSniEntryId;
-        private List<RelatedAddressDTO> relatedAddressJa4;
-        private List<RelatedAddressDTO> relatedAddressSni;
-        @Data
-       public static class RelatedAddressDTO {
-            private String remoteIp;
-            private Integer remotePort;
-            private Long count;
-        }
+    public static class JA4CandidateDTO {
+        private String id;
+        private String fingerprint;
+        private String application;
+        private String device;
+        private String os;
+        private Long count;
+        private Integer confidence;
+        private Integer hop;
+    }
 
+    @Data
+    public static class SNICandidateDTO {
+        private String id;
+        private String sni;
+        private String service;
+        private Long count;
+        private Integer confidence;
+        private Integer hop;
     }
 }

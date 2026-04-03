@@ -56,27 +56,29 @@ message ConnectionInsight {
   int64 syn_count = 9;
   int64 fin_count = 10;
   int64 rst_count = 11;
-  repeated IdentificData identific_data = 12;
-  int64 identified_packets = 13;
+  int64 identified_packets = 12;
+  repeated JA4Candidate ja4_candidates = 13;
+  repeated SNICandidate sni_candidates = 14;
 }
 
-message IdentificData {
-  repeated string unique_ja4_raw = 1;
-  repeated string unique_ja4_application = 2;
-  repeated string unique_ja4_device = 3;
-  repeated string unique_ja4_os = 4;
-  repeated string unique_sni = 5;
-  repeated string unique_sni_service = 6;
-  repeated string unique_ja4_entry_id = 7;
-  repeated string unique_sni_entry_id = 8;
-  repeated RelatedAddress related_address_ja4 = 9;
-  repeated RelatedAddress related_address_sni = 10;
+message JA4Candidate {
+  string id = 1;
+  string fingerprint = 2;
+  string application = 3;
+  string device = 4;
+  string os = 5;
+  int64 count = 6;
+  int32 confidence = 7;
+  int32 hop = 8;
 }
 
-message RelatedAddress {
-  string remote_ip = 1;
-  uint32 remote_port = 2;
-  int64 count = 3;
+message SNICandidate {
+  string id = 1;
+  string sni = 2;
+  string service = 3;
+  int64 count = 4;
+  int32 confidence = 5;
+  int32 hop = 6;
 }
 
 message HashTable {

@@ -392,7 +392,7 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 	return tx.Commit()
 }
 
-// GetConnectionInsightByPacket - аналитика по соединению на основе packet_id
+// GetConnectionInsightByPacket - аналитика по соединению на основе packet_id (сбор до Hop=3)
 func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, packetID string) (*models.ConnectionInsight, error) {
 	if !c.ensureConnection() {
 		return nil, fmt.Errorf("storage not available")
@@ -484,8 +484,10 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	insight.FirstPacketTime = firstTime.UnixNano()
 	insight.LastPacketTime = lastTime.UnixNano()
 
-	// Группируем идентификационные данные
-	idMap := make(map[string]*models.IdentificData)
+	// Собираем кандидатов JA4 и SNI (Hop=1)
+	ja4Map := make(map[string]*models.JA4Candidate)
+	sniMap := make(map[string]*models.SNICandidate)
+
 	for _, group := range identificationGroups {
 		if len(group) < 8 {
 			continue
@@ -500,57 +502,318 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 		ja4EntryID := toString(group[6])
 		sniEntryID := toString(group[7])
 
-		key := ja4EntryID + "|" + sniEntryID
-
-		if _, exists := idMap[key]; !exists {
-			idMap[key] = &models.IdentificData{
-				UniqueJA4Raw:         []string{},
-				UniqueJA4Application: []string{},
-				UniqueJA4Device:      []string{},
-				UniqueJA4OS:          []string{},
-				UniqueSNI:            []string{},
-				UniqueSNIService:     []string{},
-				UniqueJA4EntryID:     []string{},
-				UniqueSNIEntryID:     []string{},
-				RelatedAddressJa4:    []models.RelatedAddress{},
-				RelatedAddressSNI:    []models.RelatedAddress{},
+		if ja4EntryID != "" {
+			if _, exists := ja4Map[ja4EntryID]; !exists {
+				ja4Map[ja4EntryID] = &models.JA4Candidate{
+					ID:          ja4EntryID,
+					Fingerprint: ja4Raw,
+					Application: ja4App,
+					Device:      ja4Device,
+					OS:          ja4OS,
+					Count:       0,
+					Confidence:  0,
+					Hop:         1,
+				}
 			}
+			ja4Map[ja4EntryID].Count++
 		}
 
-		idMap[key].UniqueJA4Raw = addUnique(idMap[key].UniqueJA4Raw, ja4Raw)
-		idMap[key].UniqueJA4Application = addUnique(idMap[key].UniqueJA4Application, ja4App)
-		idMap[key].UniqueJA4Device = addUnique(idMap[key].UniqueJA4Device, ja4Device)
-		idMap[key].UniqueJA4OS = addUnique(idMap[key].UniqueJA4OS, ja4OS)
-		idMap[key].UniqueSNI = addUnique(idMap[key].UniqueSNI, sni)
-		idMap[key].UniqueSNIService = addUnique(idMap[key].UniqueSNIService, sniService)
-		idMap[key].UniqueJA4EntryID = addUnique(idMap[key].UniqueJA4EntryID, ja4EntryID)
-		idMap[key].UniqueSNIEntryID = addUnique(idMap[key].UniqueSNIEntryID, sniEntryID)
-	}
-
-	for _, data := range idMap {
-		if len(data.UniqueJA4EntryID) > 0 {
-			related, err := c.GetRelatedByJA4(ctx, data.UniqueJA4EntryID)
-			if err == nil {
-				data.RelatedAddressJa4 = related
+		if sniEntryID != "" {
+			if _, exists := sniMap[sniEntryID]; !exists {
+				sniMap[sniEntryID] = &models.SNICandidate{
+					ID:         sniEntryID,
+					SNI:        sni,
+					Service:    sniService,
+					Count:      0,
+					Confidence: 0,
+					Hop:        1,
+				}
 			}
-		}
-
-		if len(data.UniqueSNIEntryID) > 0 {
-			related, err := c.GetRelatedBySNI(ctx, data.UniqueSNIEntryID)
-			if err == nil {
-				data.RelatedAddressSNI = related
-			}
+			sniMap[sniEntryID].Count++
 		}
 	}
 
-	for _, data := range idMap {
-		insight.IdentificData = append(insight.IdentificData, *data)
+	// Собираем Hop=2 и Hop=3 через связанные адреса
+	ja4Map, sniMap = c.collectRelatedCandidates(ctx, ja4Map, sniMap, 2, 3)
+
+	// Добавляем Confidence из глобальной статистики
+	for _, cand := range ja4Map {
+		entry, _ := c.GetJA4ByID(ctx, cand.ID)
+		if entry != nil {
+			cand.Confidence = int(entry.ObservationCount)
+		}
+	}
+
+	for _, cand := range sniMap {
+		entry, _ := c.GetSNIByID(ctx, cand.ID)
+		if entry != nil {
+			cand.Confidence = int(entry.OccurrenceCount)
+		}
+	}
+
+	// Конвертируем мапы в слайсы
+	for _, cand := range ja4Map {
+		insight.JA4Candidates = append(insight.JA4Candidates, *cand)
+	}
+	for _, cand := range sniMap {
+		insight.SNICandidates = append(insight.SNICandidates, *cand)
 	}
 
 	return &insight, nil
 }
 
-// toString - конвертирует interface{} в строку
+// collectRelatedCandidates - рекурсивный сбор кандидатов до maxHop
+func (c *ClickHouseStorage) collectRelatedCandidates(ctx context.Context,
+	ja4Map map[string]*models.JA4Candidate,
+	sniMap map[string]*models.SNICandidate,
+	currentHop int, maxHop int) (map[string]*models.JA4Candidate, map[string]*models.SNICandidate) {
+
+	if currentHop > maxHop {
+		return ja4Map, sniMap
+	}
+
+	// Проверяем, сколько уже собрали
+	currentTotal := len(ja4Map) + len(sniMap)
+	if currentTotal >= 5 {
+		return ja4Map, sniMap
+	}
+
+	// Собираем JA4 ID текущего уровня
+	ja4IDs := make([]string, 0)
+	for _, cand := range ja4Map {
+		if cand.Hop == currentHop-1 {
+			ja4IDs = append(ja4IDs, cand.ID)
+		}
+	}
+
+	// Собираем SNI ID текущего уровня
+	sniIDs := make([]string, 0)
+	for _, cand := range sniMap {
+		if cand.Hop == currentHop-1 {
+			sniIDs = append(sniIDs, cand.ID)
+		}
+	}
+
+	if len(ja4IDs) == 0 && len(sniIDs) == 0 {
+		return ja4Map, sniMap
+	}
+
+	// Получаем связанные адреса с ограничением
+	addresses := make([]models.RelatedAddress, 0)
+	needCount := 5 - currentTotal
+
+	if len(ja4IDs) > 0 {
+		ja4Addresses, _ := c.getRelatedAddressesByJA4(ctx, ja4IDs, needCount)
+		addresses = append(addresses, ja4Addresses...)
+	}
+
+	if len(sniIDs) > 0 && len(addresses) < needCount {
+		sniAddresses, _ := c.getRelatedAddressesBySNI(ctx, sniIDs, needCount-len(addresses))
+		addresses = append(addresses, sniAddresses...)
+	}
+
+	if len(addresses) == 0 {
+		return ja4Map, sniMap
+	}
+
+	// Определяем лимит для JA4/SNI с адреса в зависимости от hop
+	itemsPerAddress := 5
+	if currentHop == 2 {
+		itemsPerAddress = 3
+	} else if currentHop == 3 {
+		itemsPerAddress = 2
+	}
+
+	// По каждому адресу собираем его JA4 и SNI
+	for _, addr := range addresses {
+		ja4List, sniList := c.getJA4AndSNIByAddress(ctx, addr.RemoteIP, addr.RemotePort, itemsPerAddress)
+
+		for _, j := range ja4List {
+			if _, exists := ja4Map[j.ID]; !exists {
+				ja4Map[j.ID] = &models.JA4Candidate{
+					ID:          j.ID,
+					Fingerprint: j.Fingerprint,
+					Application: j.Application,
+					Device:      j.Device,
+					OS:          j.OS,
+					Count:       j.Count,
+					Confidence:  0,
+					Hop:         currentHop,
+				}
+			} else {
+				ja4Map[j.ID].Count += j.Count
+			}
+		}
+
+		for _, s := range sniList {
+			if _, exists := sniMap[s.ID]; !exists {
+				sniMap[s.ID] = &models.SNICandidate{
+					ID:         s.ID,
+					SNI:        s.SNI,
+					Service:    s.Service,
+					Count:      s.Count,
+					Confidence: 0,
+					Hop:        currentHop,
+				}
+			} else {
+				sniMap[s.ID].Count += s.Count
+			}
+		}
+
+		// Проверяем, не набрали ли уже 5
+		if len(ja4Map)+len(sniMap) >= 5 {
+			return ja4Map, sniMap
+		}
+	}
+
+	// Рекурсивно собираем следующий уровень
+	return c.collectRelatedCandidates(ctx, ja4Map, sniMap, currentHop+1, maxHop)
+}
+
+// getRelatedAddressesByJA4 - получает адреса по JA4 ID
+func (c *ClickHouseStorage) getRelatedAddressesByJA4(ctx context.Context, ja4IDs []string, limit int) ([]models.RelatedAddress, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	placeholders := strings.Repeat("?,", len(ja4IDs))
+	placeholders = placeholders[:len(placeholders)-1]
+
+	query := fmt.Sprintf(`
+		SELECT dst_ip, dst_port, COUNT() as count
+		FROM packets
+		WHERE ja4_entry_id IN (%s)
+			AND dst_ip_type = 'public'
+		GROUP BY dst_ip, dst_port
+		ORDER BY count DESC
+		LIMIT %d
+	`, placeholders, limit)
+
+	args := make([]interface{}, len(ja4IDs))
+	for i, id := range ja4IDs {
+		args[i] = id
+	}
+
+	rows, err := c.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.RelatedAddress
+	for rows.Next() {
+		var addr models.RelatedAddress
+		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
+			continue
+		}
+		results = append(results, addr)
+	}
+	return results, nil
+}
+
+func (c *ClickHouseStorage) getRelatedAddressesBySNI(ctx context.Context, sniIDs []string, limit int) ([]models.RelatedAddress, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	placeholders := strings.Repeat("?,", len(sniIDs))
+	placeholders = placeholders[:len(placeholders)-1]
+
+	query := fmt.Sprintf(`
+		SELECT dst_ip, dst_port, COUNT() as count
+		FROM packets
+		WHERE sni_entry_id IN (%s)
+			AND dst_ip_type = 'public'
+		GROUP BY dst_ip, dst_port
+		ORDER BY count DESC
+		LIMIT %d
+	`, placeholders, limit)
+
+	args := make([]interface{}, len(sniIDs))
+	for i, id := range sniIDs {
+		args[i] = id
+	}
+
+	rows, err := c.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []models.RelatedAddress
+	for rows.Next() {
+		var addr models.RelatedAddress
+		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
+			continue
+		}
+		results = append(results, addr)
+	}
+	return results, nil
+}
+
+func (c *ClickHouseStorage) getJA4AndSNIByAddress(ctx context.Context, ip string, port uint16, limit int) ([]models.JA4Candidate, []models.SNICandidate) {
+	if limit <= 0 {
+		limit = 5
+	}
+
+	ja4Results := make([]models.JA4Candidate, 0)
+	sniResults := make([]models.SNICandidate, 0)
+
+	ja4Query := fmt.Sprintf(`
+		SELECT 
+			ja4_entry_id,
+			any(ja4_raw) as ja4_raw,
+			any(ja4_application) as ja4_app,
+			any(ja4_device) as ja4_device,
+			any(ja4_os) as ja4_os,
+			COUNT() as count
+		FROM packets
+		WHERE (dst_ip = ? AND dst_port = ?) AND ja4_entry_id != ''
+		GROUP BY ja4_entry_id
+		ORDER BY count DESC
+		LIMIT %d
+	`, limit)
+
+	rows, err := c.conn.QueryContext(ctx, ja4Query, ip, port)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var cand models.JA4Candidate
+			err := rows.Scan(&cand.ID, &cand.Fingerprint, &cand.Application, &cand.Device, &cand.OS, &cand.Count)
+			if err == nil {
+				ja4Results = append(ja4Results, cand)
+			}
+		}
+	}
+
+	sniQuery := fmt.Sprintf(`
+		SELECT 
+			sni_entry_id,
+			any(sni) as sni,
+			any(sni_service) as sni_service,
+			COUNT() as count
+		FROM packets
+		WHERE (dst_ip = ? AND dst_port = ?) AND sni_entry_id != ''
+		GROUP BY sni_entry_id
+		ORDER BY count DESC
+		LIMIT %d
+	`, limit)
+
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, ip, port)
+	if err == nil {
+		defer rows2.Close()
+		for rows2.Next() {
+			var cand models.SNICandidate
+			err := rows2.Scan(&cand.ID, &cand.SNI, &cand.Service, &cand.Count)
+			if err == nil {
+				sniResults = append(sniResults, cand)
+			}
+		}
+	}
+
+	return ja4Results, sniResults
+}
+
 func toString(v interface{}) string {
 	if v == nil {
 		return ""
@@ -563,110 +826,6 @@ func toString(v interface{}) string {
 	default:
 		return fmt.Sprintf("%v", v)
 	}
-}
-
-// GetRelatedByJA4 - ищет все адреса, где встречаются указанные JA4EntryID (только публичные)
-func (c *ClickHouseStorage) GetRelatedByJA4(ctx context.Context, ja4EntryIDs []string) ([]models.RelatedAddress, error) {
-	if !c.ensureConnection() {
-		return nil, fmt.Errorf("storage not available")
-	}
-
-	query := `
-		SELECT 
-			dst_ip,
-			dst_port,
-			COUNT() as count
-		FROM packets
-		WHERE ja4_entry_id IN (?)
-			AND dst_ip_type = 'public'
-		GROUP BY dst_ip, dst_port
-		ORDER BY count DESC
-		LIMIT 50
-	`
-
-	placeholders := strings.Repeat("?,", len(ja4EntryIDs))
-	placeholders = placeholders[:len(placeholders)-1]
-	query = strings.Replace(query, "(?)", "("+placeholders+")", 1)
-
-	args := []interface{}{}
-	for _, id := range ja4EntryIDs {
-		args = append(args, id)
-	}
-
-	rows, err := c.conn.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []models.RelatedAddress
-	for rows.Next() {
-		var addr models.RelatedAddress
-		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
-			continue
-		}
-		results = append(results, addr)
-	}
-
-	return results, nil
-}
-
-// GetRelatedBySNI - ищет все адреса, где встречаются указанные SNIEntryID (только публичные)
-func (c *ClickHouseStorage) GetRelatedBySNI(ctx context.Context, sniEntryIDs []string) ([]models.RelatedAddress, error) {
-	if !c.ensureConnection() {
-		return nil, fmt.Errorf("storage not available")
-	}
-
-	query := `
-		SELECT 
-			dst_ip,
-			dst_port,
-			COUNT() as count
-		FROM packets
-		WHERE sni_entry_id IN (?)
-			AND dst_ip_type = 'public'
-		GROUP BY dst_ip, dst_port
-		ORDER BY count DESC
-		LIMIT 50
-	`
-
-	placeholders := strings.Repeat("?,", len(sniEntryIDs))
-	placeholders = placeholders[:len(placeholders)-1]
-	query = strings.Replace(query, "(?)", "("+placeholders+")", 1)
-
-	args := []interface{}{}
-	for _, id := range sniEntryIDs {
-		args = append(args, id)
-	}
-
-	rows, err := c.conn.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []models.RelatedAddress
-	for rows.Next() {
-		var addr models.RelatedAddress
-		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
-			continue
-		}
-		results = append(results, addr)
-	}
-
-	return results, nil
-}
-
-func addUnique(slice []string, value string) []string {
-	if value == "" {
-		return slice
-	}
-	for _, v := range slice {
-		if v == value {
-			return slice
-		}
-	}
-	return append(slice, value)
 }
 
 // UpdateConnectionInsight - обновляет JA4 и SNI для всех пакетов соединения

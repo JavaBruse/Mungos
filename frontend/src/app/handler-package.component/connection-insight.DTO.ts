@@ -1,4 +1,3 @@
-// models/connection-insight.ts
 export interface ConnectionInsight {
     localIp: string;
     localPorts: number[];
@@ -12,24 +11,26 @@ export interface ConnectionInsight {
     finCount: number;
     rstCount: number;
     identifiedPackets: number;
-    identificData: IdentificData[];
+    ja4Candidates: JA4Candidate[];
+    sniCandidates: SNICandidate[];
 }
 
-export interface IdentificData {
-    uniqueJa4Raw: string[];
-    uniqueJa4Application: string[];
-    uniqueJa4Device: string[];
-    uniqueJa4Os: string[];
-    uniqueSni: string[];
-    uniqueSniService: string[];
-    uniqueJa4EntryId: string[];
-    uniqueSniEntryId: string[];
-    relatedAddressJa4: RelatedAddress[];
-    relatedAddressSni: RelatedAddress[];
-}
-
-export interface RelatedAddress {
-    remoteIp: string;
-    remotePort: number;
+export interface JA4Candidate {
+    id: string;
+    fingerprint: string;
+    application: string;
+    device: string;
+    os: string;
     count: number;
+    confidence: number;
+    hop: number;
+}
+
+export interface SNICandidate {
+    id: string;
+    sni: string;
+    service: string;
+    count: number;
+    confidence: number;
+    hop: number;
 }

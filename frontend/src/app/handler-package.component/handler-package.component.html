@@ -48,76 +48,65 @@
                         <div>Не идентифицировано: {{ (insight()?.totalPackets ?? 0) - (insight()?.identifiedPackets ??
                             0) }}</div>
                     </div>
-
                 </div>
-
-                @if (insight()?.identificData?.length) {
+                @if (insight()?.ja4Candidates?.length || insight()?.sniCandidates?.length) {
                 <mat-tab-group>
-                    @for (data of insight()?.identificData; track $index) {
-                    <mat-tab label="Идентификация #{{ $index + 1 }}">
-                        <div class="section">
-                            @if (data.uniqueJa4Raw.length) {
-                            <div class="info-block">
-                                <strong>JA4 Raw:</strong>
-                                <div class="tags">{{ data.uniqueJa4Raw.join(', ') }}</div>
-                            </div>
-                            }
-
-                            @if (data.uniqueJa4Application.length) {
-                            <div class="info-block">
-                                <strong>Приложения:</strong>
-                                <div class="tags">{{ data.uniqueJa4Application.join(', ') }}</div>
-                            </div>
-                            }
-
-                            @if (data.uniqueSni.length) {
-                            <div class="info-block">
-                                <strong>SNI:</strong>
-                                <div class="tags">{{ data.uniqueSni.join(', ') }}</div>
-                            </div>
-                            }
-
-                            @if (data.uniqueSniService.length) {
-                            <div class="info-block">
-                                <strong>Сервисы SNI:</strong>
-                                <div class="tags">{{ data.uniqueSniService.join(', ') }}</div>
-                            </div>
-                            }
-
-                            @if (data.relatedAddressJa4.length) {
-                            <div class="info-block">
-                                <strong>Связанные адреса (JA4):</strong>
-                                @for (addr of data.relatedAddressJa4; track addr.remoteIp) {
-                                <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
+                    <mat-tab label="JA4 кандидаты">
+                        <table class="candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>Hop</th>
+                                    <th>Fingerprint</th>
+                                    <th>Application</th>
+                                    <th>Device</th>
+                                    <th>OS</th>
+                                    <th>Count</th>
+                                    <th>Confidence</th>
+                                    <th>ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (candidate of insight()?.ja4Candidates; track candidate.id) {
+                                <tr [class.hop-highlight]="candidate.hop === 1">
+                                    <td>{{ candidate.hop }}</td>
+                                    <td>{{ candidate.fingerprint }}</td>
+                                    <td>{{ candidate.application }}</td>
+                                    <td>{{ candidate.device }}</td>
+                                    <td>{{ candidate.os }}</td>
+                                    <td>{{ candidate.count }}</td>
+                                    <td>{{ candidate.confidence }}</td>
+                                    <td class="id-cell">{{ candidate.id }}</td>
+                                </tr>
                                 }
-                            </div>
-                            }
-
-                            @if (data.relatedAddressSni.length) {
-                            <div class="info-block">
-                                <strong>Связанные адреса (SNI):</strong>
-                                @for (addr of data.relatedAddressSni; track addr.remoteIp) {
-                                <div>{{ addr.remoteIp }}:{{ addr.remotePort }} ({{ addr.count }} пакетов)</div>
-                                }
-                            </div>
-                            }
-
-                            @if (data.uniqueJa4EntryId.length) {
-                            <div class="info-block">
-                                <strong>JA4 Entry ID:</strong>
-                                <div class="tags">{{ data.uniqueJa4EntryId.join(', ') }}</div>
-                            </div>
-                            }
-
-                            @if (data.uniqueSniEntryId.length) {
-                            <div class="info-block">
-                                <strong>SNI Entry ID:</strong>
-                                <div class="tags">{{ data.uniqueSniEntryId.join(', ') }}</div>
-                            </div>
-                            }
-                        </div>
+                            </tbody>
+                        </table>
                     </mat-tab>
-                    }
+                    <mat-tab label="SNI кандидаты">
+                        <table class="candidates-table">
+                            <thead>
+                                <tr>
+                                    <th>Hop</th>
+                                    <th>SNI</th>
+                                    <th>Service</th>
+                                    <th>Count</th>
+                                    <th>Confidence</th>
+                                    <th>ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (candidate of insight()?.sniCandidates; track candidate.id) {
+                                <tr [class.hop-highlight]="candidate.hop === 1">
+                                    <td>{{ candidate.hop }}</td>
+                                    <td>{{ candidate.sni }}</td>
+                                    <td>{{ candidate.service }}</td>
+                                    <td>{{ candidate.count }}</td>
+                                    <td>{{ candidate.confidence }}</td>
+                                    <td class="id-cell">{{ candidate.id }}</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </mat-tab>
                 </mat-tab-group>
                 }
                 <div class="date-grid">
@@ -132,8 +121,9 @@
                     <mat-label>JA4 идентификатор</mat-label>
                     <mat-select [(value)]="selectedJa4Id">
                         <mat-option value="">Не выбрано</mat-option>
-                        @for (id of allJa4EntryIds(); track id) {
-                        <mat-option [value]="id">{{ id }}</mat-option>
+                        @for (candidate of allJa4Candidates(); track candidate.id) {
+                        <mat-option [value]="candidate.id">{{ candidate.application || candidate.fingerprint ||
+                            candidate.id }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
@@ -142,8 +132,9 @@
                     <mat-label>SNI идентификатор</mat-label>
                     <mat-select [(value)]="selectedSniId">
                         <mat-option value="">Не выбрано</mat-option>
-                        @for (id of allSniEntryIds(); track id) {
-                        <mat-option [value]="id">{{ id }}</mat-option>
+                        @for (candidate of allSniCandidates(); track candidate.id) {
+                        <mat-option [value]="candidate.id">{{ candidate.sni || candidate.service || candidate.id
+                            }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>

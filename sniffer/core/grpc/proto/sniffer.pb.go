@@ -206,8 +206,9 @@ type ConnectionInsight struct {
 	SynCount          int64                  `protobuf:"varint,9,opt,name=syn_count,json=synCount,proto3" json:"syn_count,omitempty"`
 	FinCount          int64                  `protobuf:"varint,10,opt,name=fin_count,json=finCount,proto3" json:"fin_count,omitempty"`
 	RstCount          int64                  `protobuf:"varint,11,opt,name=rst_count,json=rstCount,proto3" json:"rst_count,omitempty"`
-	IdentificData     []*IdentificData       `protobuf:"bytes,12,rep,name=identific_data,json=identificData,proto3" json:"identific_data,omitempty"`
-	IdentifiedPackets int64                  `protobuf:"varint,13,opt,name=identified_packets,json=identifiedPackets,proto3" json:"identified_packets,omitempty"`
+	IdentifiedPackets int64                  `protobuf:"varint,12,opt,name=identified_packets,json=identifiedPackets,proto3" json:"identified_packets,omitempty"`
+	Ja4Candidates     []*JA4Candidate        `protobuf:"bytes,13,rep,name=ja4_candidates,json=ja4Candidates,proto3" json:"ja4_candidates,omitempty"`
+	SniCandidates     []*SNICandidate        `protobuf:"bytes,14,rep,name=sni_candidates,json=sniCandidates,proto3" json:"sni_candidates,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -319,13 +320,6 @@ func (x *ConnectionInsight) GetRstCount() int64 {
 	return 0
 }
 
-func (x *ConnectionInsight) GetIdentificData() []*IdentificData {
-	if x != nil {
-		return x.IdentificData
-	}
-	return nil
-}
-
 func (x *ConnectionInsight) GetIdentifiedPackets() int64 {
 	if x != nil {
 		return x.IdentifiedPackets
@@ -333,145 +327,146 @@ func (x *ConnectionInsight) GetIdentifiedPackets() int64 {
 	return 0
 }
 
-type IdentificData struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	UniqueJa4Raw         []string               `protobuf:"bytes,1,rep,name=unique_ja4_raw,json=uniqueJa4Raw,proto3" json:"unique_ja4_raw,omitempty"`
-	UniqueJa4Application []string               `protobuf:"bytes,2,rep,name=unique_ja4_application,json=uniqueJa4Application,proto3" json:"unique_ja4_application,omitempty"`
-	UniqueJa4Device      []string               `protobuf:"bytes,3,rep,name=unique_ja4_device,json=uniqueJa4Device,proto3" json:"unique_ja4_device,omitempty"`
-	UniqueJa4Os          []string               `protobuf:"bytes,4,rep,name=unique_ja4_os,json=uniqueJa4Os,proto3" json:"unique_ja4_os,omitempty"`
-	UniqueSni            []string               `protobuf:"bytes,5,rep,name=unique_sni,json=uniqueSni,proto3" json:"unique_sni,omitempty"`
-	UniqueSniService     []string               `protobuf:"bytes,6,rep,name=unique_sni_service,json=uniqueSniService,proto3" json:"unique_sni_service,omitempty"`
-	UniqueJa4EntryId     []string               `protobuf:"bytes,7,rep,name=unique_ja4_entry_id,json=uniqueJa4EntryId,proto3" json:"unique_ja4_entry_id,omitempty"`
-	UniqueSniEntryId     []string               `protobuf:"bytes,8,rep,name=unique_sni_entry_id,json=uniqueSniEntryId,proto3" json:"unique_sni_entry_id,omitempty"`
-	RelatedAddressJa4    []*RelatedAddress      `protobuf:"bytes,9,rep,name=related_address_ja4,json=relatedAddressJa4,proto3" json:"related_address_ja4,omitempty"`
-	RelatedAddressSni    []*RelatedAddress      `protobuf:"bytes,10,rep,name=related_address_sni,json=relatedAddressSni,proto3" json:"related_address_sni,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
-}
-
-func (x *IdentificData) Reset() {
-	*x = IdentificData{}
-	mi := &file_proto_sniffer_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IdentificData) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IdentificData) ProtoMessage() {}
-
-func (x *IdentificData) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_sniffer_proto_msgTypes[4]
+func (x *ConnectionInsight) GetJa4Candidates() []*JA4Candidate {
 	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IdentificData.ProtoReflect.Descriptor instead.
-func (*IdentificData) Descriptor() ([]byte, []int) {
-	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *IdentificData) GetUniqueJa4Raw() []string {
-	if x != nil {
-		return x.UniqueJa4Raw
+		return x.Ja4Candidates
 	}
 	return nil
 }
 
-func (x *IdentificData) GetUniqueJa4Application() []string {
+func (x *ConnectionInsight) GetSniCandidates() []*SNICandidate {
 	if x != nil {
-		return x.UniqueJa4Application
+		return x.SniCandidates
 	}
 	return nil
 }
 
-func (x *IdentificData) GetUniqueJa4Device() []string {
-	if x != nil {
-		return x.UniqueJa4Device
-	}
-	return nil
-}
-
-func (x *IdentificData) GetUniqueJa4Os() []string {
-	if x != nil {
-		return x.UniqueJa4Os
-	}
-	return nil
-}
-
-func (x *IdentificData) GetUniqueSni() []string {
-	if x != nil {
-		return x.UniqueSni
-	}
-	return nil
-}
-
-func (x *IdentificData) GetUniqueSniService() []string {
-	if x != nil {
-		return x.UniqueSniService
-	}
-	return nil
-}
-
-func (x *IdentificData) GetUniqueJa4EntryId() []string {
-	if x != nil {
-		return x.UniqueJa4EntryId
-	}
-	return nil
-}
-
-func (x *IdentificData) GetUniqueSniEntryId() []string {
-	if x != nil {
-		return x.UniqueSniEntryId
-	}
-	return nil
-}
-
-func (x *IdentificData) GetRelatedAddressJa4() []*RelatedAddress {
-	if x != nil {
-		return x.RelatedAddressJa4
-	}
-	return nil
-}
-
-func (x *IdentificData) GetRelatedAddressSni() []*RelatedAddress {
-	if x != nil {
-		return x.RelatedAddressSni
-	}
-	return nil
-}
-
-type RelatedAddress struct {
+type JA4Candidate struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RemoteIp      string                 `protobuf:"bytes,1,opt,name=remote_ip,json=remoteIp,proto3" json:"remote_ip,omitempty"`
-	RemotePort    uint32                 `protobuf:"varint,2,opt,name=remote_port,json=remotePort,proto3" json:"remote_port,omitempty"`
-	Count         int64                  `protobuf:"varint,3,opt,name=count,proto3" json:"count,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Fingerprint   string                 `protobuf:"bytes,2,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	Application   string                 `protobuf:"bytes,3,opt,name=application,proto3" json:"application,omitempty"`
+	Device        string                 `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
+	Os            string                 `protobuf:"bytes,5,opt,name=os,proto3" json:"os,omitempty"`
+	Count         int64                  `protobuf:"varint,6,opt,name=count,proto3" json:"count,omitempty"`
+	Confidence    int32                  `protobuf:"varint,7,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	Hop           int32                  `protobuf:"varint,8,opt,name=hop,proto3" json:"hop,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RelatedAddress) Reset() {
-	*x = RelatedAddress{}
+func (x *JA4Candidate) Reset() {
+	*x = JA4Candidate{}
+	mi := &file_proto_sniffer_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JA4Candidate) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JA4Candidate) ProtoMessage() {}
+
+func (x *JA4Candidate) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_sniffer_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JA4Candidate.ProtoReflect.Descriptor instead.
+func (*JA4Candidate) Descriptor() ([]byte, []int) {
+	return file_proto_sniffer_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *JA4Candidate) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *JA4Candidate) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *JA4Candidate) GetApplication() string {
+	if x != nil {
+		return x.Application
+	}
+	return ""
+}
+
+func (x *JA4Candidate) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *JA4Candidate) GetOs() string {
+	if x != nil {
+		return x.Os
+	}
+	return ""
+}
+
+func (x *JA4Candidate) GetCount() int64 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *JA4Candidate) GetConfidence() int32 {
+	if x != nil {
+		return x.Confidence
+	}
+	return 0
+}
+
+func (x *JA4Candidate) GetHop() int32 {
+	if x != nil {
+		return x.Hop
+	}
+	return 0
+}
+
+type SNICandidate struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Sni           string                 `protobuf:"bytes,2,opt,name=sni,proto3" json:"sni,omitempty"`
+	Service       string                 `protobuf:"bytes,3,opt,name=service,proto3" json:"service,omitempty"`
+	Count         int64                  `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	Confidence    int32                  `protobuf:"varint,5,opt,name=confidence,proto3" json:"confidence,omitempty"`
+	Hop           int32                  `protobuf:"varint,6,opt,name=hop,proto3" json:"hop,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SNICandidate) Reset() {
+	*x = SNICandidate{}
 	mi := &file_proto_sniffer_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RelatedAddress) String() string {
+func (x *SNICandidate) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RelatedAddress) ProtoMessage() {}
+func (*SNICandidate) ProtoMessage() {}
 
-func (x *RelatedAddress) ProtoReflect() protoreflect.Message {
+func (x *SNICandidate) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_sniffer_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -483,28 +478,49 @@ func (x *RelatedAddress) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RelatedAddress.ProtoReflect.Descriptor instead.
-func (*RelatedAddress) Descriptor() ([]byte, []int) {
+// Deprecated: Use SNICandidate.ProtoReflect.Descriptor instead.
+func (*SNICandidate) Descriptor() ([]byte, []int) {
 	return file_proto_sniffer_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *RelatedAddress) GetRemoteIp() string {
+func (x *SNICandidate) GetId() string {
 	if x != nil {
-		return x.RemoteIp
+		return x.Id
 	}
 	return ""
 }
 
-func (x *RelatedAddress) GetRemotePort() uint32 {
+func (x *SNICandidate) GetSni() string {
 	if x != nil {
-		return x.RemotePort
+		return x.Sni
+	}
+	return ""
+}
+
+func (x *SNICandidate) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *SNICandidate) GetCount() int64 {
+	if x != nil {
+		return x.Count
 	}
 	return 0
 }
 
-func (x *RelatedAddress) GetCount() int64 {
+func (x *SNICandidate) GetConfidence() int32 {
 	if x != nil {
-		return x.Count
+		return x.Confidence
+	}
+	return 0
+}
+
+func (x *SNICandidate) GetHop() int32 {
+	if x != nil {
+		return x.Hop
 	}
 	return 0
 }
@@ -2363,7 +2379,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\x18ConnectionInsightRequest\x12\x1f\n" +
 	"\vsession_key\x18\x01 \x01(\tR\n" +
 	"sessionKey\x12\x1b\n" +
-	"\tpacket_id\x18\x02 \x01(\tR\bpacketId\"\xee\x03\n" +
+	"\tpacket_id\x18\x02 \x01(\tR\bpacketId\"\xab\x04\n" +
 	"\x11ConnectionInsight\x12\x19\n" +
 	"\blocal_ip\x18\x01 \x01(\tR\alocalIp\x12\x1f\n" +
 	"\vlocal_ports\x18\x02 \x03(\rR\n" +
@@ -2379,27 +2395,30 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"\tsyn_count\x18\t \x01(\x03R\bsynCount\x12\x1b\n" +
 	"\tfin_count\x18\n" +
 	" \x01(\x03R\bfinCount\x12\x1b\n" +
-	"\trst_count\x18\v \x01(\x03R\brstCount\x12=\n" +
-	"\x0eidentific_data\x18\f \x03(\v2\x16.sniffer.IdentificDataR\ridentificData\x12-\n" +
-	"\x12identified_packets\x18\r \x01(\x03R\x11identifiedPackets\"\xf8\x03\n" +
-	"\rIdentificData\x12$\n" +
-	"\x0eunique_ja4_raw\x18\x01 \x03(\tR\funiqueJa4Raw\x124\n" +
-	"\x16unique_ja4_application\x18\x02 \x03(\tR\x14uniqueJa4Application\x12*\n" +
-	"\x11unique_ja4_device\x18\x03 \x03(\tR\x0funiqueJa4Device\x12\"\n" +
-	"\runique_ja4_os\x18\x04 \x03(\tR\vuniqueJa4Os\x12\x1d\n" +
+	"\trst_count\x18\v \x01(\x03R\brstCount\x12-\n" +
+	"\x12identified_packets\x18\f \x01(\x03R\x11identifiedPackets\x12<\n" +
+	"\x0eja4_candidates\x18\r \x03(\v2\x15.sniffer.JA4CandidateR\rja4Candidates\x12<\n" +
+	"\x0esni_candidates\x18\x0e \x03(\v2\x15.sniffer.SNICandidateR\rsniCandidates\"\xd2\x01\n" +
+	"\fJA4Candidate\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
+	"\vfingerprint\x18\x02 \x01(\tR\vfingerprint\x12 \n" +
+	"\vapplication\x18\x03 \x01(\tR\vapplication\x12\x16\n" +
+	"\x06device\x18\x04 \x01(\tR\x06device\x12\x0e\n" +
+	"\x02os\x18\x05 \x01(\tR\x02os\x12\x14\n" +
+	"\x05count\x18\x06 \x01(\x03R\x05count\x12\x1e\n" +
 	"\n" +
-	"unique_sni\x18\x05 \x03(\tR\tuniqueSni\x12,\n" +
-	"\x12unique_sni_service\x18\x06 \x03(\tR\x10uniqueSniService\x12-\n" +
-	"\x13unique_ja4_entry_id\x18\a \x03(\tR\x10uniqueJa4EntryId\x12-\n" +
-	"\x13unique_sni_entry_id\x18\b \x03(\tR\x10uniqueSniEntryId\x12G\n" +
-	"\x13related_address_ja4\x18\t \x03(\v2\x17.sniffer.RelatedAddressR\x11relatedAddressJa4\x12G\n" +
-	"\x13related_address_sni\x18\n" +
-	" \x03(\v2\x17.sniffer.RelatedAddressR\x11relatedAddressSni\"d\n" +
-	"\x0eRelatedAddress\x12\x1b\n" +
-	"\tremote_ip\x18\x01 \x01(\tR\bremoteIp\x12\x1f\n" +
-	"\vremote_port\x18\x02 \x01(\rR\n" +
-	"remotePort\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x03R\x05count\"A\n" +
+	"confidence\x18\a \x01(\x05R\n" +
+	"confidence\x12\x10\n" +
+	"\x03hop\x18\b \x01(\x05R\x03hop\"\x92\x01\n" +
+	"\fSNICandidate\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
+	"\x03sni\x18\x02 \x01(\tR\x03sni\x12\x18\n" +
+	"\aservice\x18\x03 \x01(\tR\aservice\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\x03R\x05count\x12\x1e\n" +
+	"\n" +
+	"confidence\x18\x05 \x01(\x05R\n" +
+	"confidence\x12\x10\n" +
+	"\x03hop\x18\x06 \x01(\x05R\x03hop\"A\n" +
 	"\tHashTable\x12\x19\n" +
 	"\bsni_hash\x18\x01 \x01(\x04R\asniHash\x12\x19\n" +
 	"\bja4_hash\x18\x02 \x01(\x04R\aja4Hash\"\xce\x01\n" +
@@ -2634,8 +2653,8 @@ var file_proto_sniffer_proto_goTypes = []any{
 	(*UpdateConnectionInsightResponse)(nil), // 1: sniffer.UpdateConnectionInsightResponse
 	(*ConnectionInsightRequest)(nil),        // 2: sniffer.ConnectionInsightRequest
 	(*ConnectionInsight)(nil),               // 3: sniffer.ConnectionInsight
-	(*IdentificData)(nil),                   // 4: sniffer.IdentificData
-	(*RelatedAddress)(nil),                  // 5: sniffer.RelatedAddress
+	(*JA4Candidate)(nil),                    // 4: sniffer.JA4Candidate
+	(*SNICandidate)(nil),                    // 5: sniffer.SNICandidate
 	(*HashTable)(nil),                       // 6: sniffer.HashTable
 	(*SNIEntry)(nil),                        // 7: sniffer.SNIEntry
 	(*SNIEntryList)(nil),                    // 8: sniffer.SNIEntryList
@@ -2669,56 +2688,55 @@ var file_proto_sniffer_proto_goTypes = []any{
 	nil,                                     // 36: sniffer.MetricsResponse.TopServicesByConnectionsEntry
 }
 var file_proto_sniffer_proto_depIdxs = []int32{
-	4,  // 0: sniffer.ConnectionInsight.identific_data:type_name -> sniffer.IdentificData
-	5,  // 1: sniffer.IdentificData.related_address_ja4:type_name -> sniffer.RelatedAddress
-	5,  // 2: sniffer.IdentificData.related_address_sni:type_name -> sniffer.RelatedAddress
-	7,  // 3: sniffer.SNIEntryList.entries:type_name -> sniffer.SNIEntry
-	12, // 4: sniffer.JA4EntryList.entries:type_name -> sniffer.JA4Entry
-	20, // 5: sniffer.PackageFilterRequest.filter:type_name -> sniffer.FilterExpression
-	30, // 6: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
-	31, // 7: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
-	32, // 8: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
-	33, // 9: sniffer.MetricsResponse.well_known_ports:type_name -> sniffer.MetricsResponse.WellKnownPortsEntry
-	34, // 10: sniffer.MetricsResponse.top_services:type_name -> sniffer.MetricsResponse.TopServicesEntry
-	35, // 11: sniffer.MetricsResponse.top_applications:type_name -> sniffer.MetricsResponse.TopApplicationsEntry
-	36, // 12: sniffer.MetricsResponse.top_services_by_connections:type_name -> sniffer.MetricsResponse.TopServicesByConnectionsEntry
-	22, // 13: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
-	26, // 14: sniffer.SnifferService.GetMetrics:input_type -> sniffer.AuthRequest
-	28, // 15: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
-	19, // 16: sniffer.SnifferService.GetFilteredPackage:input_type -> sniffer.PackageFilterRequest
-	17, // 17: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
-	24, // 18: sniffer.SnifferService.GetSettings:input_type -> sniffer.SettingRequest
-	24, // 19: sniffer.SnifferService.SetSettings:input_type -> sniffer.SettingRequest
-	15, // 20: sniffer.SnifferService.DownloadJA4Database:input_type -> sniffer.Ja4DataChunkRequest
-	14, // 21: sniffer.SnifferService.UploadJA4Database:input_type -> sniffer.Ja4DataChunk
-	12, // 22: sniffer.SnifferService.UpdateOrSaveJa4Entry:input_type -> sniffer.JA4Entry
-	10, // 23: sniffer.SnifferService.DownloadSNIDatabase:input_type -> sniffer.SNIDataChunkRequest
-	9,  // 24: sniffer.SnifferService.UploadSNIDatabase:input_type -> sniffer.SNIDataChunk
-	7,  // 25: sniffer.SnifferService.UpdateOrSaveSNIEntry:input_type -> sniffer.SNIEntry
-	26, // 26: sniffer.SnifferService.GetHashSNIandJa4HashTable:input_type -> sniffer.AuthRequest
-	2,  // 27: sniffer.SnifferService.GetConnectionInsight:input_type -> sniffer.ConnectionInsightRequest
-	0,  // 28: sniffer.SnifferService.UpdateConnectionInsight:input_type -> sniffer.UpdateConnectionInsightRequest
-	23, // 29: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
-	27, // 30: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
-	29, // 31: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
-	21, // 32: sniffer.SnifferService.GetFilteredPackage:output_type -> sniffer.TrafficPacket
-	18, // 33: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
-	25, // 34: sniffer.SnifferService.GetSettings:output_type -> sniffer.SettingResponse
-	25, // 35: sniffer.SnifferService.SetSettings:output_type -> sniffer.SettingResponse
-	14, // 36: sniffer.SnifferService.DownloadJA4Database:output_type -> sniffer.Ja4DataChunk
-	16, // 37: sniffer.SnifferService.UploadJA4Database:output_type -> sniffer.Ja4DataChunkResponse
-	12, // 38: sniffer.SnifferService.UpdateOrSaveJa4Entry:output_type -> sniffer.JA4Entry
-	9,  // 39: sniffer.SnifferService.DownloadSNIDatabase:output_type -> sniffer.SNIDataChunk
-	11, // 40: sniffer.SnifferService.UploadSNIDatabase:output_type -> sniffer.SNIDataChunkResponse
-	7,  // 41: sniffer.SnifferService.UpdateOrSaveSNIEntry:output_type -> sniffer.SNIEntry
-	6,  // 42: sniffer.SnifferService.GetHashSNIandJa4HashTable:output_type -> sniffer.HashTable
-	3,  // 43: sniffer.SnifferService.GetConnectionInsight:output_type -> sniffer.ConnectionInsight
-	1,  // 44: sniffer.SnifferService.UpdateConnectionInsight:output_type -> sniffer.UpdateConnectionInsightResponse
-	29, // [29:45] is the sub-list for method output_type
-	13, // [13:29] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	4,  // 0: sniffer.ConnectionInsight.ja4_candidates:type_name -> sniffer.JA4Candidate
+	5,  // 1: sniffer.ConnectionInsight.sni_candidates:type_name -> sniffer.SNICandidate
+	7,  // 2: sniffer.SNIEntryList.entries:type_name -> sniffer.SNIEntry
+	12, // 3: sniffer.JA4EntryList.entries:type_name -> sniffer.JA4Entry
+	20, // 4: sniffer.PackageFilterRequest.filter:type_name -> sniffer.FilterExpression
+	30, // 5: sniffer.FilterExpression.custom:type_name -> sniffer.FilterExpression.CustomEntry
+	31, // 6: sniffer.TrafficPacket.headers:type_name -> sniffer.TrafficPacket.HeadersEntry
+	32, // 7: sniffer.MetricsResponse.protocols:type_name -> sniffer.MetricsResponse.ProtocolsEntry
+	33, // 8: sniffer.MetricsResponse.well_known_ports:type_name -> sniffer.MetricsResponse.WellKnownPortsEntry
+	34, // 9: sniffer.MetricsResponse.top_services:type_name -> sniffer.MetricsResponse.TopServicesEntry
+	35, // 10: sniffer.MetricsResponse.top_applications:type_name -> sniffer.MetricsResponse.TopApplicationsEntry
+	36, // 11: sniffer.MetricsResponse.top_services_by_connections:type_name -> sniffer.MetricsResponse.TopServicesByConnectionsEntry
+	22, // 12: sniffer.SnifferService.Register:input_type -> sniffer.RegisterRequest
+	26, // 13: sniffer.SnifferService.GetMetrics:input_type -> sniffer.AuthRequest
+	28, // 14: sniffer.SnifferService.Ping:input_type -> sniffer.PingRequest
+	19, // 15: sniffer.SnifferService.GetFilteredPackage:input_type -> sniffer.PackageFilterRequest
+	17, // 16: sniffer.SnifferService.GetPacketPayload:input_type -> sniffer.PayloadRequest
+	24, // 17: sniffer.SnifferService.GetSettings:input_type -> sniffer.SettingRequest
+	24, // 18: sniffer.SnifferService.SetSettings:input_type -> sniffer.SettingRequest
+	15, // 19: sniffer.SnifferService.DownloadJA4Database:input_type -> sniffer.Ja4DataChunkRequest
+	14, // 20: sniffer.SnifferService.UploadJA4Database:input_type -> sniffer.Ja4DataChunk
+	12, // 21: sniffer.SnifferService.UpdateOrSaveJa4Entry:input_type -> sniffer.JA4Entry
+	10, // 22: sniffer.SnifferService.DownloadSNIDatabase:input_type -> sniffer.SNIDataChunkRequest
+	9,  // 23: sniffer.SnifferService.UploadSNIDatabase:input_type -> sniffer.SNIDataChunk
+	7,  // 24: sniffer.SnifferService.UpdateOrSaveSNIEntry:input_type -> sniffer.SNIEntry
+	26, // 25: sniffer.SnifferService.GetHashSNIandJa4HashTable:input_type -> sniffer.AuthRequest
+	2,  // 26: sniffer.SnifferService.GetConnectionInsight:input_type -> sniffer.ConnectionInsightRequest
+	0,  // 27: sniffer.SnifferService.UpdateConnectionInsight:input_type -> sniffer.UpdateConnectionInsightRequest
+	23, // 28: sniffer.SnifferService.Register:output_type -> sniffer.RegisterResponse
+	27, // 29: sniffer.SnifferService.GetMetrics:output_type -> sniffer.MetricsResponse
+	29, // 30: sniffer.SnifferService.Ping:output_type -> sniffer.PingResponse
+	21, // 31: sniffer.SnifferService.GetFilteredPackage:output_type -> sniffer.TrafficPacket
+	18, // 32: sniffer.SnifferService.GetPacketPayload:output_type -> sniffer.PayloadResponse
+	25, // 33: sniffer.SnifferService.GetSettings:output_type -> sniffer.SettingResponse
+	25, // 34: sniffer.SnifferService.SetSettings:output_type -> sniffer.SettingResponse
+	14, // 35: sniffer.SnifferService.DownloadJA4Database:output_type -> sniffer.Ja4DataChunk
+	16, // 36: sniffer.SnifferService.UploadJA4Database:output_type -> sniffer.Ja4DataChunkResponse
+	12, // 37: sniffer.SnifferService.UpdateOrSaveJa4Entry:output_type -> sniffer.JA4Entry
+	9,  // 38: sniffer.SnifferService.DownloadSNIDatabase:output_type -> sniffer.SNIDataChunk
+	11, // 39: sniffer.SnifferService.UploadSNIDatabase:output_type -> sniffer.SNIDataChunkResponse
+	7,  // 40: sniffer.SnifferService.UpdateOrSaveSNIEntry:output_type -> sniffer.SNIEntry
+	6,  // 41: sniffer.SnifferService.GetHashSNIandJa4HashTable:output_type -> sniffer.HashTable
+	3,  // 42: sniffer.SnifferService.GetConnectionInsight:output_type -> sniffer.ConnectionInsight
+	1,  // 43: sniffer.SnifferService.UpdateConnectionInsight:output_type -> sniffer.UpdateConnectionInsightResponse
+	28, // [28:44] is the sub-list for method output_type
+	12, // [12:28] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_proto_sniffer_proto_init() }

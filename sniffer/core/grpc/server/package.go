@@ -96,19 +96,29 @@ func convertToProtoConnectionInsight(insight *models.ConnectionInsight) *pb.Conn
 		localPorts[i] = uint32(port)
 	}
 
-	identificData := make([]*pb.IdentificData, len(insight.IdentificData))
-	for i, id := range insight.IdentificData {
-		identificData[i] = &pb.IdentificData{
-			UniqueJa4Raw:         id.UniqueJA4Raw,
-			UniqueJa4Application: id.UniqueJA4Application,
-			UniqueJa4Device:      id.UniqueJA4Device,
-			UniqueJa4Os:          id.UniqueJA4OS,
-			UniqueSni:            id.UniqueSNI,
-			UniqueSniService:     id.UniqueSNIService,
-			UniqueJa4EntryId:     id.UniqueJA4EntryID,
-			UniqueSniEntryId:     id.UniqueSNIEntryID,
-			RelatedAddressJa4:    convertToProtoRelatedAddresses(id.RelatedAddressJa4),
-			RelatedAddressSni:    convertToProtoRelatedAddresses(id.RelatedAddressSNI),
+	ja4Candidates := make([]*pb.JA4Candidate, len(insight.JA4Candidates))
+	for i, cand := range insight.JA4Candidates {
+		ja4Candidates[i] = &pb.JA4Candidate{
+			Id:          cand.ID,
+			Fingerprint: cand.Fingerprint,
+			Application: cand.Application,
+			Device:      cand.Device,
+			Os:          cand.OS,
+			Count:       cand.Count,
+			Confidence:  int32(cand.Confidence),
+			Hop:         int32(cand.Hop),
+		}
+	}
+
+	sniCandidates := make([]*pb.SNICandidate, len(insight.SNICandidates))
+	for i, cand := range insight.SNICandidates {
+		sniCandidates[i] = &pb.SNICandidate{
+			Id:         cand.ID,
+			Sni:        cand.SNI,
+			Service:    cand.Service,
+			Count:      cand.Count,
+			Confidence: int32(cand.Confidence),
+			Hop:        int32(cand.Hop),
 		}
 	}
 
@@ -125,24 +135,9 @@ func convertToProtoConnectionInsight(insight *models.ConnectionInsight) *pb.Conn
 		FinCount:          insight.FinCount,
 		RstCount:          insight.RstCount,
 		IdentifiedPackets: insight.IdentifiedPackets,
-		IdentificData:     identificData,
+		Ja4Candidates:     ja4Candidates,
+		SniCandidates:     sniCandidates,
 	}
-}
-
-func convertToProtoRelatedAddresses(addresses []models.RelatedAddress) []*pb.RelatedAddress {
-	if addresses == nil {
-		return nil
-	}
-
-	result := make([]*pb.RelatedAddress, len(addresses))
-	for i, addr := range addresses {
-		result[i] = &pb.RelatedAddress{
-			RemoteIp:   addr.RemoteIP,
-			RemotePort: uint32(addr.RemotePort),
-			Count:      addr.Count,
-		}
-	}
-	return result
 }
 
 func (s *Server) UpdateConnectionInsight(ctx context.Context, req *pb.UpdateConnectionInsightRequest) (*pb.UpdateConnectionInsightResponse, error) {

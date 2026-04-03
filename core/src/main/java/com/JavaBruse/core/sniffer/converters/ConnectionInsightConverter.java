@@ -1,10 +1,9 @@
 package com.JavaBruse.core.sniffer.converters;
 
-
 import com.JavaBruse.core.sniffer.domain.DTO.ConnectionInsightDTO;
 import com.JavaBruse.proto.ConnectionInsight;
-import com.JavaBruse.proto.IdentificData;
-import com.JavaBruse.proto.RelatedAddress;
+import com.JavaBruse.proto.JA4Candidate;
+import com.JavaBruse.proto.SNICandidate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,59 +29,61 @@ public class ConnectionInsightConverter {
         dto.setSynCount(proto.getSynCount());
         dto.setFinCount(proto.getFinCount());
         dto.setRstCount(proto.getRstCount());
-        dto.setIdentificData(toIdentificDataDTOList(proto.getIdentificDataList()));
         dto.setIdentifiedPackets(proto.getIdentifiedPackets());
+        dto.setJa4Candidates(toJA4CandidateDTOList(proto.getJa4CandidatesList()));
+        dto.setSniCandidates(toSNICandidateDTOList(proto.getSniCandidatesList()));
 
         return dto;
     }
 
-    private List<ConnectionInsightDTO.IdentificDataDTO> toIdentificDataDTOList(List<IdentificData> identificDataList) {
-        if (identificDataList == null) {
+    private List<ConnectionInsightDTO.JA4CandidateDTO> toJA4CandidateDTOList(List<JA4Candidate> candidates) {
+        if (candidates == null) {
             return null;
         }
-        return identificDataList.stream()
-                .map(this::toIdentificDataDTO)
+        return candidates.stream()
+                .map(this::toJA4CandidateDTO)
                 .collect(Collectors.toList());
     }
 
-    private ConnectionInsightDTO.IdentificDataDTO toIdentificDataDTO(IdentificData proto) {
+    private ConnectionInsightDTO.JA4CandidateDTO toJA4CandidateDTO(JA4Candidate proto) {
         if (proto == null) {
             return null;
         }
 
-        ConnectionInsightDTO.IdentificDataDTO dto = new ConnectionInsightDTO.IdentificDataDTO();
-        dto.setUniqueJa4Raw(proto.getUniqueJa4RawList());
-        dto.setUniqueJa4Application(proto.getUniqueJa4ApplicationList());
-        dto.setUniqueJa4Device(proto.getUniqueJa4DeviceList());
-        dto.setUniqueJa4Os(proto.getUniqueJa4OsList());
-        dto.setUniqueSni(proto.getUniqueSniList());
-        dto.setUniqueSniService(proto.getUniqueSniServiceList());
-        dto.setUniqueJa4EntryId(proto.getUniqueJa4EntryIdList());
-        dto.setUniqueSniEntryId(proto.getUniqueSniEntryIdList());
-        dto.setRelatedAddressJa4(toRelatedAddressDTOList(proto.getRelatedAddressJa4List()));
-        dto.setRelatedAddressSni(toRelatedAddressDTOList(proto.getRelatedAddressSniList()));
-
-        return dto;
-    }
-
-    private List<ConnectionInsightDTO.IdentificDataDTO.RelatedAddressDTO> toRelatedAddressDTOList(List<RelatedAddress> addressList) {
-        if (addressList == null) {
-            return null;
-        }
-        return addressList.stream()
-                .map(this::toRelatedAddressDTO)
-                .collect(Collectors.toList());
-    }
-
-    private ConnectionInsightDTO.IdentificDataDTO.RelatedAddressDTO toRelatedAddressDTO(RelatedAddress proto) {
-        if (proto == null) {
-            return null;
-        }
-
-        ConnectionInsightDTO.IdentificDataDTO.RelatedAddressDTO dto = new ConnectionInsightDTO.IdentificDataDTO.RelatedAddressDTO();
-        dto.setRemoteIp(proto.getRemoteIp());
-        dto.setRemotePort(proto.getRemotePort());
+        ConnectionInsightDTO.JA4CandidateDTO dto = new ConnectionInsightDTO.JA4CandidateDTO();
+        dto.setId(proto.getId());
+        dto.setFingerprint(proto.getFingerprint());
+        dto.setApplication(proto.getApplication());
+        dto.setDevice(proto.getDevice());
+        dto.setOs(proto.getOs());
         dto.setCount(proto.getCount());
+        dto.setConfidence((int) proto.getConfidence());
+        dto.setHop((int) proto.getHop());
+
+        return dto;
+    }
+
+    private List<ConnectionInsightDTO.SNICandidateDTO> toSNICandidateDTOList(List<SNICandidate> candidates) {
+        if (candidates == null) {
+            return null;
+        }
+        return candidates.stream()
+                .map(this::toSNICandidateDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ConnectionInsightDTO.SNICandidateDTO toSNICandidateDTO(SNICandidate proto) {
+        if (proto == null) {
+            return null;
+        }
+
+        ConnectionInsightDTO.SNICandidateDTO dto = new ConnectionInsightDTO.SNICandidateDTO();
+        dto.setId(proto.getId());
+        dto.setSni(proto.getSni());
+        dto.setService(proto.getService());
+        dto.setCount(proto.getCount());
+        dto.setConfidence((int) proto.getConfidence());
+        dto.setHop((int) proto.getHop());
 
         return dto;
     }

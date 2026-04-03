@@ -59,10 +59,13 @@ type SettingsData struct {
 }
 
 type ConnectionInsight struct {
-	LocalIP           string
-	LocalPorts        []uint16
-	RemoteIP          string
-	RemotePort        uint16
+	// Соединение
+	LocalIP    string
+	LocalPorts []uint16
+	RemoteIP   string
+	RemotePort uint16
+
+	// Статистика
 	TotalPackets      int64
 	TotalBytes        int64
 	FirstPacketTime   int64
@@ -70,27 +73,30 @@ type ConnectionInsight struct {
 	SynCount          int64
 	FinCount          int64
 	RstCount          int64
-	IdentificData     []IdentificData
 	IdentifiedPackets int64
+
+	JA4Candidates []JA4Candidate
+	SNICandidates []SNICandidate
 }
 
-type IdentificData struct {
-	UniqueJA4Raw         []string
-	UniqueJA4Application []string
-	UniqueJA4Device      []string
-	UniqueJA4OS          []string
-	UniqueSNI            []string
-	UniqueSNIService     []string
-	UniqueJA4EntryID     []string
-	UniqueSNIEntryID     []string
-	RelatedAddressJa4    []RelatedAddress
-	RelatedAddressSNI    []RelatedAddress
+type JA4Candidate struct {
+	ID          string
+	Fingerprint string
+	Application string
+	Device      string
+	OS          string
+	Count       int64
+	Confidence  int
+	Hop         int
 }
 
-type RelatedAddress struct {
-	RemoteIP   string
-	RemotePort uint16
+type SNICandidate struct {
+	ID         string
+	SNI        string
+	Service    string
 	Count      int64
+	Confidence int
+	Hop        int
 }
 
 type SNIEntry struct {
@@ -208,4 +214,10 @@ func SNIEntryListFromProto(list *pb.SNIEntryList) []SNIEntry {
 		entries[i] = *SNIEntryFromProto(p)
 	}
 	return entries
+}
+
+type RelatedAddress struct {
+	RemoteIP   string
+	RemotePort uint16
+	Count      int64
 }

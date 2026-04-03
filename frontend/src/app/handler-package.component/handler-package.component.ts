@@ -21,12 +21,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 export class HandlerPackageComponent implements OnInit, OnDestroy {
   private snifferService = inject(SnifferService);
   private subscription: Subscription | null = null;
-  private loaded = false; // 👈 флаг загрузки
+  private loaded = false;
   messages = inject(ErrorMessageService)
   @Input() snifferId = '';
   @Input() packetId = '';
-
   @Output() close = new EventEmitter<void>();
+  selectedJa4Id = '';
+  selectedSniId = '';
+
 
   insight = signal<ConnectionInsight | null>(null);
   error = signal<string | null>(null);
@@ -37,7 +39,7 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
 
   private loadInsight() {
     if (!this.snifferId || !this.packetId) return;
-    if (this.loaded) return; // 👈 если уже загрузили, выходим
+    if (this.loaded) return;
 
     this.error.set(null);
 
@@ -48,11 +50,11 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
     this.subscription = this.snifferService.getConnectionInsight(this.snifferId, this.packetId).subscribe({
       next: (data) => {
         this.insight.set(data);
-        this.loaded = true; // 👈 помечаем как загруженное
+        this.loaded = true;
       },
       error: () => {
         this.error.set('Ошибка загрузки данных');
-        this.loaded = true; // 👈 даже при ошибке помечаем
+        this.loaded = true;
       }
     });
   }
@@ -92,23 +94,12 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectedJa4Id = '';
-  selectedSniId = '';
-
-  allJa4EntryIds = computed(() => {
-    const ids = new Set<string>();
-    this.insight()?.identificData?.forEach(data => {
-      data.uniqueJa4EntryId.forEach(id => ids.add(id));
-    });
-    return Array.from(ids);
+  allJa4Candidates = computed(() => {
+    return this.insight()?.ja4Candidates || [];
   });
 
-  allSniEntryIds = computed(() => {
-    const ids = new Set<string>();
-    this.insight()?.identificData?.forEach(data => {
-      data.uniqueSniEntryId.forEach(id => ids.add(id));
-    });
-    return Array.from(ids);
+  allSniCandidates = computed(() => {
+    return this.insight()?.sniCandidates || [];
   });
 
   applyInsight() {
