@@ -164,6 +164,7 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&pkt.SrcVendor,
 			&pkt.DstVendor,
 			&pkt.Ja4Raw,
+			&pkt.Ja4Type,
 			&pkt.Ja4Application,
 			&pkt.Ja4Device,
 			&pkt.Ja4Os,

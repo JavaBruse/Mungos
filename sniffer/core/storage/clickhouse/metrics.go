@@ -14,7 +14,7 @@ func (c *ClickHouseStorage) GetTopServices(ctx context.Context, limit int) (map[
 	query := `
 		SELECT COALESCE(sni_service, ja4_application) as service, COUNT() as count
 		FROM packets
-		WHERE (sni_entry_id != '' OR ja4_entry_id != '')
+		WHERE (sni != '' OR ja4_raw != '')
 		GROUP BY service
 		ORDER BY count DESC
 		LIMIT ?
@@ -48,7 +48,7 @@ func (c *ClickHouseStorage) GetTopServicesByConnections(ctx context.Context, lim
 			COALESCE(sni_service, ja4_application) as service,
 			COUNT(DISTINCT CONCAT(src_ip, ':', src_port, ':', dst_ip, ':', dst_port)) as connections
 		FROM packets
-		WHERE (sni_entry_id != '' OR ja4_entry_id != '')
+		WHERE (sni != '' OR ja4_raw != '')
 		GROUP BY service
 		ORDER BY connections DESC
 		LIMIT ?
@@ -79,8 +79,8 @@ func (c *ClickHouseStorage) GetKnownUnknown5Sec(ctx context.Context) (known, unk
 
 	query := `
 		SELECT 
-			COUNT(CASE WHEN (ja4_entry_id != '' OR sni_entry_id != '') THEN 1 END) as known,
-			COUNT(CASE WHEN (ja4_entry_id = '' AND sni_entry_id = '') THEN 1 END) as unknown
+			COUNT(CASE WHEN (ja4_raw != '' OR sni != '') THEN 1 END) as known,
+			COUNT(CASE WHEN (ja4_raw = '' AND sni = '') THEN 1 END) as unknown
 		FROM packets
 		WHERE timestamp > now() - INTERVAL 5 SECOND
 	`
@@ -231,7 +231,7 @@ func (c *ClickHouseStorage) GetKnownPacketsCount(ctx context.Context) (int64, er
 	query := `
 		SELECT COUNT()
 		FROM packets
-		WHERE (ja4_entry_id != '' OR sni_entry_id != '')
+		WHERE (ja4_raw != '' OR sni != '')
 	`
 
 	var count int64
@@ -248,7 +248,7 @@ func (c *ClickHouseStorage) GetUnknownPacketsCount(ctx context.Context) (int64, 
 	query := `
 		SELECT COUNT()
 		FROM packets
-		WHERE (ja4_entry_id = '' AND sni_entry_id = '')
+		WHERE (ja4_raw = '' AND sni = '')
 	`
 
 	var count int64
