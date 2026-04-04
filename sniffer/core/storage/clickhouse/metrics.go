@@ -98,6 +98,7 @@ func (c *ClickHouseStorage) GetProtocolStats(ctx context.Context) (map[string]in
 	query := `
 		SELECT protocol, COUNT() as count
 		FROM packets
+		ARRAY JOIN splitByString(',', protocol_stack) AS protocol
 		WHERE timestamp > now() - INTERVAL 5 MINUTE
 		GROUP BY protocol
 	`
@@ -197,7 +198,7 @@ func (c *ClickHouseStorage) GetTCPStats(ctx context.Context) (syn, fin, rst int6
 			COUNT(CASE WHEN tcp_flags LIKE '%F%' THEN 1 END) as fin,
 			COUNT(CASE WHEN tcp_flags LIKE '%R%' THEN 1 END) as rst
 		FROM packets
-		WHERE protocol = 'TCP' AND timestamp > now() - INTERVAL 5 MINUTE
+		WHERE position(protocol_stack, 'TCP') > 0 AND timestamp > now() - INTERVAL 5 MINUTE
 	`
 
 	err = c.conn.QueryRowContext(ctx, query).Scan(&syn, &fin, &rst)
@@ -211,9 +212,9 @@ func (c *ClickHouseStorage) GetActiveConnections(ctx context.Context) (int64, er
 	}
 
 	query := `
-		SELECT COUNT(DISTINCT CONCAT(src_ip, ':', dst_ip, ':', src_port, ':', dst_port))
+		SELECT COUNT(DISTINCT CONCAT(src_ip, ':', toString(src_port), ':', dst_ip, ':', toString(dst_port)))
 		FROM packets
-		WHERE protocol = 'TCP' 
+		WHERE position(protocol_stack, 'TCP') > 0 
 			AND timestamp > now() - INTERVAL 1 MINUTE
 	`
 

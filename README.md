@@ -143,6 +143,11 @@ VALUES ('uuid', 't13d1717h2_5b57614c22b0_3cbfd90572e0d', 'Firefox', 'libssl.so',
 
 INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type, updated_at) 
 VALUES ('test-uuid-123', 'test_fingerprint_xyz', '', '', '', '', 0, false, '', 0);
+
+docker exec -it mungos-clickhouse-sniffer bash
+cat /var/log/clickhouse-server/clickhouse-server.log
+cat /var/log/clickhouse-server/clickhouse-server.err.log
+
 ```
 ### PostgreSQL
 ```sh
