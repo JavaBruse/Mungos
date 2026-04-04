@@ -16,7 +16,6 @@ func (s *Server) GetFilteredPackage(req *pb.PackageFilterRequest, stream pb.Snif
 	if !s.checkAuth(stream.Context(), req.GetSessionKey()) {
 		return status.Error(codes.Unauthenticated, "invalid session")
 	}
-	logger.Info("GetFilteredTraffic called for sniffer: %s", s.config.SnifferID)
 	logger.Info("GetFilteredTraffic: limit=%d, offset=%d", req.GetLimit(), req.GetOffset())
 
 	// Проверяем storage

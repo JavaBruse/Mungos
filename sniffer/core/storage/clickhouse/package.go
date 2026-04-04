@@ -297,7 +297,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
         SELECT packet_id, timestamp, src_ip, dst_ip, src_port, dst_port, 
                protocol_stack, length, ttl, tcp_flags, payload,
                src_mac, dst_mac, src_vendor, dst_vendor,
-               ja4_raw, ja4_application, ja4_device, ja4_os, 
+               ja4_raw, ja4_type, ja4_application, ja4_device, ja4_os, 
                ja4_verified, ja4_confidence, sni, sni_service,
 			   src_ip_type, dst_ip_type
         FROM packets
