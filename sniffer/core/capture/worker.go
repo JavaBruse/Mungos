@@ -58,23 +58,23 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	if packet == nil {
 		return nil
 	}
-
 	// Применяем правила из кэша (проверяем и dst, и src)
 	ruleCache := GetRuleCache()
-	if ruleCache != nil && ruleCache.ApplyRule(packet) {
-		if packet.JA4Raw != "" && packet.SNI != "" {
-			return packet
+	ruleCache.ApplyRule(packet)
+
+	// JA4 анализ
+	if packet.JA4Raw == "" {
+		if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
+			tcp, _ := tcpLayer.(*layers.TCP)
+			packet = method.ProcessJA4(packet, tcp, w.db)
 		}
 	}
 
-	// JA4 анализ
-	if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
-		tcp, _ := tcpLayer.(*layers.TCP)
-		packet = method.ProcessJA4(packet, tcp, w.db)
+	if packet.SNI == "" {
+		packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 	}
 
 	// SNI обработка через процессор
-	packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 	if ruleCache := GetRuleCache(); ruleCache != nil {
 		ruleCache.UpdateFromPacket(packet, w.db)
 	}
