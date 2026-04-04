@@ -152,3 +152,36 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 
 	return false
 }
+
+func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.ClickHouseStorage) {
+	if packet == nil || c == nil {
+		return
+	}
+
+	if packet.JA4Raw == "" && packet.SNI == "" {
+		return
+	}
+	var remoteIP string
+	var remotePort uint16
+	if packet.DstIPType == "public" {
+		remoteIP = packet.DstIP
+		remotePort = packet.DstPort
+	} else if packet.SrcIPType == "public" {
+		remoteIP = packet.SrcIP
+		remotePort = packet.SrcPort
+	}
+
+	if remoteIP == "" {
+		return
+	}
+	var ja4Entry *models.Ja4Entry
+	var sniEntry *models.SNIEntry
+	if packet.JA4Raw != "" {
+		ja4Entry, _ = db.LookupJA4(context.Background(), packet.JA4Raw)
+	}
+	if packet.SNI != "" {
+		sniEntry, _ = db.LookupSNIBySNI(context.Background(), packet.SNI)
+	}
+
+	c.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+}
