@@ -102,13 +102,14 @@ func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry,
 		}
 		logger.Info("Rule created: key=%s, ja4=%v, sni=%v", key, ja4Entry != nil, sniEntry != nil)
 	} else {
-		if ja4Entry != nil {
+		if ja4Entry != nil && existing.JA4Entry == nil {
 			existing.JA4Entry = ja4Entry
+			logger.Info("Rule updated: key=%s, JA4 added", key)
 		}
-		if sniEntry != nil {
+		if sniEntry != nil && existing.SNIEntry == nil {
 			existing.SNIEntry = sniEntry
+			logger.Info("Rule updated: key=%s, SNI added", key)
 		}
-		logger.Info("Rule updated: key=%s, ja4=%v, sni=%v", key, ja4Entry != nil, sniEntry != nil)
 	}
 }
 
