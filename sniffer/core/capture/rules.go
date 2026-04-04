@@ -161,6 +161,7 @@ func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.Click
 	if packet.JA4Raw == "" && packet.SNI == "" {
 		return
 	}
+
 	var remoteIP string
 	var remotePort uint16
 	if packet.DstIPType == "public" {
@@ -174,8 +175,10 @@ func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.Click
 	if remoteIP == "" {
 		return
 	}
+
 	var ja4Entry *models.Ja4Entry
 	var sniEntry *models.SNIEntry
+
 	if packet.JA4Raw != "" {
 		ja4Entry, _ = db.LookupJA4(context.Background(), packet.JA4Raw)
 	}
@@ -183,5 +186,7 @@ func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.Click
 		sniEntry, _ = db.LookupSNIBySNI(context.Background(), packet.SNI)
 	}
 
-	c.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+	if ja4Entry != nil || sniEntry != nil {
+		c.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+	}
 }
