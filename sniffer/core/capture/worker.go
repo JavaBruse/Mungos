@@ -70,9 +70,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 		}
 	}
 
-	if packet.SNI == "" {
-		packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
-	}
+	packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 
 	// SNI обработка через процессор
 	if ruleCache := GetRuleCache(); ruleCache != nil {
