@@ -177,6 +177,12 @@ func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.Click
 		return
 	}
 
+	key := fmt.Sprintf("%s:%d", remoteIP, remotePort)
+	existing := c.Get(key)
+	if existing != nil && existing.JA4Entry != nil && existing.SNIEntry != nil {
+		return
+	}
+
 	var ja4Entry *models.Ja4Entry
 	var sniEntry *models.SNIEntry
 
