@@ -131,24 +131,25 @@ public class SnifferController {
 
 
     @GetMapping("/export/ja4")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void downloadJA4Database(@RequestParam String snifferId, HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=ja4_database_" + snifferId + ".xlsx");
-
         databaseService.exportJA4DatabaseToExcelStream(snifferId, response.getOutputStream());
         response.getOutputStream().flush();
     }
 
     @GetMapping("/export/sni")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void downloadSNIDatabase(@RequestParam String snifferId, HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=sni_database_" + snifferId + ".xlsx");
-
         databaseService.exportSNIDatabaseToExcelStream(snifferId, response.getOutputStream());
         response.getOutputStream().flush();
     }
 
     @PostMapping("/upload/ja4")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> uploadJA4Database(
             @RequestParam String snifferId,
             @RequestParam("file") MultipartFile file) {
@@ -162,6 +163,7 @@ public class SnifferController {
     }
 
     @PostMapping("/upload/sni")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<Void> uploadSNIDatabase(
             @RequestParam String snifferId,
             @RequestParam("file") MultipartFile file) {

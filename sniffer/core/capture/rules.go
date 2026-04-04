@@ -68,11 +68,11 @@ func (c *RuleCache) LoadRules(ctx context.Context) error {
 			DstPort: data.DstPort,
 		}
 
-		if data.JA4EntryID != "" {
-			rule.JA4Entry, _ = c.db.GetJA4ByID(ctx, data.JA4EntryID)
+		if data.JA4Raw != "" {
+			rule.JA4Entry, _ = c.db.LookupJA4(ctx, data.JA4Raw)
 		}
-		if data.SNIEntryID != "" {
-			rule.SNIEntry, _ = c.db.GetSNIByID(ctx, data.SNIEntryID)
+		if data.SNIRaw != "" {
+			rule.SNIEntry, _ = c.db.LookupSNIBySNI(ctx, data.SNIRaw)
 		}
 
 		c.rules[key] = rule
@@ -92,11 +92,22 @@ func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry,
 	logger.Info("Adding rule to cache: key=%s, ja4=%v, sni=%v", key, ja4Entry != nil, sniEntry != nil)
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.rules[key] = &ServiceRule{
-		DstIP:    dstIP,
-		DstPort:  dstPort,
-		JA4Entry: ja4Entry,
-		SNIEntry: sniEntry,
+
+	existing := c.rules[key]
+	if existing == nil {
+		c.rules[key] = &ServiceRule{
+			DstIP:    dstIP,
+			DstPort:  dstPort,
+			JA4Entry: ja4Entry,
+			SNIEntry: sniEntry,
+		}
+	} else {
+		if ja4Entry != nil {
+			existing.JA4Entry = ja4Entry
+		}
+		if sniEntry != nil {
+			existing.SNIEntry = sniEntry
+		}
 	}
 }
 
@@ -114,7 +125,6 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 			}
 			if rule.SNIEntry != nil {
 				packet.SNIService = rule.SNIEntry.Service
-				packet.SNIEntryID = rule.SNIEntry.ID
 				if packet.SNI == "" {
 					packet.SNI = rule.SNIEntry.SNI
 				}
@@ -124,7 +134,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	}
 
 	// Проверяем по src (обратные пакеты)
-	if packet.SrcIPType == "public" && (packet.JA4EntryID == "" || packet.SNIEntryID == "") {
+	if packet.SrcIPType == "public" && (packet.JA4Raw == "" || packet.SNI == "") {
 		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
 		if rule := c.Get(key); rule != nil {
 			if rule.JA4Entry != nil {
@@ -132,7 +142,6 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 			}
 			if rule.SNIEntry != nil {
 				packet.SNIService = rule.SNIEntry.Service
-				packet.SNIEntryID = rule.SNIEntry.ID
 				if packet.SNI == "" {
 					packet.SNI = rule.SNIEntry.SNI
 				}

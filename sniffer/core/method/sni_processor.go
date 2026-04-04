@@ -51,7 +51,6 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 
 		if entry, err := p.db.LookupSNIBySNI(ctx, packet.SNI); err == nil && entry != nil {
 			packet.SNIService = entry.Service
-			packet.SNIEntryID = entry.ID
 		}
 	}
 
@@ -169,7 +168,6 @@ func (p *SNIProcessor) classifySessionAsync(packets []*models.Packet) {
 		if bestEntry != nil {
 			pkt.SNI = bestEntry.SNI
 			pkt.SNIService = bestEntry.Service
-			pkt.SNIEntryID = bestEntry.ID
 		}
 		if pkt.SNI != "" {
 			snis = append(snis, pkt.SNI)

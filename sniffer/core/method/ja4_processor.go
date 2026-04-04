@@ -23,12 +23,13 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 	// 1) JA4T: только первый SYN (без ACK) в направлении клиента.
 	if tcp.SYN && !tcp.ACK {
 		opts, mss, wscale := tcpSynOptions(tcp.Options)
-		packet.JA4RRaw = ja4go.BuildJA4T(ja4go.BuildJA4TInput{
+		packet.JA4Raw = ja4go.BuildJA4T(ja4go.BuildJA4TInput{
 			WindowSize:  tcp.Window,
 			Options:     opts,
 			MSS:         mss,
 			WindowScale: wscale,
 		})
+		packet.JA4Type = "JA4T"
 	}
 
 	// 2) TLS/HTTP: делаем минимальный TCP reassembly по Seq и пытаемся разобрать handshake/HTTP.
@@ -41,21 +42,23 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 				if ch, ok := parseTLSClientHello(buf); ok {
 					out := ja4go.BuildJA4(ch, ja4go.FormatFlags{WithRaw: true})
 					packet.JA4Raw = out.JA4
-					packet.JA4RRaw = out.JA4Raw
+					packet.JA4Type = "JA4"
 				}
 			}
-			if dir == "s2c" && packet.JA4SRaw == "" {
+			if dir == "s2c" && packet.JA4Raw == "" {
 				if sh, ok := parseTLSServerHello(buf); ok {
 					out := ja4go.BuildJA4S(sh, ja4go.FormatFlags{WithRaw: true})
-					packet.JA4SRaw = out.JA4S
+					packet.JA4Raw = out.JA4S
+					packet.JA4Type = "JA4S"
 				}
 			}
 
 			// HTTP можно пробовать и без reassembly, но буфер даёт шанс поймать заголовок целиком.
-			if packet.JA4HRaw == "" {
+			if packet.JA4Raw == "" {
 				if httpIn, ok := parseHTTPRequest(buf); ok {
 					out := ja4go.BuildJA4H(httpIn, ja4go.FormatFlags{WithRaw: true})
-					packet.JA4HRaw = out.JA4
+					packet.JA4Raw = out.JA4
+					packet.JA4Type = "JA4H"
 				}
 			}
 		}
@@ -70,18 +73,6 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 				return packet
 			}
 		}
-		if packet.JA4SRaw != "" {
-			if entry, err := db.LookupJA4(ctx, packet.JA4SRaw); err == nil && entry != nil {
-				fillPacketFromEntry(packet, entry)
-				return packet
-			}
-		}
-		if packet.JA4HRaw != "" {
-			if entry, err := db.LookupJA4(ctx, packet.JA4HRaw); err == nil && entry != nil {
-				fillPacketFromEntry(packet, entry)
-				return packet
-			}
-		}
 	}
 	return packet
 }
@@ -90,7 +81,6 @@ func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
 	if entry == nil {
 		return
 	}
-	packet.JA4EntryID = entry.ID
 	packet.JA4Application = entry.Application
 	packet.JA4Device = entry.Device
 	packet.JA4OS = entry.OS

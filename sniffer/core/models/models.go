@@ -23,13 +23,8 @@ type Packet struct {
 	SrcVendor string
 	DstVendor string
 
-	JA4Raw    string // основной JA4 отпечаток (клиент)
-	JA4SRaw   string // JA4S отпечаток (сервер)
-	JA4HRaw   string // JA4H отпечаток (HTTP)
-	JA4XRaw   string // JA4X отпечаток (сертификаты)
-	JA4SSHRaw string // JA4SSH отпечаток
-	JA4LRaw   string // JA4L отпечаток (latency)
-	JA4RRaw   string // raw отпечаток (для отладки)
+	JA4Raw  string // основной JA4 отпечаток (клиент)
+	JA4Type string
 
 	// JA4 fields
 	JA4Application string
@@ -41,9 +36,6 @@ type Packet struct {
 	// SNI vector
 	SNI        string
 	SNIService string
-
-	JA4EntryID string
-	SNIEntryID string
 }
 
 type ClientData struct {

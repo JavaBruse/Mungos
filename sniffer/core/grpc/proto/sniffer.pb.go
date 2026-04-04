@@ -1523,19 +1523,18 @@ type TrafficPacket struct {
 	DstVendor string `protobuf:"bytes,21,opt,name=dst_vendor,json=dstVendor,proto3" json:"dst_vendor,omitempty"`
 	// JA4 fields (22-27)
 	Ja4Raw         string `protobuf:"bytes,22,opt,name=ja4_raw,json=ja4Raw,proto3" json:"ja4_raw,omitempty"`
-	Ja4Application string `protobuf:"bytes,23,opt,name=ja4_application,json=ja4Application,proto3" json:"ja4_application,omitempty"`
-	Ja4Device      string `protobuf:"bytes,24,opt,name=ja4_device,json=ja4Device,proto3" json:"ja4_device,omitempty"`
-	Ja4Os          string `protobuf:"bytes,25,opt,name=ja4_os,json=ja4Os,proto3" json:"ja4_os,omitempty"`
-	Ja4Verified    bool   `protobuf:"varint,26,opt,name=ja4_verified,json=ja4Verified,proto3" json:"ja4_verified,omitempty"`
-	Ja4Confidence  int32  `protobuf:"varint,27,opt,name=ja4_confidence,json=ja4Confidence,proto3" json:"ja4_confidence,omitempty"`
+	Ja4Type        string `protobuf:"bytes,23,opt,name=ja4_type,json=ja4Type,proto3" json:"ja4_type,omitempty"`
+	Ja4Application string `protobuf:"bytes,24,opt,name=ja4_application,json=ja4Application,proto3" json:"ja4_application,omitempty"`
+	Ja4Device      string `protobuf:"bytes,25,opt,name=ja4_device,json=ja4Device,proto3" json:"ja4_device,omitempty"`
+	Ja4Os          string `protobuf:"bytes,26,opt,name=ja4_os,json=ja4Os,proto3" json:"ja4_os,omitempty"`
+	Ja4Verified    bool   `protobuf:"varint,27,opt,name=ja4_verified,json=ja4Verified,proto3" json:"ja4_verified,omitempty"`
+	Ja4Confidence  int32  `protobuf:"varint,28,opt,name=ja4_confidence,json=ja4Confidence,proto3" json:"ja4_confidence,omitempty"`
 	// SNI fields (28-29)
-	Sni        string `protobuf:"bytes,28,opt,name=sni,proto3" json:"sni,omitempty"`
-	SniService string `protobuf:"bytes,29,opt,name=sni_service,json=sniService,proto3" json:"sni_service,omitempty"`
-	Ja4Id      string `protobuf:"bytes,30,opt,name=ja4_id,json=ja4Id,proto3" json:"ja4_id,omitempty"`
-	SniId      string `protobuf:"bytes,31,opt,name=sni_id,json=sniId,proto3" json:"sni_id,omitempty"`
+	Sni        string `protobuf:"bytes,29,opt,name=sni,proto3" json:"sni,omitempty"`
+	SniService string `protobuf:"bytes,30,opt,name=sni_service,json=sniService,proto3" json:"sni_service,omitempty"`
 	// IP Type fields (32-33)
-	SrcIpType     string `protobuf:"bytes,32,opt,name=src_ip_type,json=srcIpType,proto3" json:"src_ip_type,omitempty"`
-	DstIpType     string `protobuf:"bytes,33,opt,name=dst_ip_type,json=dstIpType,proto3" json:"dst_ip_type,omitempty"`
+	SrcIpType     string `protobuf:"bytes,31,opt,name=src_ip_type,json=srcIpType,proto3" json:"src_ip_type,omitempty"`
+	DstIpType     string `protobuf:"bytes,32,opt,name=dst_ip_type,json=dstIpType,proto3" json:"dst_ip_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1724,6 +1723,13 @@ func (x *TrafficPacket) GetJa4Raw() string {
 	return ""
 }
 
+func (x *TrafficPacket) GetJa4Type() string {
+	if x != nil {
+		return x.Ja4Type
+	}
+	return ""
+}
+
 func (x *TrafficPacket) GetJa4Application() string {
 	if x != nil {
 		return x.Ja4Application
@@ -1769,20 +1775,6 @@ func (x *TrafficPacket) GetSni() string {
 func (x *TrafficPacket) GetSniService() string {
 	if x != nil {
 		return x.SniService
-	}
-	return ""
-}
-
-func (x *TrafficPacket) GetJa4Id() string {
-	if x != nil {
-		return x.Ja4Id
-	}
-	return ""
-}
-
-func (x *TrafficPacket) GetSniId() string {
-	if x != nil {
-		return x.SniId
 	}
 	return ""
 }
@@ -2506,7 +2498,7 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"known_only\x18\t \x01(\bR\tknownOnly\x1a9\n" +
 	"\vCustomEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x82\b\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xef\a\n" +
 	"\rTrafficPacket\x12\x1b\n" +
 	"\tpacket_id\x18\x01 \x01(\tR\bpacketId\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12%\n" +
@@ -2533,20 +2525,19 @@ const file_proto_sniffer_proto_rawDesc = "" +
 	"src_vendor\x18\x14 \x01(\tR\tsrcVendor\x12\x1d\n" +
 	"\n" +
 	"dst_vendor\x18\x15 \x01(\tR\tdstVendor\x12\x17\n" +
-	"\aja4_raw\x18\x16 \x01(\tR\x06ja4Raw\x12'\n" +
-	"\x0fja4_application\x18\x17 \x01(\tR\x0eja4Application\x12\x1d\n" +
+	"\aja4_raw\x18\x16 \x01(\tR\x06ja4Raw\x12\x19\n" +
+	"\bja4_type\x18\x17 \x01(\tR\aja4Type\x12'\n" +
+	"\x0fja4_application\x18\x18 \x01(\tR\x0eja4Application\x12\x1d\n" +
 	"\n" +
-	"ja4_device\x18\x18 \x01(\tR\tja4Device\x12\x15\n" +
-	"\x06ja4_os\x18\x19 \x01(\tR\x05ja4Os\x12!\n" +
-	"\fja4_verified\x18\x1a \x01(\bR\vja4Verified\x12%\n" +
-	"\x0eja4_confidence\x18\x1b \x01(\x05R\rja4Confidence\x12\x10\n" +
-	"\x03sni\x18\x1c \x01(\tR\x03sni\x12\x1f\n" +
-	"\vsni_service\x18\x1d \x01(\tR\n" +
-	"sniService\x12\x15\n" +
-	"\x06ja4_id\x18\x1e \x01(\tR\x05ja4Id\x12\x15\n" +
-	"\x06sni_id\x18\x1f \x01(\tR\x05sniId\x12\x1e\n" +
-	"\vsrc_ip_type\x18  \x01(\tR\tsrcIpType\x12\x1e\n" +
-	"\vdst_ip_type\x18! \x01(\tR\tdstIpType\x1a:\n" +
+	"ja4_device\x18\x19 \x01(\tR\tja4Device\x12\x15\n" +
+	"\x06ja4_os\x18\x1a \x01(\tR\x05ja4Os\x12!\n" +
+	"\fja4_verified\x18\x1b \x01(\bR\vja4Verified\x12%\n" +
+	"\x0eja4_confidence\x18\x1c \x01(\x05R\rja4Confidence\x12\x10\n" +
+	"\x03sni\x18\x1d \x01(\tR\x03sni\x12\x1f\n" +
+	"\vsni_service\x18\x1e \x01(\tR\n" +
+	"sniService\x12\x1e\n" +
+	"\vsrc_ip_type\x18\x1f \x01(\tR\tsrcIpType\x12\x1e\n" +
+	"\vdst_ip_type\x18  \x01(\tR\tdstIpType\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +

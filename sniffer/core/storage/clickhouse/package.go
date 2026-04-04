@@ -31,6 +31,7 @@ func createPacketsTable(conn *sql.DB) error {
 			src_vendor String,
 			dst_vendor String,
 			ja4_raw String,
+			ja4_type String,
 			ja4_application String,
 			ja4_device String,
 			ja4_os String,
@@ -38,8 +39,6 @@ func createPacketsTable(conn *sql.DB) error {
 			ja4_confidence UInt32,
 			sni String,
 			sni_service String,
-			ja4_entry_id String,
-			sni_entry_id String,
 			src_ip_type String,
 			dst_ip_type String
 		) ENGINE = MergeTree()
@@ -92,6 +91,7 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&pkt.SrcVendor,
 			&pkt.DstVendor,
 			&pkt.Ja4Raw,
+			&pkt.Ja4Type,
 			&pkt.Ja4Application,
 			&pkt.Ja4Device,
 			&pkt.Ja4Os,
@@ -99,8 +99,6 @@ func (c *ClickHouseStorage) GetPackets(ctx context.Context, filter *pb.FilterExp
 			&ja4Confidence,
 			&pkt.Sni,
 			&pkt.SniService,
-			&pkt.Ja4Id,
-			&pkt.SniId,
 			&pkt.SrcIpType,
 			&pkt.DstIpType,
 		)
@@ -173,8 +171,6 @@ func (c *ClickHouseStorage) StreamPackets(ctx context.Context, filter *pb.Filter
 			&ja4Confidence,
 			&pkt.Sni,
 			&pkt.SniService,
-			&pkt.Ja4Id,
-			&pkt.SniId,
 			&pkt.SrcIpType,
 			&pkt.DstIpType,
 		)
@@ -284,10 +280,10 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
 		}
 
 		if filter.KnownOnly {
-			conditions = append(conditions, "(ja4_entry_id != '' OR sni_entry_id != '')")
+			conditions = append(conditions, "(ja4_raw != '' OR sni != '')")
 		}
 		if filter.UnknownOnly {
-			conditions = append(conditions, "(ja4_entry_id = '' AND sni_entry_id = '')")
+			conditions = append(conditions, "(ja4_raw = '' AND sni = '')")
 		}
 	}
 
@@ -302,7 +298,7 @@ func buildFilterQuery(filter *pb.FilterExpression, limit, offset int32) (string,
                src_mac, dst_mac, src_vendor, dst_vendor,
                ja4_raw, ja4_application, ja4_device, ja4_os, 
                ja4_verified, ja4_confidence, sni, sni_service,
-			   ja4_entry_id, sni_entry_id, src_ip_type, dst_ip_type
+			   src_ip_type, dst_ip_type
         FROM packets
         WHERE %s
         ORDER BY timestamp DESC
@@ -334,10 +330,10 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			packet_id, timestamp, src_ip, dst_ip, src_port, dst_port,
 			protocol_stack, length, ttl, tcp_flags, payload,
 			src_mac, dst_mac, src_vendor, dst_vendor,
-			ja4_raw, ja4_application, ja4_device, ja4_os,
-			ja4_verified, ja4_confidence, sni, sni_service,
-			ja4_entry_id, sni_entry_id, src_ip_type, dst_ip_type
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ja4_raw, ja4_type, ja4_application, ja4_device, 
+			ja4_os, ja4_verified, ja4_confidence, sni, 
+			sni_service, src_ip_type, dst_ip_type
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
@@ -372,6 +368,7 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.SrcVendor,
 			pkt.DstVendor,
 			pkt.JA4Raw,
+			pkt.JA4Type,
 			pkt.JA4Application,
 			pkt.JA4Device,
 			pkt.JA4OS,
@@ -379,8 +376,6 @@ func (c *ClickHouseStorage) SavePackets(packets []*models.Packet) error {
 			pkt.JA4Confidence,
 			pkt.SNI,
 			pkt.SNIService,
-			pkt.JA4EntryID,
-			pkt.SNIEntryID,
 			pkt.SrcIPType,
 			pkt.DstIPType,
 		)
@@ -442,10 +437,10 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 			COUNT(CASE WHEN tcp_flags LIKE '%S%' AND tcp_flags NOT LIKE '%A%' THEN 1 END) as syn_count,
 			COUNT(CASE WHEN tcp_flags LIKE '%F%' THEN 1 END) as fin_count,
 			COUNT(CASE WHEN tcp_flags LIKE '%R%' THEN 1 END) as rst_count,
-			COUNT(CASE WHEN ja4_entry_id != '' OR sni_entry_id != '' THEN 1 END) as identified_packets,
+			COUNT(CASE WHEN ja4_raw != '' OR sni != '' THEN 1 END) as identified_packets,
 			groupUniqArray((
 				ja4_raw, ja4_application, ja4_device, ja4_os,
-				sni, sni_service, ja4_entry_id, sni_entry_id
+				sni, sni_service
 			)) as identification_groups
 		FROM packets
 		WHERE (dst_ip = ? AND dst_port = ?) 
@@ -905,27 +900,7 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 		remotePort = srcPort
 	}
 
-	// 4. Обновляем все поля в пакетах
-	query := `
-		ALTER TABLE packets UPDATE 
-			ja4_entry_id = ?,
-			ja4_raw = ?,
-			ja4_application = ?,
-			ja4_device = ?,
-			ja4_os = ?,
-			ja4_verified = ?,
-			ja4_confidence = ?,
-			sni_entry_id = ?,
-			sni = ?,
-			sni_service = ?
-		WHERE (
-			(dst_ip = ? AND dst_port = ?)
-			OR 
-			(src_ip = ? AND src_port = ?)
-		)
-		AND (ja4_entry_id = '' OR sni_entry_id = '')
-	`
-
+	// 4. Подготавливаем данные для обновления
 	ja4Raw := ""
 	ja4App := ""
 	ja4Device := ""
@@ -936,9 +911,7 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 	if ja4 != nil {
 		ja4Raw = ja4.Fingerprint
 		ja4App = ja4.Application
-		if ja4.Device != "" {
-			ja4Device = ja4.Device
-		}
+		ja4Device = ja4.Device
 		ja4OS = ja4.OS
 		ja4Verified = ja4.Verified
 		ja4Confidence = int32(ja4.ObservationCount)
@@ -952,9 +925,34 @@ func (c *ClickHouseStorage) UpdateConnectionInsight(ctx context.Context, packetI
 		sniService = sni.Service
 	}
 
+	// 5. Обновляем только те пакеты, у которых ещё нет идентификации
+	query := `
+		ALTER TABLE packets UPDATE 
+			ja4_raw = ?,
+			ja4_type = ?,
+			ja4_application = ?,
+			ja4_device = ?,
+			ja4_os = ?,
+			ja4_verified = ?,
+			ja4_confidence = ?,
+			sni = ?,
+			sni_service = ?
+		WHERE (
+			(dst_ip = ? AND dst_port = ?)
+			OR 
+			(src_ip = ? AND src_port = ?)
+		)
+		AND (ja4_raw = '' OR sni = '')
+	`
+
+	ja4Type := ""
+	if ja4 != nil {
+		ja4Type = ja4.FingerprintType
+	}
+
 	_, err = c.conn.ExecContext(ctx, query,
-		ja4EntryID, ja4Raw, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence,
-		sniEntryID, sniValue, sniService,
+		ja4Raw, ja4Type, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence,
+		sniValue, sniService,
 		remoteIP, remotePort,
 		remoteIP, remotePort,
 	)
@@ -973,9 +971,9 @@ func (c *ClickHouseStorage) GetServiceRules(ctx context.Context) ([]ServiceRuleD
 	}
 
 	query := `
-		SELECT DISTINCT dst_ip, dst_port, ja4_entry_id, sni_entry_id
+		SELECT DISTINCT dst_ip, dst_port, ja4_raw, sni
 		FROM packets
-		WHERE (ja4_entry_id != '' OR sni_entry_id != '')
+		WHERE (ja4_raw != '' OR sni != '')
 		  AND dst_ip_type = 'public'
 	`
 
@@ -988,7 +986,7 @@ func (c *ClickHouseStorage) GetServiceRules(ctx context.Context) ([]ServiceRuleD
 	var rules []ServiceRuleData
 	for rows.Next() {
 		var rule ServiceRuleData
-		if err := rows.Scan(&rule.DstIP, &rule.DstPort, &rule.JA4EntryID, &rule.SNIEntryID); err != nil {
+		if err := rows.Scan(&rule.DstIP, &rule.DstPort, &rule.JA4Raw, &rule.SNIRaw); err != nil {
 			continue
 		}
 		rules = append(rules, rule)
@@ -997,8 +995,8 @@ func (c *ClickHouseStorage) GetServiceRules(ctx context.Context) ([]ServiceRuleD
 }
 
 type ServiceRuleData struct {
-	DstIP      string
-	DstPort    uint16
-	JA4EntryID string
-	SNIEntryID string
+	DstIP   string
+	DstPort uint16
+	JA4Raw  string
+	SNIRaw  string
 }

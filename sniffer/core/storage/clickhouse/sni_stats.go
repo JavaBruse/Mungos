@@ -291,15 +291,20 @@ func (c *ClickHouseStorage) LookupSNIBySNI(ctx context.Context, sni string) (*mo
 		return nil, fmt.Errorf("storage not available")
 	}
 
-	query := `
-		SELECT id, service, sni, occurrence_count, first_seen, last_seen
+	var entry models.SNIEntry
+	err := c.conn.QueryRowContext(ctx, `
+		SELECT 
+			any(id) as id,
+			any(service) as service,
+			sni,
+			SUM(occurrence_count) as occurrence_count,
+			min(first_seen) as first_seen,
+			max(last_seen) as last_seen
 		FROM sni_stats
 		WHERE sni = ?
+		GROUP BY sni
 		LIMIT 1
-	`
-
-	var entry models.SNIEntry
-	err := c.conn.QueryRowContext(ctx, query, sni).Scan(
+	`, sni).Scan(
 		&entry.ID,
 		&entry.Service,
 		&entry.SNI,
@@ -307,6 +312,7 @@ func (c *ClickHouseStorage) LookupSNIBySNI(ctx context.Context, sni string) (*mo
 		&entry.FirstSeen,
 		&entry.LastSeen,
 	)
+
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

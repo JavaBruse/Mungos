@@ -50,6 +50,7 @@ public class PacketConverter {
                 .srcVendor(proto.getSrcVendor())
                 .dstVendor(proto.getDstVendor())
                 .ja4Raw(proto.getJa4Raw())
+                .ja4Type(proto.getJa4Type())
                 .ja4Application(proto.getJa4Application())
                 .ja4Device(proto.getJa4Device())
                 .ja4Os(proto.getJa4Os())

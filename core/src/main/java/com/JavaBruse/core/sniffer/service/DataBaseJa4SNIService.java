@@ -86,7 +86,7 @@ public class DataBaseJa4SNIService {
                 List<JA4Entry> snifferEntries = downloadJA4Database(sniffer.getId());
 
                 for (JA4Entry entry : snifferEntries) {
-                    String key = entry.getFingerprint() + ":" + entry.getFingerprintType();
+                    String key = entry.getFingerprint();
                     JA4Entry existing = masterDatabase.get(key);
 
                     if (existing == null || entry.getUpdatedAt() > existing.getUpdatedAt()) {

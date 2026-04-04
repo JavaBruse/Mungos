@@ -31,6 +31,7 @@ public class TrafficPacketDTO {
     String srcVendor;
     String dstVendor;
     String ja4Raw;
+    String ja4Type;
     String ja4Application;
     String ja4Device;
     String ja4Os;

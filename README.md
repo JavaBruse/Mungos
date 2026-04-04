@@ -137,6 +137,12 @@ SELECT * FROM sniffer_clients;
 SELECT * FROM sni_stats;
 TRUNCATE TABLE sniffer_clients;
 DROP TABLE IF EXISTS ja4_database;
+
+INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type, updated_at) 
+VALUES ('uuid', 't13d1717h2_5b57614c22b0_3cbfd90572e0d', 'Firefox', 'libssl.so', 'Windows', 'Windows 10', 1, true, 'JA4', toUnixTimestamp(now()));
+
+INSERT INTO ja4_database (id, fingerprint, application, library, device, os, observation_count, verified, fingerprint_type, updated_at) 
+VALUES ('test-uuid-123', 'test_fingerprint_xyz', '', '', '', '', 0, false, '', 0);
 ```
 ### PostgreSQL
 ```sh

@@ -44,7 +44,7 @@ func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
 	if entry == nil {
 		return
 	}
-	packet.JA4EntryID = entry.ID
+	packet.JA4Type = entry.FingerprintType
 	packet.JA4Raw = entry.Fingerprint
 	packet.JA4Application = entry.Application
 	packet.JA4Device = entry.Device
@@ -62,7 +62,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	// Применяем правила из кэша (проверяем и dst, и src)
 	ruleCache := GetRuleCache()
 	if ruleCache != nil && ruleCache.ApplyRule(packet) {
-		if packet.JA4EntryID != "" && packet.SNIEntryID != "" {
+		if packet.JA4Raw != "" && packet.SNI != "" {
 			return packet
 		}
 	}

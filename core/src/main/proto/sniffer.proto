@@ -208,21 +208,20 @@ message TrafficPacket {
 
   // JA4 fields (22-27)
   string ja4_raw = 22;
-  string ja4_application = 23;
-  string ja4_device = 24;
-  string ja4_os = 25;
-  bool ja4_verified = 26;
-  int32 ja4_confidence = 27;
+  string ja4_type = 23;
+  string ja4_application = 24;
+  string ja4_device = 25;
+  string ja4_os = 26;
+  bool ja4_verified = 27;
+  int32 ja4_confidence = 28;
 
   // SNI fields (28-29)
-  string sni = 28;
-  string sni_service = 29;
-  string ja4_id = 30;
-  string sni_id = 31;
+  string sni = 29;
+  string sni_service = 30;
 
   // IP Type fields (32-33)
-  string src_ip_type = 32;
-  string dst_ip_type = 33;
+  string src_ip_type = 31;
+  string dst_ip_type = 32;
 }
 
 message RegisterRequest {
