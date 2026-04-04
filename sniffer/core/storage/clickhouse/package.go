@@ -485,9 +485,6 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	sniMap := make(map[string]*models.SNICandidate)
 
 	for _, group := range identificationGroups {
-		if len(group) < 8 {
-			continue
-		}
 
 		ja4Raw := toString(group[0])
 		ja4App := toString(group[1])
