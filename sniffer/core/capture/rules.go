@@ -60,6 +60,8 @@ func (c *RuleCache) LoadRules(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	logger.Info("Loading %d rules from database", len(rulesData))
+
 	for _, data := range rulesData {
 		key := fmt.Sprintf("%s:%d", data.DstIP, data.DstPort)
 
@@ -76,8 +78,10 @@ func (c *RuleCache) LoadRules(ctx context.Context) error {
 		}
 
 		c.rules[key] = rule
+		logger.Info("Loaded rule: key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 	}
 
+	logger.Info("Total rules loaded: %d", len(c.rules))
 	return nil
 }
 
@@ -124,15 +128,15 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по dst (прямые пакеты)
 	if packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
-		logger.Info("ApplyRule: (прямые пакеты) looking for key=%s", key)
 		if rule := c.Get(key); rule != nil {
+			logger.Info("ApplyRule: (прямые пакеты) looking for key=%s", key)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
 			if rule.SNIEntry != nil {
-				packet.SNIService = rule.SNIEntry.Service
-				if packet.SNI == "" {
-					packet.SNI = rule.SNIEntry.SNI
+				packet.SNI = rule.SNIEntry.SNI
+				if packet.SNIService == "" {
+					packet.SNIService = rule.SNIEntry.Service
 				}
 			}
 			return true
@@ -148,9 +152,9 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
 			if rule.SNIEntry != nil {
-				packet.SNIService = rule.SNIEntry.Service
-				if packet.SNI == "" {
-					packet.SNI = rule.SNIEntry.SNI
+				packet.SNI = rule.SNIEntry.SNI
+				if packet.SNIService == "" {
+					packet.SNIService = rule.SNIEntry.Service
 				}
 			}
 			return true
