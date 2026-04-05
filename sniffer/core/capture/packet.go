@@ -64,9 +64,9 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		}
 	}
 
-	// if p.SrcIPType != "public" && p.DstIPType != "public" {
-	// 	return nil
-	// }
+	if p.SrcIPType != "public" && p.DstIPType != "public" {
+		return nil
+	}
 
 	return p
 }
