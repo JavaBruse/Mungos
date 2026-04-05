@@ -60,10 +60,8 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	}
 	// Применяем правила из кэша (проверяем и dst, и src)
 	ruleCache := GetRuleCache()
-	applied := ruleCache.ApplyRule(packet)
-	if applied {
-		logger.Info("ApplyRule applied to packet, JA4Raw=%s, SNI=%s", packet.JA4Raw, packet.SNI)
-	}
+	ruleCache.ApplyRule(packet)
+
 	// JA4 анализ
 	if packet.JA4Raw == "" {
 		if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
