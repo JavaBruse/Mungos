@@ -998,3 +998,71 @@ type ServiceRuleData struct {
 	JA4Raw  string
 	SNIRaw  string
 }
+
+// UpdatePacketsInsight - обновляет JA4 и SNI для всех пакетов соединения по IP:Port (только пустые поля)
+func (c *ClickHouseStorage) UpdatePacketsInsight(ctx context.Context, targetIP string, targetPort uint16, ja4Entry *models.Ja4Entry, sniEntry *models.SNIEntry) error {
+	if !c.ensureConnection() {
+		return fmt.Errorf("storage not available")
+	}
+
+	ja4Raw := ""
+	ja4App := ""
+	ja4Device := ""
+	ja4OS := ""
+	ja4Verified := false
+	ja4Confidence := int32(0)
+	ja4Type := ""
+
+	sniValue := ""
+	sniService := ""
+
+	if ja4Entry != nil {
+		ja4Raw = ja4Entry.Fingerprint
+		ja4App = ja4Entry.Application
+		ja4Device = ja4Entry.Device
+		ja4OS = ja4Entry.OS
+		ja4Verified = ja4Entry.Verified
+		ja4Confidence = int32(ja4Entry.ObservationCount)
+		ja4Type = ja4Entry.FingerprintType
+	}
+
+	if sniEntry != nil {
+		sniValue = sniEntry.SNI
+		sniService = sniEntry.Service
+	}
+
+	// Обновляем JA4, если он пустой
+	if ja4Entry != nil {
+		queryJA4 := `
+			ALTER TABLE packets UPDATE 
+				ja4_raw = ?,
+				ja4_type = ?,
+				ja4_application = ?,
+				ja4_device = ?,
+				ja4_os = ?,
+				ja4_verified = ?,
+				ja4_confidence = ?
+			WHERE ((dst_ip = ? AND dst_port = ?) OR (src_ip = ? AND src_port = ?))
+			AND ja4_raw = ''
+		`
+		if _, err := c.conn.ExecContext(ctx, queryJA4, ja4Raw, ja4Type, ja4App, ja4Device, ja4OS, ja4Verified, ja4Confidence, targetIP, targetPort, targetIP, targetPort); err != nil {
+			return err
+		}
+	}
+
+	// Обновляем SNI, если он пустой
+	if sniEntry != nil {
+		querySNI := `
+			ALTER TABLE packets UPDATE 
+				sni = ?,
+				sni_service = ?
+			WHERE ((dst_ip = ? AND dst_port = ?) OR (src_ip = ? AND src_port = ?))
+			AND sni = ''
+		`
+		if _, err := c.conn.ExecContext(ctx, querySNI, sniValue, sniService, targetIP, targetPort, targetIP, targetPort); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

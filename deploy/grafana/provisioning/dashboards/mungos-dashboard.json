@@ -71,7 +71,6 @@
                 }
             },
             "pluginVersion": "12.4.1",
-            "repeatDirection": "h",
             "targets": [
                 {
                     "editorMode": "code",
@@ -521,9 +520,9 @@
             "pluginVersion": "12.4.1",
             "targets": [
                 {
-                    "editorMode": "builder",
-                    "expr": "sniffer_top_services_connections",
-                    "legendFormat": "{{instance}}",
+                    "editorMode": "code",
+                    "expr": "sum(sniffer_top_services_connections{service!=\"\"}) by (service)",
+                    "legendFormat": "__auto",
                     "range": true,
                     "refId": "A"
                 }
@@ -592,8 +591,8 @@
             "pluginVersion": "12.4.1",
             "targets": [
                 {
-                    "editorMode": "builder",
-                    "expr": "sniffer_top_services",
+                    "editorMode": "code",
+                    "expr": "sum(sniffer_top_services{service!=\"\"}) by (service)",
                     "legendFormat": "{{instance}}",
                     "range": true,
                     "refId": "A"

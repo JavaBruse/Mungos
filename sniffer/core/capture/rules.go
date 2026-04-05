@@ -87,7 +87,7 @@ func (c *RuleCache) Get(key string) *ServiceRule {
 	return c.rules[key]
 }
 
-func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry, sniEntry *models.SNIEntry) {
+func (c *RuleCache) Add(ctx context.Context, dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry, sniEntry *models.SNIEntry) {
 	key := fmt.Sprintf("%s:%d", dstIP, dstPort)
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -101,14 +101,17 @@ func (c *RuleCache) Add(dstIP string, dstPort uint16, ja4Entry *models.Ja4Entry,
 			SNIEntry: sniEntry,
 		}
 		logger.Info("Rule created: key=%s, ja4=%v, sni=%v", key, ja4Entry != nil, sniEntry != nil)
+		c.db.UpdatePacketsInsight(ctx, dstIP, dstPort, ja4Entry, sniEntry)
 	} else {
 		if ja4Entry != nil && existing.JA4Entry == nil {
 			existing.JA4Entry = ja4Entry
 			logger.Info("Rule updated: key=%s, JA4 added", key)
+			c.db.UpdatePacketsInsight(ctx, dstIP, dstPort, ja4Entry, sniEntry)
 		}
 		if sniEntry != nil && existing.SNIEntry == nil {
 			existing.SNIEntry = sniEntry
 			logger.Info("Rule updated: key=%s, SNI added", key)
+			c.db.UpdatePacketsInsight(ctx, dstIP, dstPort, ja4Entry, sniEntry)
 		}
 	}
 }
@@ -121,6 +124,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по dst (прямые пакеты)
 	if packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
+		logger.Info("ApplyRule: (прямые пакеты) looking for key=%s", key)
 		if rule := c.Get(key); rule != nil {
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
@@ -136,9 +140,10 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	}
 
 	// Проверяем по src (обратные пакеты)
-	if packet.SrcIPType == "public" && (packet.JA4Raw == "" || packet.SNI == "") {
+	if packet.SrcIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
 		if rule := c.Get(key); rule != nil {
+			logger.Info("ApplyRule: (обратные пакеты) looking for key=%s", key)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
@@ -195,6 +200,6 @@ func (c *RuleCache) UpdateFromPacket(packet *models.Packet, db *clickhouse.Click
 	}
 
 	if ja4Entry != nil || sniEntry != nil {
-		c.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+		c.Add(context.Background(), remoteIP, remotePort, ja4Entry, sniEntry)
 	}
 }

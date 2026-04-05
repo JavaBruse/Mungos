@@ -155,7 +155,7 @@ func (s *Server) UpdateConnectionInsight(ctx context.Context, req *pb.UpdateConn
 	}
 
 	if ruleCache := capture.GetRuleCache(); ruleCache != nil {
-		ruleCache.Add(remoteIP, remotePort, ja4Entry, sniEntry)
+		ruleCache.Add(ctx, remoteIP, remotePort, ja4Entry, sniEntry)
 	}
 	return &pb.UpdateConnectionInsightResponse{Success: true}, nil
 }
