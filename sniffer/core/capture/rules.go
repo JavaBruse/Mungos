@@ -128,8 +128,9 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по dst (прямые пакеты)
 	if packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
+		logger.Info("ApplyRule: looking for dst key=%s, map size=%d", key, len(c.rules))
 		if rule := c.Get(key); rule != nil {
-			logger.Info("ApplyRule: (прямые пакеты) looking for key=%s", key)
+			logger.Info("ApplyRule: FOUND rule for dst key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
@@ -146,8 +147,9 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по src (обратные пакеты)
 	if packet.SrcIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
+		logger.Info("ApplyRule: looking for src key=%s, map size=%d", key, len(c.rules))
 		if rule := c.Get(key); rule != nil {
-			logger.Info("ApplyRule: (обратные пакеты) looking for key=%s", key)
+			logger.Info("ApplyRule: FOUND rule for src key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
