@@ -60,8 +60,6 @@ func (c *RuleCache) LoadRules(ctx context.Context) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	logger.Info("Loading %d rules from database", len(rulesData))
-
 	for _, data := range rulesData {
 		key := fmt.Sprintf("%s:%d", data.DstIP, data.DstPort)
 
@@ -78,7 +76,6 @@ func (c *RuleCache) LoadRules(ctx context.Context) error {
 		}
 
 		c.rules[key] = rule
-		logger.Info("Loaded rule: key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 	}
 
 	logger.Info("Total rules loaded: %d", len(c.rules))
@@ -128,9 +125,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по dst (прямые пакеты)
 	if packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
-		logger.Info("ApplyRule: looking for dst key=%s, map size=%d", key, len(c.rules))
 		if rule := c.Get(key); rule != nil {
-			logger.Info("ApplyRule: FOUND rule for dst key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
@@ -147,9 +142,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 	// Проверяем по src (обратные пакеты)
 	if packet.SrcIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
-		logger.Info("ApplyRule: looking for src key=%s, map size=%d", key, len(c.rules))
 		if rule := c.Get(key); rule != nil {
-			logger.Info("ApplyRule: FOUND rule for src key=%s, ja4=%v, sni=%v", key, rule.JA4Entry != nil, rule.SNIEntry != nil)
 			if rule.JA4Entry != nil {
 				fillPacketFromEntry(packet, rule.JA4Entry)
 			}
