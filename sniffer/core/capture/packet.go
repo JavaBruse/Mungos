@@ -44,11 +44,7 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		udp, _ := udpLayer.(*layers.UDP)
 		p.SrcPort = uint16(udp.SrcPort)
 		p.DstPort = uint16(udp.DstPort)
-		if len(udp.Payload) > 500 {
-			p.Payload = udp.Payload[:500]
-		} else {
-			p.Payload = udp.Payload
-		}
+		p.Payload = udp.Payload
 	}
 
 	if ethLayer := pkt.Layer(layers.LayerTypeEthernet); ethLayer != nil {
