@@ -72,7 +72,7 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 
 	packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 
-	// SNI обработка через процессор
+	// SNI обработка через процессор sniffer_known_packets_5sec
 	if ruleCache := GetRuleCache(); ruleCache != nil {
 		ruleCache.UpdateFromPacket(packet, w.db)
 	}

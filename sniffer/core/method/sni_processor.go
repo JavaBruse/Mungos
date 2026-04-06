@@ -64,7 +64,7 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 // достает домен из пакета
 func ExtractSNI(packet *models.Packet) string {
 	if packet == nil || len(packet.Payload) < 5 || packet.Payload[0] != 0x16 {
-		return ""
+		return packet.SNI
 	}
 
 	payload := packet.Payload
