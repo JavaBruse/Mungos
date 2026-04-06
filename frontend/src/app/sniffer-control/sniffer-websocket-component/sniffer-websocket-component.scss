@@ -17,6 +17,20 @@
     }
 }
 
+.date-grid {
+    color: rgb(121, 121, 121);
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    margin-left: 10px;
+
+    button {
+        justify-self: end;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+}
+
 .packets-list {
     padding: 0 0;
 }
@@ -590,3 +604,32 @@ table {
 }
 
 // -------------------------------------
+
+
+mat-button-toggle-group {
+    display: flex;
+    // flex-direction: column;
+    width: 55%;
+}
+
+mat-button-toggle {
+    width: 100%;
+}
+
+::ng-deep .mat-button-toggle-button {
+    padding: 0 !important;
+}
+
+::ng-deep .mat-button-toggle-label-content {
+    padding: 0 8px !important;
+    line-height: 28px !important;
+}
+
+:host ::ng-deep .mat-mdc-tab-header {
+    margin-top: -16px;
+}
+
+
+::ng-deep .mat-badge-content {
+    left: 15px !important;
+}

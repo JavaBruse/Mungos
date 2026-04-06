@@ -159,3 +159,14 @@
 .sidebar:hover .brand-author {
     opacity: 1;
 }
+
+
+
+::ng-deep .sidebar .item .mat-badge-content {
+    position: fixed !important;
+    top: 165px !important;
+    left: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: -6px !important;
+}

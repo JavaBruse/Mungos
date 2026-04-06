@@ -103,41 +103,30 @@ func (c *ClickHouseStorage) loadFromFile(path string) ([]JA4JsonEntry, error) {
 
 func (c *ClickHouseStorage) downloadFromAPI() ([]JA4JsonEntry, error) {
 	ja4APIURL := os.Getenv("JA4_DB_WEB_PATH")
-
-	for {
-		logger.Info("Downloading JA4 database from %s", ja4APIURL)
-
-		client := &http.Client{
-			Timeout: 0,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return nil
-			},
-		}
-
-		resp, err := client.Get(ja4APIURL)
-		if err != nil {
-			logger.Error("Download failed: %v, retrying in 10 seconds...", err)
-			time.Sleep(10 * time.Second)
-			continue
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			logger.Error("API returned %s, retrying in 10 seconds...", resp.Status)
-			time.Sleep(10 * time.Second)
-			continue
-		}
-
-		var entries []JA4JsonEntry
-		if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
-			logger.Error("Failed to decode JSON: %v, retrying...", err)
-			time.Sleep(10 * time.Second)
-			continue
-		}
-
-		logger.Info("Downloaded %d entries", len(entries))
-		return entries, nil
+	if ja4APIURL == "" {
+		return nil, fmt.Errorf("JA4_DB_WEB_PATH not set")
 	}
+
+	logger.Info("Downloading JA4 database from %s", ja4APIURL)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(ja4APIURL)
+	if err != nil {
+		return nil, fmt.Errorf("download failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned %s", resp.Status)
+	}
+
+	var entries []JA4JsonEntry
+	if err := json.NewDecoder(resp.Body).Decode(&entries); err != nil {
+		return nil, fmt.Errorf("failed to decode JSON: %v", err)
+	}
+
+	logger.Info("Downloaded %d entries", len(entries))
+	return entries, nil
 }
 
 func (c *ClickHouseStorage) saveJA4ToDB(ctx context.Context, entries []JA4JsonEntry) error {

@@ -3,7 +3,14 @@
         <button mat-icon-button color="primary" (click)="resetAndLoad()" matTooltip="Обновить список">
             <mat-icon>update</mat-icon>
         </button>
-        <h2>Поток трафика со сниффера: {{ id() }}</h2>
+        <mat-button-toggle-group (change)="onFilterTypeChange($event)" [value]="filterType">
+            <mat-button-toggle value="all">ВСЕ</mat-button-toggle>
+            <mat-button-toggle value="unknown">НЕИЗВЕСТНЫЕ<span matBadge="{{metricsService.getTotalUnknown()}}"></span>
+            </mat-button-toggle>
+            <mat-button-toggle value="known">ИЗВЕСТНЫЕ
+                <span matBadge="{{metricsService.getTotalKnown()}}"></span>
+            </mat-button-toggle>
+        </mat-button-toggle-group>
         <div class="stats-bar">
             <span>Загружено: {{ trafficData().length }}</span>
             @if (filterActive()) {
@@ -51,176 +58,253 @@
                     <mat-label>IP Адреса</mat-label>
                     <input matInput type="text" formControlName="ips" placeholder="192.168.1.1,10.0.0.1">
                 </mat-form-field>
-                <mat-checkbox formControlName="unknownOnly">Только неизвестные пакеты</mat-checkbox>
-                <mat-checkbox formControlName="knownOnly">Только известные пакеты</mat-checkbox>
-
             </div>
         </form>
     </div>
-    <div class="packets-list">
-        @for (packet of trafficData(); track $index; let i = $index) {
-        <div class="packet-card" [class.expanded]="expandedPacket() === i">
-            <div class="packet-header" (click)="togglePacket(i)">
-                <span class="packet-time">{{ formatTimestamp(packet.timestamp) }}</span>
-                <div class="packet-protocol-strip">
-                    @for (proto of getProtocolSegments(packet.protocols); track $index) {
-                    <div class="protocol-segment" [class]="getSegmentClass(proto)" [style.flex]="1"
-                        [matTooltip]="proto">
-                    </div>
-                    }
-                </div>
-                <span class="packet-summary-container">
-                    <div class="address">{{ getPacketSummary(packet) }}</div>
-                    <div class="vendor">{{ getPacketVendor(packet)}}</div>
-                </span>
 
-                <span class="packet-last-container">
-                    @if ( packet.ja4Application ) {
-                    <div class="app">{{ extractAppName(packet.ja4Application)}}</div>
-                    }
-
-                    <div class="service">
-
-                        @if ( packet.sniService ) {
-
-                        {{ packet.sniService}}
-                        }
-                        @if ( packet.sniService && packet.sni ) {
-                        :
-                        }
-                        @if ( packet.sni ) {
-                        {{packet.sni}}
-                        }
-                    </div>
-                </span>
-                <mat-icon class="packet-icon" [style.color]="getPacketColor(packet)" [matTooltip]="getTooltip(packet)">
-                    {{ getPacketIcon(packet) }}
-                </mat-icon>
-                <span class="packet-length">{{ packet.length || 0 }} B</span>
-            </div>
-
-            @if (expandedPacket() === i) {
-            <div class="packet-details">
-                <div class="packet-timestamp-bar">
-                    <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
-                    <button mat-raised-button color="primary"
-                        (click)="openPacketInsight(packet); $event.stopPropagation()"> Анализировать
-                    </button>
-                    <span class="protocol-badge">
-                        @if(packet.tcpFlags){
-                        {{ getTooltip(packet)}}
-                        }
-                    </span>
-                </div>
-                <div class="request-schema">
-                    <div class="endpoint source">
-
-                        <div class="vendor">{{ packet.srcVendor }} </div>
-                        @if (packet.srcIpType==="public") {
-                        <div class="endpoint-icon">
-                            <mat-icon>dns</mat-icon>
+    <mat-tab-group (selectedTabChange)="onTabChange($event)" [selectedIndex]="selectedTab">
+        <mat-tab label="ПАКЕТЫ">
+            <div class="packets-list">
+                @for (packet of trafficData(); track $index; let i = $index) {
+                <div class="packet-card" [class.expanded]="expandedPacket() === i">
+                    <div class="packet-header" (click)="togglePacket(i)">
+                        <span class="packet-time">{{ formatTimestamp(packet.timestamp) }}</span>
+                        <div class="packet-protocol-strip">
+                            @for (proto of getProtocolSegments(packet.protocols); track $index) {
+                            <div class="protocol-segment" [class]="getSegmentClass(proto)" [style.flex]="1"
+                                [matTooltip]="proto">
+                            </div>
+                            }
                         </div>
-                        } @else {
-                        <div class="endpoint-icon">
-                            <mat-icon>computer</mat-icon>
-                        </div>
-                        }
-                        <div class="endpoint-details">
-                            <div class="ip">{{ packet.srcIp }}:{{ packet.srcPort }}</div>
-                            <div class="mac">{{ packet.srcMac }}</div>
-                        </div>
-                    </div>
-                    <div class="request-flow">
-                        <div class="flow-top"> {{ packet.protocols.join(' → ') }}</div>
-                        <div class="flow-arrow" [style.--arrow-color]="getPacketColor(packet)"></div>
-                        <div class="flow-bottom">
-                            <td class="field-value">
-                                @if (packet.hasPayload) {
-                                <button mat-button color="primary" (click)="togglePayload(packet)"
-                                    class="payload-length-btn">
-                                    {{ packet.length }} bytes
-                                    @if (packet.payload) {
-                                    <mat-icon>visibility_off</mat-icon>
-                                    } @else {
-                                    <mat-icon>cloud_download</mat-icon>
-                                    }
-                                </button>
-                                } @else {
-                                {{ packet.length }} bytes
+                        <span class="packet-summary-container">
+                            <div class="address">{{ getPacketSummary(packet) }}</div>
+                            <div class="vendor">{{ getPacketVendor(packet)}}</div>
+                        </span>
+
+                        <span class="packet-last-container">
+                            @if ( packet.ja4Application ) {
+                            <div class="app">{{ extractAppName(packet.ja4Application)}}</div>
+                            }
+
+                            <div class="service">
+
+                                @if ( packet.sniService ) {
+
+                                {{ packet.sniService}}
                                 }
-                            </td>
-                        </div>
+                                @if ( packet.sniService && packet.sni ) {
+                                :
+                                }
+                                @if ( packet.sni ) {
+                                {{packet.sni}}
+                                }
+                            </div>
+                        </span>
+                        <mat-icon class="packet-icon" [style.color]="getPacketColor(packet)"
+                            [matTooltip]="getTooltip(packet)">
+                            {{ getPacketIcon(packet) }}
+                        </mat-icon>
+                        <span class="packet-length">{{ packet.length || 0 }} B</span>
                     </div>
 
-                    <div class="endpoint destination">
-                        <div class="vendor">{{ packet.dstVendor }}</div>
-                        @if (packet.dstIpType==="public") {
-                        <div class="endpoint-icon">
-                            <mat-icon>dns</mat-icon>
+                    @if (expandedPacket() === i) {
+                    <div class="packet-details">
+                        <div class="packet-timestamp-bar">
+                            <span class="timestamp">{{ formatTimestamp(packet.timestamp) }}</span>
+                            <button mat-raised-button color="primary"
+                                (click)="openPacketInsight(packet); $event.stopPropagation()"> Анализировать
+                            </button>
+                            <span class="protocol-badge">
+                                @if(packet.tcpFlags){
+                                {{ getTooltip(packet)}}
+                                }
+                            </span>
                         </div>
-                        } @else {
-                        <div class="endpoint-icon">
-                            <mat-icon>computer</mat-icon>
+                        <div class="request-schema">
+                            <div class="endpoint source">
+
+                                <div class="vendor">{{ packet.srcVendor }} </div>
+                                @if (packet.srcIpType==="public") {
+                                <div class="endpoint-icon">
+                                    <mat-icon>dns</mat-icon>
+                                </div>
+                                } @else {
+                                <div class="endpoint-icon">
+                                    <mat-icon>computer</mat-icon>
+                                </div>
+                                }
+                                <div class="endpoint-details">
+                                    <div class="ip">{{ packet.srcIp }}:{{ packet.srcPort }}</div>
+                                    <div class="mac">{{ packet.srcMac }}</div>
+                                </div>
+                            </div>
+                            <div class="request-flow">
+                                <div class="flow-top"> {{ packet.protocols.join(' → ') }}</div>
+                                <div class="flow-arrow" [style.--arrow-color]="getPacketColor(packet)"></div>
+                                <div class="flow-bottom">
+                                    <td class="field-value">
+                                        @if (packet.hasPayload) {
+                                        <button mat-button color="primary" (click)="togglePayload(packet)"
+                                            class="payload-length-btn">
+                                            {{ packet.length }} bytes
+                                            @if (packet.payload) {
+                                            <mat-icon>visibility_off</mat-icon>
+                                            } @else {
+                                            <mat-icon>cloud_download</mat-icon>
+                                            }
+                                        </button>
+                                        } @else {
+                                        {{ packet.length }} bytes
+                                        }
+                                    </td>
+                                </div>
+                            </div>
+
+                            <div class="endpoint destination">
+                                <div class="vendor">{{ packet.dstVendor }}</div>
+                                @if (packet.dstIpType==="public") {
+                                <div class="endpoint-icon">
+                                    <mat-icon>dns</mat-icon>
+                                </div>
+                                } @else {
+                                <div class="endpoint-icon">
+                                    <mat-icon>computer</mat-icon>
+                                </div>
+                                }
+                                <div class="endpoint-details">
+                                    <div class="mac">{{ packet.dstMac }}</div>
+                                    <div class="ip">{{ packet.dstIp }}:{{ packet.dstPort }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="packet-info-bar">
+                            <div class="table-container">
+                                <table>
+                                    <tr>
+                                        <td class="field-name">SNI</td>
+                                        <td class="field-value">{{ packet.sni || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">SNI Service</td>
+                                        <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
+                                    </tr>
+                                    <!-- JA4 секция -->
+                                    <tr>
+                                        <td class="field-name">JA4 Raw</td>
+                                        <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">JA4 Verified</td>
+                                        <td class="field-value monospace">{{ packet.ja4Verified }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">JA4 Application</td>
+                                        <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="ttl-container">
+                                TTL: {{ packet.ttl || 'не определен' }}
+                            </div>
+                        </div>
+                        @if (packet.payload) {
+                        <div class="payload-section">
+                            <h4>Payload ({{ packet.payload.length }} bytes):</h4>
+                            <pre class="payload">{{ formatPayload(packet.payload) }}</pre>
                         </div>
                         }
-                        <div class="endpoint-details">
-                            <div class="mac">{{ packet.dstMac }}</div>
-                            <div class="ip">{{ packet.dstIp }}:{{ packet.dstPort }}</div>
+                    </div>
+                    }
+                </div>
+                }
+                @if (!hasMore() && trafficData().length > 0) {
+                <div class="end-message">— Пакетов больше нет —</div>
+                }
+            </div>
+        </mat-tab>
+        <mat-tab label="СОЕДИНЕНИЯ">
+            <div class="connections-list">
+                @for (conn of groupedConnections(); track $index; let i = $index) {
+                <div class="packet-card" [class.expanded]="expandedConnections.has(i)">
+                    <div class="packet-header" (click)="toggleConnection(i)">
+                        <span class="packet-summary-container">
+                            <div class="address">{{ conn.clientIp }} ⇄ {{ conn.serverIp }}:{{
+                                conn.serverPort }}</div>
+                            <div class="vendor">{{ conn.packetCount }} пакетов, {{ conn.totalBytes }} B</div>
+
+                        </span>
+
+                        <span class="packet-last-container">
+                            @if (conn.ja4Application) {
+                            <div class="app">{{ extractAppName(conn.ja4Application) }}</div>
+                            }
+                            <div class="service">
+                                @if (conn.sniService) {
+                                {{ conn.sniService }}
+                                }
+                                @if (conn.sniService && conn.sni) {
+                                :
+                                }
+                                @if (conn.sni) {
+                                {{ conn.sni }}
+                                }
+                            </div>
+                        </span>
+                        <mat-icon class="packet-icon" [style.color]="'#2196f3'" matTooltip="Соединение">
+                            device_hub
+                        </mat-icon>
+                        <span class="packet-length">{{ conn.totalBytes }} B</span>
+                    </div>
+
+                    @if (expandedConnections.has(i)) {
+                    <div class="packet-details">
+                        <div class="packet-info-bar">
+                            <div class="table-container">
+                                <table>
+                                    <tr>
+                                        <td class="field-name">JA4 Raw</td>
+                                        <td class="field-value monospace">{{ conn.ja4Raw || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">JA4 Application</td>
+                                        <td class="field-value">{{ conn.ja4Application || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">SNI</td>
+                                        <td class="field-value">{{ conn.sni || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">SNI Service</td>
+                                        <td class="field-value">{{ conn.sniService || 'не определен' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">Пакетов</td>
+                                        <td class="field-value">{{ conn.packetCount }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="field-name">Всего байт</td>
+                                        <td class="field-value">{{ conn.totalBytes }}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="packet-info-bar">
-                    <div class="table-container">
-                        <table>
-                            <tr>
-                                <td class="field-name">SNI</td>
-                                <td class="field-value">{{ packet.sni || 'не определен' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="field-name">SNI Service</td>
-                                <td class="field-value">{{ packet.sniService || 'не определен' }}</td>
-                            </tr>
-                            <!-- JA4 секция -->
-                            <tr>
-                                <td class="field-name">JA4 Raw</td>
-                                <td class="field-value monospace">{{ packet.ja4Raw || 'не определен' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="field-name">JA4 Verified</td>
-                                <td class="field-value monospace">{{ packet.ja4Verified }}</td>
-                            </tr>
-                            <tr>
-                                <td class="field-name">JA4 Application</td>
-                                <td class="field-value">{{ packet.ja4Application || 'не определен' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="field-name">srcIpType</td>
-                                <td class="field-value">{{ packet.srcIpType }}</td>
-                            </tr>
-                            <tr>
-                                <td class="field-name">dstIpType</td>
-                                <td class="field-value">{{ packet.dstIpType }}</td>
-                            </tr>
-                        </table>
+                    <div class="date-grid">
+                        <span class="timestamp">Первый пакет: {{ formatTimestamp(conn.firstTimestamp) }}</span>
+                        <span class="timestamp">Последний пакет: {{
+                            formatTimestamp(conn.lastTimestamp) }}</span>
+                        <button mat-raised-button color="primary"
+                            (click)="openConnectionInsight(conn); $event.stopPropagation()">
+                            Анализировать
+                        </button>
                     </div>
-                    <div class="ttl-container">
-                        TTL: {{ packet.ttl || 'не определен' }}
-                    </div>
-                </div>
-                @if (packet.payload) {
-                <div class="payload-section">
-                    <h4>Payload ({{ packet.payload.length }} bytes):</h4>
-                    <pre class="payload">{{ formatPayload(packet.payload) }}</pre>
+                    }
                 </div>
                 }
             </div>
-            }
-        </div>
-        }
-        @if (!hasMore() && trafficData().length > 0) {
-        <div class="end-message">— Пакетов больше нет —</div>
-        }
-    </div>
+        </mat-tab>
+
+    </mat-tab-group>
 </div>
 
 @if (showHandlerPackage()) {

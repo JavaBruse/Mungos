@@ -117,7 +117,7 @@
                                 matTooltip="Удалить">delete_outline</mat-icon>
                         </div>
                         } @else {
-                        <span matBadge="{{metricsService.getValue(sniffer.id)}}"></span>
+                        <span matBadge="{{metricsService.getUnknown(sniffer.id)}}"></span>
                         }
                     </div>
                 </div>

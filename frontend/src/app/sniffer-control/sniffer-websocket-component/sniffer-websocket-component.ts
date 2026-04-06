@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SnifferWebSocketService, TrafficPacket, TrafficRequest } from '../service/sniffer-websocket.service';
@@ -17,6 +17,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { HandlerPackageComponent } from '../../handler-package.component/handler-package.component';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatBadgeModule } from '@angular/material/badge';
+import { SnifferMetricsService } from '../../sniffer-control/service/sniffer-metrics.service';
 
 @Component({
   selector: 'app-sniffer-websocket-component',
@@ -36,7 +40,10 @@ import { HandlerPackageComponent } from '../../handler-package.component/handler
     MatTooltipModule,
     MatButtonModule,
     MatCheckboxModule,
-    HandlerPackageComponent
+    HandlerPackageComponent,
+    MatTabsModule,
+    MatButtonToggleModule,
+    MatBadgeModule
   ],
   templateUrl: './sniffer-websocket-component.html',
   styleUrl: './sniffer-websocket-component.scss',
@@ -45,8 +52,11 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   private wsService = inject(SnifferWebSocketService);
   private route = inject(ActivatedRoute);
   private scrollDispatcher = inject(ScrollDispatcher);
+  metricsService = inject(SnifferMetricsService);
+
   private fb = inject(FormBuilder);
   toggleLevel2 = false;
+  selectedTab = 0;
 
   trafficData = signal<TrafficPacket[]>([]);
   expandedPacket = signal<number | null>(null);
@@ -55,7 +65,14 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   filterActive = signal(false);
   isLoading = signal(false);
   filterForm: FormGroup;
-
+  filterType = 'all'; // 'all', 'unknown', 'known'
+  onFilterTypeChange(event: any) {
+    this.filterType = event.value;
+    this.filterForm.patchValue({
+      unknownOnly: this.filterType === 'unknown',
+      knownOnly: this.filterType === 'known'
+    });
+  }
   availableProtocols = ['TCP', 'UDP', 'HTTP', 'HTTPS', 'DNS', 'ICMP', 'ARM', 'FTP', 'SSH', 'SMTP'];
 
   private readonly LIMIT = 1000;
@@ -72,7 +89,7 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
       endTime: [null],
       textSearch: [''],
       knownOnly: [false],
-      unknownOnly: [false]
+      unknownOnly: [true]
     });
   }
 
@@ -276,6 +293,12 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.filterType = 'unknown';
+
+    this.filterForm.patchValue({
+      unknownOnly: true,
+      knownOnly: false
+    });
     this.paramSubscription = this.route.paramMap.subscribe(params => {
       const newId = params.get('id')!;
       this.id.set(newId);
@@ -436,5 +459,92 @@ export class SnifferWebsocketComponent implements OnInit, OnDestroy {
 
     return ja4Application + "не определил";
   }
+
+  groupedConnections = computed(() => {
+    const packets = this.trafficData();
+    const groups = new Map<string, any>();
+
+    for (const p of packets) {
+      // Определяем публичную сторону (сервер)
+      let serverIp: string;
+      let serverPort: number;
+      let clientIp: string;
+      let clientPort: number;
+
+      if (p.srcIpType === 'public') {
+        serverIp = p.srcIp;
+        serverPort = p.srcPort;
+        clientIp = p.dstIp;
+        clientPort = p.dstPort;
+      } else {
+        serverIp = p.dstIp;
+        serverPort = p.dstPort;
+        clientIp = p.srcIp;
+        clientPort = p.srcPort;
+      }
+
+      // Ключ только по серверу (публичный IP:порт)
+      const key = `${serverIp}:${serverPort}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key: key,
+          clientIp: clientIp,
+          clientPort: clientPort,
+          serverIp: serverIp,
+          serverPort: serverPort,
+          packetCount: 1,
+          totalBytes: p.length || 0,
+          firstTimestamp: p.timestamp,
+          lastTimestamp: p.timestamp,
+          ja4Raw: p.ja4Raw,
+          ja4Application: p.ja4Application,
+          sni: p.sni,
+          sniService: p.sniService,
+          expanded: false,
+          packets: [p]
+        });
+      } else {
+        const existing = groups.get(key);
+        existing.packetCount++;
+        existing.totalBytes += (p.length || 0);
+        existing.lastTimestamp = Math.max(existing.lastTimestamp, p.timestamp);
+        existing.firstTimestamp = Math.min(existing.firstTimestamp, p.timestamp);
+        existing.packets.push(p);
+        // Обновляем идентификацию, если появилась
+        if (p.ja4Raw) existing.ja4Raw = p.ja4Raw;
+        if (p.ja4Application) existing.ja4Application = p.ja4Application;
+        if (p.sni) existing.sni = p.sni;
+        if (p.sniService) existing.sniService = p.sniService;
+        // Обновляем клиентские данные (могут быть разные порты)
+        if (p.srcIp === clientIp || p.dstIp === clientIp) {
+          // Клиент может меняться, но для отображения берем первый
+        }
+      }
+    }
+
+    return Array.from(groups.values());
+  });
+
+  expandedConnections = new Set<number>();
+
+  onTabChange(event: any) {
+    this.selectedTab = event.index;
+  }
+
+  toggleConnection(index: number) {
+    if (this.expandedConnections.has(index)) {
+      this.expandedConnections.delete(index);
+    } else {
+      this.expandedConnections.add(index);
+    }
+  }
+
+  openConnectionInsight(conn: any) {
+    if (conn.packets && conn.packets.length > 0) {
+      this.openPacketInsight(conn.packets[0]);
+    }
+  }
+
 }
 

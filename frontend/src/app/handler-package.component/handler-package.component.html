@@ -55,6 +55,7 @@
                         <table class="candidates-table">
                             <thead>
                                 <tr>
+                                    <th></th>
                                     <th>Глубина</th>
                                     <th>Приложение</th>
                                     <th>Устройство</th>
@@ -66,10 +67,14 @@
                             <tbody>
                                 @for (candidate of insight()?.ja4Candidates; track trackByJA4($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
+                                    <td (click)="$event.stopPropagation()">
+                                        <mat-radio-button name="ja4" [checked]="selectedJa4Id === candidate.id"
+                                            (change)="selectJA4(candidate.id)">
+                                        </mat-radio-button>
+                                    </td>
                                     <td>{{ candidate.hop }}</td>
                                     @if(candidate.application){
                                     <td [matTooltip]="candidate.fingerprint">{{ candidate.application }}</td>
-
                                     } @else {
                                     <td matTooltip="Новый слепок, еще не идентифицирован">{{ candidate.fingerprint }}
                                     </td>
@@ -87,6 +92,7 @@
                         <table class="candidates-table">
                             <thead>
                                 <tr>
+                                    <th></th>
                                     <th>Глубина</th>
                                     <th>SNI</th>
                                     <th>Сервис</th>
@@ -97,6 +103,11 @@
                             <tbody>
                                 @for (candidate of insight()?.sniCandidates; track trackBySNI($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
+                                    <td (click)="$event.stopPropagation()">
+                                        <mat-radio-button name="sni" [checked]="selectedSniId === candidate.id"
+                                            (change)="selectSNI(candidate.id)">
+                                        </mat-radio-button>
+                                    </td>
                                     <td>{{ candidate.hop }}</td>
                                     <td>{{ candidate.sni }}</td>
                                     <td>{{ candidate.service }}</td>
@@ -112,41 +123,16 @@
                 <div class="date-grid">
                     <div>Первый пакет: {{ formatTimestamp(insight()?.firstPacketTime ?? 0) }}</div>
                     <div>Последний пакет: {{ formatTimestamp(insight()?.lastPacketTime ?? 0) }}</div>
-                </div>
-            </div>
-            <div class="modal-sidebar">
-                <h4>Применить идентификацию</h4>
+                    <!-- @if ((insight()?.totalPackets ?? 0) - (insight()?.identifiedPackets ?? 0) === 0) {
 
-                <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>JA4 идентификатор</mat-label>
-                    <mat-select [(value)]="selectedJa4Id">
-                        <mat-option value="">Не выбрано</mat-option>
-                        @for (candidate of allJa4Candidates(); track trackByJA4($index, candidate)) {
-                        <mat-option [value]="candidate.id">{{ candidate.application || candidate.fingerprint ||
-                            candidate.id }}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>SNI идентификатор</mat-label>
-                    <mat-select [(value)]="selectedSniId">
-                        <mat-option value="">Не выбрано</mat-option>
-                        @for (candidate of allSniCandidates(); track trackBySNI($index, candidate)) {
-                        <mat-option [value]="candidate.id">{{ candidate.sni || candidate.service || candidate.id
-                            }}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-
-                <div class="action-buttons">
+                    } -->
                     <button mat-raised-button color="primary" [disabled]="!selectedJa4Id && !selectedSniId"
                         (click)="applyInsight()">
                         Применить
                     </button>
-                    <button mat-raised-button (click)="close.emit()">Отмена</button>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

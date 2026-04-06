@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { JA4Candidate, SNICandidate } from './connection-insight.DTO';
+import { MatRadioModule } from '@angular/material/radio';
 
 @Component({
   selector: 'app-handler-package',
@@ -17,7 +18,7 @@ import { JA4Candidate, SNICandidate } from './connection-insight.DTO';
   imports: [CommonModule, MatTabsModule, MatSelectModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatTooltipModule
+    MatTooltipModule, MatRadioModule
   ],
   templateUrl: './handler-package.component.html',
   styleUrl: './handler-package.component.scss',
@@ -32,12 +33,19 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   selectedJa4Id = '';
   selectedSniId = '';
+  selectJA4(id: string) {
+    this.selectedJa4Id = id;
+  }
 
+  selectSNI(id: string) {
+    this.selectedSniId = id;
+  }
 
   insight = signal<ConnectionInsight | null>(null);
   error = signal<string | null>(null);
 
   ngOnInit() {
+
     this.loadInsight();
   }
 
@@ -54,6 +62,14 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
     this.subscription = this.snifferService.getConnectionInsight(this.snifferId, this.packetId).subscribe({
       next: (data) => {
         this.insight.set(data);
+
+        if (data.ja4Candidates?.length && !this.selectedJa4Id) {
+          this.selectedJa4Id = data.ja4Candidates[0].id;
+        }
+        if (data.sniCandidates?.length && !this.selectedSniId) {
+          this.selectedSniId = data.sniCandidates[0].id;
+        }
+
         this.loaded = true;
       },
       error: () => {
@@ -107,6 +123,7 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   });
 
   applyInsight() {
+    console.log('applyInsight called', this.selectedJa4Id, this.selectedSniId);
     if (!this.selectedJa4Id && !this.selectedSniId) return;
     this.updateInsight(this.selectedJa4Id, this.selectedSniId);
   }
