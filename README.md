@@ -298,3 +298,28 @@ not (src net 192.168.0.0/16 or dst net 192.168.0.0/16)
 ```text
 not (host 172.20.0.10 and port 3331) and not port 3123 and not host 172.20.0.2
 ```
+
+
+```python
+import random
+from locust import HttpUser, task, between
+# Читаем домены из файла
+with open("host.txt", "r") as f:
+    target_hosts = [line.strip() for line in f if line.strip()]
+class NewsVisitor(HttpUser):
+    # Заглушка, чтобы Locust не ругался
+    host = "http://localhost"
+    wait_time = between(1, 5)
+
+    @task
+    def browse_news(self):
+        # Выбираем случайный домен
+        domain = random.choice(target_hosts)
+        url = f"https://{domain}"
+        with self.client.get(url, name=domain, catch_response=True) as response:
+            if response.status_code == 200:
+                print(f"Успешно: {domain}")
+            else:
+                print(f"Ошибка на {domain}: {response.status_code}")
+
+```

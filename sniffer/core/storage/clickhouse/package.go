@@ -480,12 +480,53 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	insight.FirstPacketTime = firstTime.UnixNano()
 	insight.LastPacketTime = lastTime.UnixNano()
 
-	// Собираем кандидатов JA4 и SNI (Hop=1) по отпечатку/домену
+	// 4. Собираем кандидатов по hop-ам
 	ja4Map := make(map[string]*models.JA4Candidate)
 	sniMap := make(map[string]*models.SNICandidate)
 
-	for _, group := range identificationGroups {
+	// Hop 1: точное совпадение (remoteIP, remotePort) из текущего соединения
+	c.collectHop1Candidates(identificationGroups, ja4Map, sniMap, ctx)
 
+	// Если не набрали 5, идём на Hop 2
+	if len(ja4Map)+len(sniMap) < 5 {
+		c.collectHopCandidates(ctx, remoteIP, remotePort, 2, ja4Map, sniMap, 5)
+	}
+
+	// Если не набрали 5, идём на Hop 3 (/24)
+	if len(ja4Map)+len(sniMap) < 5 {
+		subnet24 := getSubnet24(remoteIP)
+		if subnet24 != "" {
+			c.collectHopCandidatesBySubnet(ctx, subnet24, 3, ja4Map, sniMap, 5)
+		}
+	}
+
+	// Если не набрали 5, идём на Hop 4 (/16)
+	if len(ja4Map)+len(sniMap) < 5 {
+		subnet16 := getSubnet16(remoteIP)
+		if subnet16 != "" {
+			c.collectHopCandidatesBySubnet(ctx, subnet16, 4, ja4Map, sniMap, 5)
+		}
+	}
+
+	// Конвертируем мапы в слайсы
+	for _, cand := range ja4Map {
+		insight.JA4Candidates = append(insight.JA4Candidates, *cand)
+	}
+	for _, cand := range sniMap {
+		insight.SNICandidates = append(insight.SNICandidates, *cand)
+	}
+
+	return &insight, nil
+}
+
+// collectHop1Candidates - собирает кандидатов из текущего соединения
+func (c *ClickHouseStorage) collectHop1Candidates(
+	identificationGroups [][]interface{},
+	ja4Map map[string]*models.JA4Candidate,
+	sniMap map[string]*models.SNICandidate,
+	ctx context.Context,
+) {
+	for _, group := range identificationGroups {
 		ja4Raw := toString(group[0])
 		ja4App := toString(group[1])
 		ja4Device := toString(group[2])
@@ -493,10 +534,8 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 		sni := toString(group[4])
 		sniService := toString(group[5])
 
-		// JA4 - используем отпечаток как ключ
 		if ja4Raw != "" {
 			if _, exists := ja4Map[ja4Raw]; !exists {
-				// Ищем в базе по отпечатку
 				entry, _ := c.LookupJA4(ctx, ja4Raw)
 				id := ""
 				confidence := 0
@@ -510,18 +549,17 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 					Application: ja4App,
 					Device:      ja4Device,
 					OS:          ja4OS,
-					Count:       0,
+					Count:       1,
 					Confidence:  confidence,
 					Hop:         1,
 				}
+			} else {
+				ja4Map[ja4Raw].Count++
 			}
-			ja4Map[ja4Raw].Count++
 		}
 
-		// SNI - используем домен как ключ
 		if sni != "" {
 			if _, exists := sniMap[sni]; !exists {
-				// Ищем в базе по домену
 				entry, _ := c.GetSNIEntry(ctx, sni)
 				id := ""
 				confidence := 0
@@ -533,234 +571,34 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 					ID:         id,
 					SNI:        sni,
 					Service:    sniService,
-					Count:      0,
+					Count:      1,
 					Confidence: confidence,
 					Hop:        1,
 				}
+			} else {
+				sniMap[sni].Count++
 			}
-			sniMap[sni].Count++
 		}
 	}
-
-	// Собираем Hop=2 и Hop=3 через связанные адреса
-	ja4Map, sniMap = c.collectRelatedCandidatesByValue(ctx, ja4Map, sniMap, 2, 3)
-
-	// Конвертируем мапы в слайсы
-	for _, cand := range ja4Map {
-		insight.JA4Candidates = append(insight.JA4Candidates, *cand)
-	}
-	for _, cand := range sniMap {
-		insight.SNICandidates = append(insight.SNICandidates, *cand)
-	}
-
-	return &insight, nil
 }
 
-// collectRelatedCandidatesByValue - рекурсивный сбор кандидатов по отпечаткам/доменам
-func (c *ClickHouseStorage) collectRelatedCandidatesByValue(ctx context.Context,
+// collectHopCandidates - собирает кандидатов по IP и порту (Hop 2)
+func (c *ClickHouseStorage) collectHopCandidates(
+	ctx context.Context,
+	remoteIP string,
+	remotePort uint16,
+	hop int,
 	ja4Map map[string]*models.JA4Candidate,
 	sniMap map[string]*models.SNICandidate,
-	currentHop int, maxHop int) (map[string]*models.JA4Candidate, map[string]*models.SNICandidate) {
-
-	if currentHop > maxHop {
-		return ja4Map, sniMap
+	maxTotal int,
+) {
+	needed := maxTotal - (len(ja4Map) + len(sniMap))
+	if needed <= 0 {
+		return
 	}
 
-	// Проверяем, сколько уже собрали
-	currentTotal := len(ja4Map) + len(sniMap)
-	if currentTotal >= 5 {
-		return ja4Map, sniMap
-	}
-
-	// Собираем JA4 отпечатки текущего уровня
-	ja4Values := make([]string, 0)
-	for _, cand := range ja4Map {
-		if cand.Hop == currentHop-1 {
-			ja4Values = append(ja4Values, cand.Fingerprint)
-		}
-	}
-
-	// Собираем SNI домены текущего уровня
-	sniValues := make([]string, 0)
-	for _, cand := range sniMap {
-		if cand.Hop == currentHop-1 {
-			sniValues = append(sniValues, cand.SNI)
-		}
-	}
-
-	if len(ja4Values) == 0 && len(sniValues) == 0 {
-		return ja4Map, sniMap
-	}
-
-	// Получаем связанные адреса
-	addresses := make([]models.RelatedAddress, 0)
-	needCount := 5 - currentTotal
-
-	if len(ja4Values) > 0 {
-		ja4Addresses, _ := c.getRelatedAddressesByJA4Value(ctx, ja4Values, needCount)
-		addresses = append(addresses, ja4Addresses...)
-	}
-
-	if len(sniValues) > 0 && len(addresses) < needCount {
-		sniAddresses, _ := c.getRelatedAddressesBySNIValue(ctx, sniValues, needCount-len(addresses))
-		addresses = append(addresses, sniAddresses...)
-	}
-
-	if len(addresses) == 0 {
-		return ja4Map, sniMap
-	}
-
-	// Определяем лимит для JA4/SNI с адреса
-	itemsPerAddress := 5
-	if currentHop == 2 {
-		itemsPerAddress = 3
-	} else if currentHop == 3 {
-		itemsPerAddress = 2
-	}
-
-	// По каждому адресу собираем его JA4 и SNI
-	for _, addr := range addresses {
-		ja4List, sniList := c.getJA4AndSNIByAddressValue(ctx, addr.RemoteIP, addr.RemotePort, itemsPerAddress)
-
-		for _, j := range ja4List {
-			if existing, exists := ja4Map[j.Fingerprint]; exists {
-				existing.Count += j.Count
-				if currentHop < existing.Hop {
-					existing.Hop = currentHop
-				}
-			} else {
-				ja4Map[j.Fingerprint] = &models.JA4Candidate{
-					ID:          j.ID,
-					Fingerprint: j.Fingerprint,
-					Application: j.Application,
-					Device:      j.Device,
-					OS:          j.OS,
-					Count:       j.Count,
-					Confidence:  j.Confidence,
-					Hop:         currentHop,
-				}
-			}
-		}
-
-		for _, s := range sniList {
-			if existing, exists := sniMap[s.SNI]; exists {
-				existing.Count += s.Count
-				if currentHop < existing.Hop {
-					existing.Hop = currentHop
-				}
-			} else {
-				sniMap[s.SNI] = &models.SNICandidate{
-					ID:         s.ID,
-					SNI:        s.SNI,
-					Service:    s.Service,
-					Count:      s.Count,
-					Confidence: s.Confidence,
-					Hop:        currentHop,
-				}
-			}
-		}
-
-		if len(ja4Map)+len(sniMap) >= 5 {
-			return ja4Map, sniMap
-		}
-	}
-
-	return c.collectRelatedCandidatesByValue(ctx, ja4Map, sniMap, currentHop+1, maxHop)
-}
-
-// getRelatedAddressesByJA4Value - получает адреса по JA4 отпечатку
-func (c *ClickHouseStorage) getRelatedAddressesByJA4Value(ctx context.Context, ja4Values []string, limit int) ([]models.RelatedAddress, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-
-	placeholders := strings.Repeat("?,", len(ja4Values))
-	placeholders = placeholders[:len(placeholders)-1]
-
-	query := fmt.Sprintf(`
-		SELECT dst_ip, dst_port, COUNT() as count
-		FROM packets
-		WHERE ja4_raw IN (%s)
-			AND dst_ip_type = 'public'
-		GROUP BY dst_ip, dst_port
-		ORDER BY count DESC
-		LIMIT %d
-	`, placeholders, limit)
-
-	args := make([]interface{}, len(ja4Values))
-	for i, v := range ja4Values {
-		args[i] = v
-	}
-
-	rows, err := c.conn.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []models.RelatedAddress
-	for rows.Next() {
-		var addr models.RelatedAddress
-		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
-			continue
-		}
-		results = append(results, addr)
-	}
-	return results, nil
-}
-
-// getRelatedAddressesBySNIValue - получает адреса по SNI домену
-func (c *ClickHouseStorage) getRelatedAddressesBySNIValue(ctx context.Context, sniValues []string, limit int) ([]models.RelatedAddress, error) {
-	if limit <= 0 {
-		limit = 10
-	}
-
-	placeholders := strings.Repeat("?,", len(sniValues))
-	placeholders = placeholders[:len(placeholders)-1]
-
-	query := fmt.Sprintf(`
-		SELECT dst_ip, dst_port, COUNT() as count
-		FROM packets
-		WHERE sni IN (%s)
-			AND dst_ip_type = 'public'
-		GROUP BY dst_ip, dst_port
-		ORDER BY count DESC
-		LIMIT %d
-	`, placeholders, limit)
-
-	args := make([]interface{}, len(sniValues))
-	for i, v := range sniValues {
-		args[i] = v
-	}
-
-	rows, err := c.conn.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var results []models.RelatedAddress
-	for rows.Next() {
-		var addr models.RelatedAddress
-		if err := rows.Scan(&addr.RemoteIP, &addr.RemotePort, &addr.Count); err != nil {
-			continue
-		}
-		results = append(results, addr)
-	}
-	return results, nil
-}
-
-// getJA4AndSNIByAddressValue - получает JA4 и SNI по адресу (по отпечаткам/доменам)
-func (c *ClickHouseStorage) getJA4AndSNIByAddressValue(ctx context.Context, ip string, port uint16, limit int) ([]models.JA4Candidate, []models.SNICandidate) {
-	if limit <= 0 {
-		limit = 5
-	}
-
-	ja4Results := make([]models.JA4Candidate, 0)
-	sniResults := make([]models.SNICandidate, 0)
-
-	// JA4 по адресу - группируем по отпечатку
-	ja4Query := fmt.Sprintf(`
+	// JA4 кандидаты
+	ja4Query := `
 		SELECT 
 			ja4_raw,
 			any(ja4_application) as ja4_app,
@@ -768,64 +606,195 @@ func (c *ClickHouseStorage) getJA4AndSNIByAddressValue(ctx context.Context, ip s
 			any(ja4_os) as ja4_os,
 			COUNT() as count
 		FROM packets
-		WHERE (dst_ip = ? AND dst_port = ?) AND ja4_raw != ''
+		WHERE dst_ip = ? AND ja4_raw != ''
 		GROUP BY ja4_raw
 		ORDER BY count DESC
-		LIMIT %d
-	`, limit)
+		LIMIT ?
+	`
 
-	rows, err := c.conn.QueryContext(ctx, ja4Query, ip, port)
+	rows, err := c.conn.QueryContext(ctx, ja4Query, remoteIP, needed*2)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
+			if len(ja4Map)+len(sniMap) >= maxTotal {
+				break
+			}
 			var cand models.JA4Candidate
 			var fingerprint string
 			err := rows.Scan(&fingerprint, &cand.Application, &cand.Device, &cand.OS, &cand.Count)
 			if err == nil {
+				if _, exists := ja4Map[fingerprint]; exists {
+					continue
+				}
 				cand.Fingerprint = fingerprint
-				// Ищем ID и Confidence в базе
 				entry, _ := c.LookupJA4(ctx, fingerprint)
 				if entry != nil {
 					cand.ID = entry.ID
 					cand.Confidence = int(entry.ObservationCount)
 				}
-				ja4Results = append(ja4Results, cand)
+				cand.Hop = hop
+				ja4Map[fingerprint] = &cand
 			}
 		}
 	}
 
-	// SNI по адресу - группируем по домену
-	sniQuery := fmt.Sprintf(`
+	// SNI кандидаты
+	needed = maxTotal - (len(ja4Map) + len(sniMap))
+	if needed <= 0 {
+		return
+	}
+
+	sniQuery := `
 		SELECT 
 			sni,
 			any(sni_service) as sni_service,
 			COUNT() as count
 		FROM packets
-		WHERE (dst_ip = ? AND dst_port = ?) AND sni != ''
+		WHERE dst_ip = ? AND sni != ''
 		GROUP BY sni
 		ORDER BY count DESC
-		LIMIT %d
-	`, limit)
+		LIMIT ?
+	`
 
-	rows2, err := c.conn.QueryContext(ctx, sniQuery, ip, port)
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, remoteIP, needed*2)
 	if err == nil {
 		defer rows2.Close()
 		for rows2.Next() {
+			if len(ja4Map)+len(sniMap) >= maxTotal {
+				break
+			}
 			var cand models.SNICandidate
 			err := rows2.Scan(&cand.SNI, &cand.Service, &cand.Count)
 			if err == nil {
-				// Ищем ID и Confidence в базе
+				if _, exists := sniMap[cand.SNI]; exists {
+					continue
+				}
 				entry, _ := c.GetSNIEntry(ctx, cand.SNI)
 				if entry != nil {
 					cand.ID = entry.ID
 					cand.Confidence = int(entry.OccurrenceCount)
 				}
-				sniResults = append(sniResults, cand)
+				cand.Hop = hop
+				sniMap[cand.SNI] = &cand
+			}
+		}
+	}
+}
+
+// collectHopCandidatesBySubnet - собирает кандидатов по подсети (Hop 3 и 4)
+func (c *ClickHouseStorage) collectHopCandidatesBySubnet(
+	ctx context.Context,
+	subnet string,
+	hop int,
+	ja4Map map[string]*models.JA4Candidate,
+	sniMap map[string]*models.SNICandidate,
+	maxTotal int,
+) {
+	needed := maxTotal - (len(ja4Map) + len(sniMap))
+	if needed <= 0 {
+		return
+	}
+
+	// JA4 кандидаты по подсети
+	ja4Query := `
+		SELECT 
+			ja4_raw,
+			any(ja4_application) as ja4_app,
+			any(ja4_device) as ja4_device,
+			any(ja4_os) as ja4_os,
+			COUNT() as count
+		FROM packets
+		WHERE dst_ip LIKE ? AND ja4_raw != ''
+		GROUP BY ja4_raw
+		ORDER BY count DESC
+		LIMIT ?
+	`
+
+	rows, err := c.conn.QueryContext(ctx, ja4Query, subnet+"%", needed*2)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			if len(ja4Map)+len(sniMap) >= maxTotal {
+				break
+			}
+			var cand models.JA4Candidate
+			var fingerprint string
+			err := rows.Scan(&fingerprint, &cand.Application, &cand.Device, &cand.OS, &cand.Count)
+			if err == nil {
+				if _, exists := ja4Map[fingerprint]; exists {
+					continue
+				}
+				cand.Fingerprint = fingerprint
+				entry, _ := c.LookupJA4(ctx, fingerprint)
+				if entry != nil {
+					cand.ID = entry.ID
+					cand.Confidence = int(entry.ObservationCount)
+				}
+				cand.Hop = hop
+				ja4Map[fingerprint] = &cand
 			}
 		}
 	}
 
-	return ja4Results, sniResults
+	needed = maxTotal - (len(ja4Map) + len(sniMap))
+	if needed <= 0 {
+		return
+	}
+
+	// SNI кандидаты по подсети
+	sniQuery := `
+		SELECT 
+			sni,
+			any(sni_service) as sni_service,
+			COUNT() as count
+		FROM packets
+		WHERE dst_ip LIKE ? AND sni != ''
+		GROUP BY sni
+		ORDER BY count DESC
+		LIMIT ?
+	`
+
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, subnet+"%", needed*2)
+	if err == nil {
+		defer rows2.Close()
+		for rows2.Next() {
+			if len(ja4Map)+len(sniMap) >= maxTotal {
+				break
+			}
+			var cand models.SNICandidate
+			err := rows2.Scan(&cand.SNI, &cand.Service, &cand.Count)
+			if err == nil {
+				if _, exists := sniMap[cand.SNI]; exists {
+					continue
+				}
+				entry, _ := c.GetSNIEntry(ctx, cand.SNI)
+				if entry != nil {
+					cand.ID = entry.ID
+					cand.Confidence = int(entry.OccurrenceCount)
+				}
+				cand.Hop = hop
+				sniMap[cand.SNI] = &cand
+			}
+		}
+	}
+}
+
+// getSubnet24 - возвращает первые 3 октета IP с точкой
+func getSubnet24(ip string) string {
+	parts := strings.Split(ip, ".")
+	if len(parts) >= 3 {
+		return parts[0] + "." + parts[1] + "." + parts[2] + "."
+	}
+	return ""
+}
+
+// getSubnet16 - возвращает первые 2 октета IP с точкой
+func getSubnet16(ip string) string {
+	parts := strings.Split(ip, ".")
+	if len(parts) >= 2 {
+		return parts[0] + "." + parts[1] + "."
+	}
+	return ""
 }
 
 func toString(v interface{}) string {
