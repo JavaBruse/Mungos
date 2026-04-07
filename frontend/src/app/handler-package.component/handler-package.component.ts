@@ -135,4 +135,49 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   trackBySNI(index: number, item: SNICandidate): string {
     return item.id || item.sni || `sni-${index}`;
   }
+
+
+  sortedJa4Candidates = computed(() => {
+    const candidates = this.insight()?.ja4Candidates || [];
+    return [...candidates].sort((a, b) => {
+      if (a.hop !== b.hop) {
+        return a.hop - b.hop;
+      }
+      if (a.count !== b.count) {
+        return (b.count || 0) - (a.count || 0);
+      }
+      return (b.confidence || 0) - (a.confidence || 0);
+    });
+  });
+
+  sortedSniCandidates = computed(() => {
+    const candidates = this.insight()?.sniCandidates || [];
+    return [...candidates].sort((a, b) => {
+      if (a.hop !== b.hop) {
+        return a.hop - b.hop;
+      }
+      if (a.count !== b.count) {
+        return (b.count || 0) - (a.count || 0);
+      }
+      return (b.confidence || 0) - (a.confidence || 0);
+    });
+  });
+
+  getSubnet24(ip: string | undefined): string {
+    if (!ip) return '';
+    const parts = ip.split('.');
+    if (parts.length >= 3) {
+      return parts[0] + '.' + parts[1] + '.' + parts[2] + '.*';
+    }
+    return '';
+  }
+
+  getSubnet16(ip: string | undefined): string {
+    if (!ip) return '';
+    const parts = ip.split('.');
+    if (parts.length >= 2) {
+      return parts[0] + '.' + parts[1] + '.*.*';
+    }
+    return '';
+  }
 }

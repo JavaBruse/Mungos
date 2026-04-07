@@ -65,14 +65,28 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (candidate of insight()?.ja4Candidates; track trackByJA4($index, candidate)) {
+                                @for (candidate of sortedJa4Candidates(); track trackByJA4($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
                                     <td (click)="$event.stopPropagation()">
                                         <mat-radio-button name="ja4" [checked]="selectedJa4Id === candidate.id"
                                             (change)="selectJA4(candidate.id)">
                                         </mat-radio-button>
                                     </td>
-                                    <td>{{ candidate.hop }}</td>
+                                    @if(candidate.hop == 1) {
+                                    <td
+                                        matTooltip="Точное совпадение ({{ insight()?.remoteIp }}:{{ insight()?.remotePort }})">
+                                        {{ candidate.hop }}</td>
+                                    } @else if (candidate.hop == 2) {
+                                    <td matTooltip="Совпадение по IP ({{ insight()?.remoteIp }})">{{ candidate.hop }}
+                                    </td>
+                                    } @else if (candidate.hop == 3) {
+                                    <td matTooltip="Совпадение по подсети /24 ({{ getSubnet24(insight()?.remoteIp) }})">
+                                        {{ candidate.hop }}</td>
+                                    } @else if (candidate.hop == 4) {
+                                    <td matTooltip="Совпадение по подсети /16 ({{ getSubnet16(insight()?.remoteIp) }})">
+                                        {{ candidate.hop }}</td>
+                                    }
+
                                     @if(candidate.application){
                                     <td [matTooltip]="candidate.fingerprint">{{ candidate.application }}</td>
                                     } @else {
@@ -101,14 +115,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @for (candidate of insight()?.sniCandidates; track trackBySNI($index, candidate)) {
+                                @for (candidate of sortedSniCandidates(); track trackBySNI($index, candidate)) {
                                 <tr [class.hop-highlight]="candidate.hop === 1">
                                     <td (click)="$event.stopPropagation()">
                                         <mat-radio-button name="sni" [checked]="selectedSniId === candidate.id"
                                             (change)="selectSNI(candidate.id)">
                                         </mat-radio-button>
                                     </td>
-                                    <td>{{ candidate.hop }}</td>
+                                    @if(candidate.hop == 1) {
+                                    <td
+                                        matTooltip="Точное совпадение ({{ insight()?.remoteIp }}:{{ insight()?.remotePort }})">
+                                        {{ candidate.hop }}</td>
+                                    } @else if (candidate.hop == 2) {
+                                    <td matTooltip="Совпадение по IP ({{ insight()?.remoteIp }})">{{ candidate.hop }}
+                                    </td>
+                                    } @else if (candidate.hop == 3) {
+                                    <td matTooltip="Совпадение по подсети /24 ({{ getSubnet24(insight()?.remoteIp) }})">
+                                        {{ candidate.hop }}</td>
+                                    } @else if (candidate.hop == 4) {
+                                    <td matTooltip="Совпадение по подсети /16 ({{ getSubnet16(insight()?.remoteIp) }})">
+                                        {{ candidate.hop }}</td>
+                                    }
                                     <td>{{ candidate.sni }}</td>
                                     <td>{{ candidate.service }}</td>
                                     <td>{{ candidate.count }}</td>

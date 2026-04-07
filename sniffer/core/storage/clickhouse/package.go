@@ -485,7 +485,7 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 	sniMap := make(map[string]*models.SNICandidate)
 
 	// Hop 1: точное совпадение (remoteIP, remotePort) из текущего соединения
-	c.collectHop1Candidates(identificationGroups, ja4Map, sniMap, ctx)
+	c.collectHop1Candidates(ctx, remoteIP, remotePort, ja4Map, sniMap)
 
 	// Если не набрали 5, идём на Hop 2
 	if len(ja4Map)+len(sniMap) < 5 {
@@ -521,68 +521,76 @@ func (c *ClickHouseStorage) GetConnectionInsightByPacket(ctx context.Context, pa
 
 // collectHop1Candidates - собирает кандидатов из текущего соединения
 func (c *ClickHouseStorage) collectHop1Candidates(
-	identificationGroups [][]interface{},
+	ctx context.Context,
+	remoteIP string,
+	remotePort uint16,
 	ja4Map map[string]*models.JA4Candidate,
 	sniMap map[string]*models.SNICandidate,
-	ctx context.Context,
 ) {
-	for _, group := range identificationGroups {
-		ja4Raw := toString(group[0])
-		ja4App := toString(group[1])
-		ja4Device := toString(group[2])
-		ja4OS := toString(group[3])
-		sni := toString(group[4])
-		sniService := toString(group[5])
+	// JA4 с реальным Count
+	ja4Query := `
+		SELECT 
+			ja4_raw,
+			any(ja4_application) as ja4_app,
+			any(ja4_device) as ja4_device,
+			any(ja4_os) as ja4_os,
+			COUNT() as count
+		FROM packets
+		WHERE ((dst_ip = ? AND dst_port = ?) OR (src_ip = ? AND src_port = ?))
+			AND ja4_raw != ''
+		GROUP BY ja4_raw
+	`
 
-		if ja4Raw != "" {
-			if _, exists := ja4Map[ja4Raw]; !exists {
-				entry, _ := c.LookupJA4(ctx, ja4Raw)
-				id := ""
-				confidence := 0
+	rows, err := c.conn.QueryContext(ctx, ja4Query, remoteIP, remotePort, remoteIP, remotePort)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var cand models.JA4Candidate
+			var fingerprint string
+			if err := rows.Scan(&fingerprint, &cand.Application, &cand.Device, &cand.OS, &cand.Count); err == nil {
+				entry, _ := c.LookupJA4(ctx, fingerprint)
 				if entry != nil {
-					id = entry.ID
-					confidence = int(entry.ObservationCount)
+					cand.ID = entry.ID
+					cand.Confidence = int(entry.ObservationCount)
 				}
-				ja4Map[ja4Raw] = &models.JA4Candidate{
-					ID:          id,
-					Fingerprint: ja4Raw,
-					Application: ja4App,
-					Device:      ja4Device,
-					OS:          ja4OS,
-					Count:       1,
-					Confidence:  confidence,
-					Hop:         1,
-				}
-			} else {
-				ja4Map[ja4Raw].Count++
+				cand.Fingerprint = fingerprint
+				cand.Hop = 1
+				ja4Map[fingerprint] = &cand
 			}
 		}
+	}
 
-		if sni != "" {
-			if _, exists := sniMap[sni]; !exists {
-				entry, _ := c.GetSNIEntry(ctx, sni)
-				id := ""
-				confidence := 0
+	// SNI с реальным Count
+	sniQuery := `
+		SELECT 
+			sni,
+			any(sni_service) as sni_service,
+			COUNT() as count
+		FROM packets
+		WHERE ((dst_ip = ? AND dst_port = ?) OR (src_ip = ? AND src_port = ?))
+			AND sni != ''
+		GROUP BY sni
+	`
+
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, remoteIP, remotePort, remoteIP, remotePort)
+	if err == nil {
+		defer rows2.Close()
+		for rows2.Next() {
+			var cand models.SNICandidate
+			if err := rows2.Scan(&cand.SNI, &cand.Service, &cand.Count); err == nil {
+				entry, _ := c.GetSNIEntry(ctx, cand.SNI)
 				if entry != nil {
-					id = entry.ID
-					confidence = int(entry.OccurrenceCount)
+					cand.ID = entry.ID
+					cand.Confidence = int(entry.OccurrenceCount)
 				}
-				sniMap[sni] = &models.SNICandidate{
-					ID:         id,
-					SNI:        sni,
-					Service:    sniService,
-					Count:      1,
-					Confidence: confidence,
-					Hop:        1,
-				}
-			} else {
-				sniMap[sni].Count++
+				cand.Hop = 1
+				sniMap[cand.SNI] = &cand
 			}
 		}
 	}
 }
 
-// collectHopCandidates - собирает кандидатов по IP и порту (Hop 2)
+// collectHopCandidates - собирает кандидатов по IP (Hop 2)
 func (c *ClickHouseStorage) collectHopCandidates(
 	ctx context.Context,
 	remoteIP string,
@@ -606,13 +614,14 @@ func (c *ClickHouseStorage) collectHopCandidates(
 			any(ja4_os) as ja4_os,
 			COUNT() as count
 		FROM packets
-		WHERE dst_ip = ? AND ja4_raw != ''
+		WHERE (dst_ip = ? OR src_ip = ?)
+			AND ja4_raw != ''
 		GROUP BY ja4_raw
 		ORDER BY count DESC
 		LIMIT ?
 	`
 
-	rows, err := c.conn.QueryContext(ctx, ja4Query, remoteIP, needed*2)
+	rows, err := c.conn.QueryContext(ctx, ja4Query, remoteIP, remoteIP, needed*2)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -650,13 +659,14 @@ func (c *ClickHouseStorage) collectHopCandidates(
 			any(sni_service) as sni_service,
 			COUNT() as count
 		FROM packets
-		WHERE dst_ip = ? AND sni != ''
+		WHERE (dst_ip = ? OR src_ip = ?)
+			AND sni != ''
 		GROUP BY sni
 		ORDER BY count DESC
 		LIMIT ?
 	`
 
-	rows2, err := c.conn.QueryContext(ctx, sniQuery, remoteIP, needed*2)
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, remoteIP, remoteIP, needed*2)
 	if err == nil {
 		defer rows2.Close()
 		for rows2.Next() {
@@ -704,13 +714,14 @@ func (c *ClickHouseStorage) collectHopCandidatesBySubnet(
 			any(ja4_os) as ja4_os,
 			COUNT() as count
 		FROM packets
-		WHERE dst_ip LIKE ? AND ja4_raw != ''
+		WHERE (dst_ip LIKE ? OR src_ip LIKE ?)
+			AND ja4_raw != ''
 		GROUP BY ja4_raw
 		ORDER BY count DESC
 		LIMIT ?
 	`
 
-	rows, err := c.conn.QueryContext(ctx, ja4Query, subnet+"%", needed*2)
+	rows, err := c.conn.QueryContext(ctx, ja4Query, subnet+"%", subnet+"%", needed*2)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -748,13 +759,14 @@ func (c *ClickHouseStorage) collectHopCandidatesBySubnet(
 			any(sni_service) as sni_service,
 			COUNT() as count
 		FROM packets
-		WHERE dst_ip LIKE ? AND sni != ''
+		WHERE (dst_ip LIKE ? OR src_ip LIKE ?)
+			AND sni != ''
 		GROUP BY sni
 		ORDER BY count DESC
 		LIMIT ?
 	`
 
-	rows2, err := c.conn.QueryContext(ctx, sniQuery, subnet+"%", needed*2)
+	rows2, err := c.conn.QueryContext(ctx, sniQuery, subnet+"%", subnet+"%", needed*2)
 	if err == nil {
 		defer rows2.Close()
 		for rows2.Next() {
@@ -795,20 +807,6 @@ func getSubnet16(ip string) string {
 		return parts[0] + "." + parts[1] + "."
 	}
 	return ""
-}
-
-func toString(v interface{}) string {
-	if v == nil {
-		return ""
-	}
-	switch s := v.(type) {
-	case string:
-		return s
-	case []byte:
-		return string(s)
-	default:
-		return fmt.Sprintf("%v", v)
-	}
 }
 
 // UpdateConnectionInsight - обновляет JA4 и SNI для всех пакетов соединения
