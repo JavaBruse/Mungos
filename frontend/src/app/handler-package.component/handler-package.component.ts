@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { JA4Candidate, SNICandidate } from './connection-insight.DTO';
 import { MatRadioModule } from '@angular/material/radio';
+import { effect } from '@angular/core';
 
 @Component({
   selector: 'app-handler-package',
@@ -33,6 +34,25 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
   @Output() close = new EventEmitter<void>();
   selectedJa4Id = '';
   selectedSniId = '';
+
+
+  constructor() {
+    effect(() => {
+      const sortedJa4 = this.sortedJa4Candidates();
+      if (sortedJa4.length && !this.selectedJa4Id) {
+        this.selectedJa4Id = sortedJa4[0].id;
+      }
+    });
+
+    effect(() => {
+      const sortedSni = this.sortedSniCandidates();
+      if (sortedSni.length && !this.selectedSniId) {
+        this.selectedSniId = sortedSni[0].id;
+      }
+    });
+  }
+
+
   selectJA4(id: string) {
     this.selectedJa4Id = id;
   }
@@ -62,14 +82,6 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
     this.subscription = this.snifferService.getConnectionInsight(this.snifferId, this.packetId).subscribe({
       next: (data) => {
         this.insight.set(data);
-
-        if (data.ja4Candidates?.length && !this.selectedJa4Id) {
-          this.selectedJa4Id = data.ja4Candidates[0].id;
-        }
-        if (data.sniCandidates?.length && !this.selectedSniId) {
-          this.selectedSniId = data.sniCandidates[0].id;
-        }
-
         this.loaded = true;
       },
       error: () => {
@@ -113,14 +125,6 @@ export class HandlerPackageComponent implements OnInit, OnDestroy {
       }
     });
   }
-
-  allJa4Candidates = computed(() => {
-    return this.insight()?.ja4Candidates || [];
-  });
-
-  allSniCandidates = computed(() => {
-    return this.insight()?.sniCandidates || [];
-  });
 
   applyInsight() {
     console.log('applyInsight called', this.selectedJa4Id, this.selectedSniId);

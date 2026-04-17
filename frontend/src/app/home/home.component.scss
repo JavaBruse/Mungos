@@ -1,0 +1,31 @@
+.widgets-panel {
+    display: flex;
+    gap: 15px;
+    padding: 10px;
+    right: 0px;
+    border-radius: 8px;
+    user-select: text;
+
+    .item {
+        display: flex;
+        flex-direction: column;
+        // border-right: 1px solid #eee;
+        padding-right: 15px;
+
+        &:last-child {
+            border: none;
+        }
+
+        .val {
+            font-weight: bold;
+            font-size: 18px;
+            color: #000;
+        }
+
+        .desc {
+            font-size: 11px;
+            color: #777;
+            text-transform: uppercase;
+        }
+    }
+}
