@@ -122,7 +122,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 		return false
 	}
 
-	// Проверяем по dst (прямые пакеты)
+	// прямые пакеты
 	if packet.DstIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.DstIP, packet.DstPort)
 		if rule := c.Get(key); rule != nil {
@@ -139,7 +139,7 @@ func (c *RuleCache) ApplyRule(packet *models.Packet) bool {
 		}
 	}
 
-	// Проверяем по src (обратные пакеты)
+	// обратные пакеты
 	if packet.SrcIPType == "public" {
 		key := fmt.Sprintf("%s:%d", packet.SrcIP, packet.SrcPort)
 		if rule := c.Get(key); rule != nil {

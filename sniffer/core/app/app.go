@@ -121,7 +121,6 @@ func (a *App) Run() error {
 	go func() { _ = a.grpc.Start() }()
 	go func() { _ = a.sniffer.Start() }()
 
-	// Просто передаем пакеты в канал для сохранения
 	for pkt := range a.sniffer.Packets() {
 		select {
 		case a.packetChan <- pkt:

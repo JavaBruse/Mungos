@@ -59,13 +59,39 @@ Mungos/
 ├── frontend/ # Веб-интерфейс (Angular)
 └── deploy/ # Оркестрация и конфигурация (Docker Compose)
 ```
+> [!WARNING]
+>
+>  Для JA4+ требуется скачать базу данных
+>
+> База скачается сама если будет доступен ресурс https://ja4db.com/api/download/. 
+>
+> Иначе требуется скачать в ручную:
+> - ja4db
+> ```bash
+> wget https://ja4db.com/api/download/ -O ./data/ja4db.json
+> ```
+> - google
+> ```bash
+> wget "https://drive.usercontent.google.com/download?id=1U4Od-5OpLJxvTNp54-ZKBUMFIjhp-wDr&export=download&confirm=t" -O ~/Mungos/deploy/data/ja4db.json
+> ```
+
+> [!NOTE]
+> ### База вендоров взята из источника
+>
+>```http
+> https://standards-oui.ieee.org/oui/oui.txt
+>```
 
 > [!NOTE]
 >
-> ### Ограничения классификации
-> Библиотека ja4go реализует только отпечатки JA4, JA4S, JA4T и JA4H (HTTP/1.1).
+> ### Ограничения в реализации ja4go
+>
+> - Реализовано: 
+>
+> JA4, JA4S, JA4T и JA4H (HTTP/1.1).
+> - Не реализовано: 
+>
 > JA4X, JA4L, JA4SSH, JA4DHCP и JA4H для HTTP/2 не поддерживаются.
-
 
 > [!IMPORTANT]
 >

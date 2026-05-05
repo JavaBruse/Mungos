@@ -33,8 +33,8 @@ func NewPacketFromGopacket(pkt gopacket.Packet) *models.Packet {
 		p.SrcPort = uint16(tcp.SrcPort)
 		p.DstPort = uint16(tcp.DstPort)
 		p.TCPFlags = formatTCPFlags(tcp)
-		if len(tcp.Payload) > 500 {
-			p.Payload = tcp.Payload[:500]
+		if len(tcp.Payload) > 1500 {
+			p.Payload = tcp.Payload[:1500]
 		} else {
 			p.Payload = tcp.Payload
 		}
@@ -93,8 +93,7 @@ func getIPType(ip string) string {
 		return "private"
 	}
 
-	// Приватные диапазоны (RFC 1918: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
-	// и IPv6 unique local (fc00::/7) - Go 1.17+ покрывает оба
+	// и IPv6 unique local (fc00::/7)
 	if parsedIP.IsPrivate() {
 		return "private"
 	}

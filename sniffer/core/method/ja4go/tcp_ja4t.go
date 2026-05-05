@@ -2,32 +2,28 @@ package ja4go
 
 import "strconv"
 
-// BuildJA4TInput описывает данные из TCP SYN-пакета клиента,
-// необходимые для вычисления JA4T.
 type BuildJA4TInput struct {
-	// Номер пакета (опционально, библиотеке не нужен, но может пригодиться вызывающему коду).
 	PacketNum int
 
-	// Нефильтрованный размер окна (tcp.window_size_value).
+	// tcp.window_size_value.
 	WindowSize uint16
 
-	// Опции TCP в порядке появления (tcp.option_kind).
+	// tcp.option_kind.
 	Options []uint8
 
-	// MSS из tcp.options.mss_val, если был.
+	// MSS изtcp.options.mss_val
 	MSS *uint16
 
-	// Window scale из tcp.options.wscale.shift, если был.
+	// Window scale из tcp.options.wscale.shift
 	WindowScale *uint8
 }
 
-// BuildJA4T возвращает строку JA4T в формате:
-//   <window size>_<opt1-opt2-...>_<mss>_<wscale>
-//
-// Пример:
-//   64240_2-1-3-1-1-4_1460_8
+/// Format:
+///   <window size>_<options>_<mss>_<window scale>
+///
+/// Example:
+///   64240_2-1-3-1-1-4_1460_8
 func BuildJA4T(in BuildJA4TInput) string {
-	// Окно
 	win := strconv.Itoa(int(in.WindowSize))
 
 	// Опции
@@ -53,4 +49,3 @@ func BuildJA4T(in BuildJA4TInput) string {
 
 	return win + "_" + opts + "_" + mss + "_" + ws
 }
-

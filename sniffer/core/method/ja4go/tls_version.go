@@ -2,7 +2,6 @@ package ja4go
 
 import "unicode/utf8"
 
-// TlsVersion соответствует rust-энуму TlsVersion.
 type TlsVersion int
 
 const (
@@ -15,7 +14,6 @@ const (
 	Ssl20
 )
 
-// TlsVersionFromWire конвертирует строку вида "0x0304" в TlsVersion.
 func TlsVersionFromWire(s string) TlsVersion {
 	switch s {
 	case "0x0304":
@@ -35,7 +33,6 @@ func TlsVersionFromWire(s string) TlsVersion {
 	}
 }
 
-// String возвращает короткий код версии, как в Rust Display:
 // "13", "12", "11", "10", "s3", "s2", или "00" для Unknown.
 func (v TlsVersion) String() string {
 	switch v {
@@ -56,21 +53,16 @@ func (v TlsVersion) String() string {
 	}
 }
 
-// firstLast эквивалентна rust-функции first_last:
-// возвращает первую и последнюю ASCII-букву строки,
-// заменяя не-ASCII на '9'. Для пустой строки оба значения nil.
 func firstLast(s string) (rune, *rune) {
 	if s == "" {
 		return 0, nil
 	}
 
-	// Первый символ
 	r, size := utf8.DecodeRuneInString(s)
 	if r == utf8.RuneError || r > 127 {
 		r = '9'
 	}
 
-	// Второй и далее
 	rest := s[size:]
 	if rest == "" {
 		return r, nil
@@ -87,4 +79,3 @@ func firstLast(s string) (rune, *rune) {
 	}
 	return r, &last
 }
-

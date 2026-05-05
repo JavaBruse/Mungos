@@ -5,37 +5,31 @@ import (
 	"strings"
 )
 
-// BuildJA4HInput описывает нормализованные HTTP-поля
-// (уже разобранные из HTTP/1.1 или HTTP/2).
+// BuildJA4HInput HTTP-поля
 type BuildJA4HInput struct {
-	// Метод запроса, как в протоколе: "GET", "POST" и т.п.
+	// GET POST
 	Method string
-	// Версия: "HTTP/1.0", "HTTP/1.1", "HTTP/2", "HTTP/3".
+	// HTTP/1.0 HTTP/1.1 HTTP/2 HTTP/3
 	Version string
-	// Язык из Accept-Language, как строка заголовка (может быть пустой).
+	//Accept-Language
 	Language string
-	// Полный список заголовков запроса (имена, как в протоколе, без дубликата Cookie/Referer
-	// для HTTP/1.1; для HTTP/2 — значения http2.header.name).
+	// Cookie/Referer
+	// HTTP/2  http2.header.name.
 	Headers []string
-	// Cookies — строка как в заголовке Cookie (HTTP/1.1) или объединённые cookie value (HTTP/2).
-	// В простом варианте используем одну строку, как в Python-реализации.
+	// Cookies Cookie HTTP/1.1 cookie value (HTTP/2).
 	Cookies string
 }
 
-// BuildJA4HOutput содержит итоговые строки JA4H/JA4H_r/JA4H_ro.
 type BuildJA4HOutput struct {
-	JA4    string
-	JA4Raw string
+	JA4        string
+	JA4Raw     string
 	JA4RawOrig string
 }
 
-// BuildJA4H реализует спецификацию JA4H в том же виде, как Python/ja4h.py:
-// ge11cr13enus_.... и варианты *_r/_ro.
 func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 	methodCode := httpMethodCode(in.Method)
 	versionCode := httpVersionCode(in.Version)
 
-	// cookie / referer маркеры
 	cookieMarker := 'n'
 	if in.Cookies != "" {
 		cookieMarker = 'c'
@@ -48,7 +42,6 @@ func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 		}
 	}
 
-	// Нормализованные имена заголовков (без cookie/referer и псевдозаголовков).
 	var headerNames []string
 	for _, h := range in.Headers {
 		name := h
@@ -84,14 +77,12 @@ func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 	firstChunk.WriteString(twoDigits(headerLen))
 	firstChunk.WriteString(lang)
 
-	// Хэдеры для хеширования — в нижнем регистре.
 	var headersNormalized []string
 	for _, h := range headerNames {
 		headersNormalized = append(headersNormalized, h)
 	}
 	headersHash := Hash12(strings.Join(headersNormalized, ","))
 
-	// Cookie-пары.
 	var cookieFields, cookieValues []string
 	if in.Cookies != "" {
 		parts := strings.Split(in.Cookies, ";")
@@ -118,7 +109,6 @@ func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 		}
 	}
 
-	// Отсортированные cookie-поля/значения.
 	sortedFields := append([]string(nil), cookieFields...)
 	sortedValues := append([]string(nil), cookieValues...)
 	sort.Strings(sortedFields)
@@ -137,7 +127,6 @@ func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 
 	var ja4hR, ja4hRO string
 	if flags.WithRaw {
-		// Raw: оригинальный порядок заголовков.
 		ja4hR = firstChunk.String() + "_" +
 			strings.Join(headerNames, ",") + "_"
 		ja4hRO = ja4hR
@@ -148,13 +137,12 @@ func BuildJA4H(in BuildJA4HInput, flags FormatFlags) BuildJA4HOutput {
 	}
 
 	return BuildJA4HOutput{
-		JA4:       ja4h,
-		JA4Raw:    ja4hR,
+		JA4:        ja4h,
+		JA4Raw:     ja4hR,
 		JA4RawOrig: ja4hRO,
 	}
 }
 
-// httpMethodCode даёт 2-буквенный код, как в Rust/Python.
 func httpMethodCode(m string) string {
 	switch strings.ToUpper(m) {
 	case "CONNECT":
@@ -180,7 +168,6 @@ func httpMethodCode(m string) string {
 	}
 }
 
-// httpVersionCode маппит строку версии к "10"/"11"/"20"/"30".
 func httpVersionCode(v string) string {
 	switch v {
 	case "HTTP/1.0":
@@ -196,7 +183,6 @@ func httpVersionCode(v string) string {
 	}
 }
 
-// httpPrimaryLanguage аналогичен Rust primary_language.
 func httpPrimaryLanguage(lang string) string {
 	lang = strings.TrimSpace(lang)
 	if lang == "" {
@@ -207,7 +193,6 @@ func httpPrimaryLanguage(lang string) string {
 	return strings.ToLower(primary)
 }
 
-// truncateTo эквивалентна Rust truncate_to.
 func truncateTo(n int, s string) string {
 	runes := []rune(s)
 	if len(runes) < n {
@@ -221,4 +206,3 @@ func truncateTo(n int, s string) string {
 	}
 	return s
 }
-

@@ -6,17 +6,11 @@ import (
 	"strings"
 )
 
-// FormatFlags повторяет rust-структуру FormatFlags.
 type FormatFlags struct {
 	WithRaw       bool
 	OriginalOrder bool
 }
 
-// TLS_CLIENT_* и TLS_SERVER_* функции ниже реализуют чистую логику построения JA4 / JA4S
-// из уже разобранных полей ClientHello / ServerHello. Внешний код может получать
-// эти поля из tshark, gopacket и т.п.
-
-// BuildJA4Input описывает входные данные для JA4 (клиентский TLS fingerprint).
 type BuildJA4Input struct {
 	// true — QUIC (UDP), false — обычный TLS поверх TCP.
 	IsQUIC bool
@@ -182,7 +176,7 @@ type BuildJA4SInput struct {
 }
 
 type BuildJA4SOutput struct {
-	JA4S   string
+	JA4S    string
 	JA4SRaw string
 }
 
@@ -242,20 +236,19 @@ func BuildJA4S(in BuildJA4SInput, flags FormatFlags) BuildJA4SOutput {
 	}
 
 	return BuildJA4SOutput{
-		JA4S:   ja4s,
+		JA4S:    ja4s,
 		JA4SRaw: ja4sRaw,
 	}
 }
 
 // --------------------------------------------------------------------
-// Вспомогательные функции
 
 const (
 	tlsExtServerName uint16 = 0  // SNI
 	tlsExtALPN       uint16 = 16 // ALPN
 )
 
-// значения GREASE как в Rust (строки "0x0a0a" и т.п.).
+// значения TLS_GREASE_VALUES_STR как в Rust
 var greaseStr = map[string]struct{}{
 	"0x0a0a": {}, "0x1a1a": {}, "0x2a2a": {}, "0x3a3a": {},
 	"0x4a4a": {}, "0x5a5a": {}, "0x6a6a": {}, "0x7a7a": {},
@@ -324,4 +317,3 @@ func normalizeSigAlgs(vs []string) []string {
 	}
 	return out
 }
-

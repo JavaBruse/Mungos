@@ -20,7 +20,6 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 		return packet
 	}
 
-	// 1) JA4T: только первый SYN (без ACK) в направлении клиента.
 	if tcp.SYN && !tcp.ACK {
 		opts, mss, wscale := tcpSynOptions(tcp.Options)
 		packet.JA4Raw = ja4go.BuildJA4T(ja4go.BuildJA4TInput{
@@ -32,9 +31,8 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 		packet.JA4Type = "JA4T"
 	}
 
-	// 2) TLS/HTTP: делаем минимальный TCP reassembly по Seq и пытаемся разобрать handshake/HTTP.
 	if len(tcp.Payload) > 0 {
-		dir := tlsDirection(packet, tcp)
+		dir := tlsDirection(packet)
 		if dir != "" {
 			buf := tcpReasmAdd(packet, tcp, dir)
 
@@ -53,7 +51,6 @@ func ProcessJA4(packet *models.Packet, tcp *layers.TCP, db *clickhouse.ClickHous
 				}
 			}
 
-			// HTTP можно пробовать и без reassembly, но буфер даёт шанс поймать заголовок целиком.
 			if packet.JA4Raw == "" {
 				if httpIn, ok := parseHTTPRequest(buf); ok {
 					out := ja4go.BuildJA4H(httpIn, ja4go.FormatFlags{WithRaw: true})
@@ -89,7 +86,6 @@ func fillPacketFromEntry(packet *models.Packet, entry *models.Ja4Entry) {
 }
 
 // -----------------------------------------------------------------------------
-// Минимальный TCP reassembly под ранние handshake/HTTP.
 
 type reasmKey struct {
 	srcIP   string
@@ -109,13 +105,15 @@ type reasmState struct {
 
 var reasm sync.Map // map[reasmKey]*reasmState
 
-func tlsDirection(p *models.Packet, tcp *layers.TCP) string {
-	// Упрощение: считаем TLS-клиента той стороной, которая шлёт на 443.
-	// Если у тебя не 443 — можно расширить позже (по первому SYN).
-	if p.DstPort == 443 {
+func tlsDirection(p *models.Packet) string {
+	serverPorts := map[uint16]bool{
+		443: true, 8443: true, 465: true, 993: true, 995: true, 636: true,
+	}
+
+	if serverPorts[p.DstPort] {
 		return "c2s"
 	}
-	if p.SrcPort == 443 {
+	if serverPorts[p.SrcPort] {
 		return "s2c"
 	}
 	return ""
@@ -144,7 +142,6 @@ func tcpReasmAdd(p *models.Packet, tcp *layers.TCP, dir string) []byte {
 	st.mu.Lock()
 	defer st.mu.Unlock()
 
-	// Простая очистка по TTL состояния, чтобы не течь памятью.
 	if now.Sub(st.lastSeen) > 30*time.Second {
 		st.segments = map[uint32][]byte{}
 		st.nextSeq = nil
@@ -156,14 +153,12 @@ func tcpReasmAdd(p *models.Packet, tcp *layers.TCP, dir string) []byte {
 	if len(tcp.Payload) == 0 {
 		return st.contig
 	}
-	// Сохраняем сегмент. Если дубликат — оставляем первый.
 	if _, ok := st.segments[seq]; !ok {
 		cp := make([]byte, len(tcp.Payload))
 		copy(cp, tcp.Payload)
 		st.segments[seq] = cp
 	}
 
-	// Инициализация nextSeq как минимального seq из сегментов.
 	if st.nextSeq == nil {
 		min := seq
 		for s := range st.segments {
@@ -174,7 +169,6 @@ func tcpReasmAdd(p *models.Packet, tcp *layers.TCP, dir string) []byte {
 		st.nextSeq = &min
 	}
 
-	// Подклеиваем непрерывные сегменты.
 	for st.nextSeq != nil {
 		data, ok := st.segments[*st.nextSeq]
 		if !ok {
@@ -186,7 +180,6 @@ func tcpReasmAdd(p *models.Packet, tcp *layers.TCP, dir string) []byte {
 		*st.nextSeq = next
 	}
 
-	// Ограничение буфера: нам достаточно первых нескольких KB для ClientHello/ServerHello и HTTP.
 	const maxBuf = 64 * 1024
 	if len(st.contig) > maxBuf {
 		st.contig = st.contig[len(st.contig)-maxBuf:]
@@ -213,10 +206,6 @@ func tcpSynOptions(opts []layers.TCPOption) (kinds []uint8, mss *uint16, wscale 
 	}
 	return kinds, mss, wscale
 }
-
-// ---- Минимальный TLS ClientHello/ServerHello парсер ----
-// Важно: это парсит только те случаи, когда ClientHello/ServerHello лежит целиком в одном tcp.Payload.
-// Для полноценной поддержки нужно TCP reassembly.
 
 func parseTLSClientHello(payload []byte) (ja4go.BuildJA4Input, bool) {
 	var out ja4go.BuildJA4Input
@@ -457,15 +446,14 @@ func parseTLSExtensionsServer(exts []byte, out *ja4go.BuildJA4SInput) {
 	}
 }
 
-// ---- HTTP request parsing (минимально) ----
 func parseHTTPRequest(payload []byte) (ja4go.BuildJA4HInput, bool) {
 	var out ja4go.BuildJA4HInput
-	// Быстрый фильтр: должен быть printable и содержать "HTTP/"
+	// filter "HTTP/"
 	s := string(payload)
 	if !strings.Contains(s, "HTTP/") {
 		return out, false
 	}
-	// Берём только заголовки до \r\n\r\n
+	// \r\n\r\n
 	end := strings.Index(s, "\r\n\r\n")
 	if end < 0 {
 		return out, false

@@ -36,7 +36,6 @@ func GetSNIProcessor(db *clickhouse.ClickHouseStorage) *SNIProcessor {
 	return globalSNIProcessor
 }
 
-// ProcessSNI - единая точка входа для обработки SNI
 func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*models.Packet) *models.Packet {
 	if packet == nil {
 		return packet
@@ -61,7 +60,6 @@ func (p *SNIProcessor) ProcessSNI(packet *models.Packet, sessionPackets []*model
 	return packet
 }
 
-// достает домен из пакета
 func ExtractSNI(packet *models.Packet) string {
 	if packet == nil || len(packet.Payload) < 5 || packet.Payload[0] != 0x16 {
 		return packet.SNI

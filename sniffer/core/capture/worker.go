@@ -58,11 +58,9 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 	if packet == nil {
 		return nil
 	}
-	// Применяем правила из кэша (проверяем и dst, и src)
 	ruleCache := GetRuleCache()
 	ruleCache.ApplyRule(packet)
 
-	// JA4 анализ
 	if packet.JA4Raw == "" {
 		if tcpLayer := pkt.Layer(layers.LayerTypeTCP); tcpLayer != nil {
 			tcp, _ := tcpLayer.(*layers.TCP)
@@ -72,12 +70,55 @@ func (w *captureWorker) processPacket(pkt gopacket.Packet) *models.Packet {
 
 	packet = method.GetSNIProcessor(w.db).ProcessSNI(packet, nil)
 
-	// SNI обработка через процессор sniffer_known_packets_5sec
 	if ruleCache := GetRuleCache(); ruleCache != nil {
 		ruleCache.UpdateFromPacket(packet, w.db)
 	}
 	return packet
 }
+
+// // Реализация на afpacket
+// func (w *captureWorker) run() {
+// 	device := w.device
+
+// 	handle, err := afpacket.NewTPacket(
+// 		afpacket.OptInterface(device),
+// 		afpacket.OptFrameSize(w.snaplen),
+// 		afpacket.OptBlockSize(w.snaplen*128),
+// 		afpacket.OptPollTimeout(int(w.timeout/time.Millisecond)),
+// 	)
+// 	if err != nil {
+// 		logger.Error("Failed to open AF_PACKET on %s: %v", device, err)
+// 		return
+// 	}
+// 	defer handle.Close()
+
+// 	if w.BPFFilter != "" {
+// 		if err := handle.SetBPFFilter(w.BPFFilter); err != nil {
+// 			logger.Error("Failed to set BPF filter: %v", err)
+// 			return
+// 		}
+// 	}
+
+// 	logger.Info("AF_PACKET sniffer started on %s", device)
+// 	packetSource := gopacket.NewPacketSource(handle, layers.LinkTypeEthernet)
+// 	packetSource.NoCopy = true
+
+// 	for {
+// 		select {
+// 		case <-w.stopCh:
+// 			logger.Info("Sniffer stopped")
+// 			return
+// 		case pkt := <-packetSource.Packets():
+// 			if packet := w.processPacket(pkt); packet != nil {
+// 				select {
+// 				case w.packetCh <- packet:
+// 				default:
+// 					logger.Warn("Packet channel full, dropping packet")
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 func (w *captureWorker) run() {
 	device := w.device
